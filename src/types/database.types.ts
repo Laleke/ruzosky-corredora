@@ -14,6 +14,8 @@ export type Json =
   | Json[];
 
 export type RolUsuario = "admin" | "propietario" | "arrendatario";
+export type TipoPersona = "persona_natural" | "persona_juridica";
+export type TipoCuentaBancaria = "corriente" | "vista" | "ahorro" | "rut";
 
 export type Database = {
   public: {
@@ -40,6 +42,7 @@ export type Database = {
           activa?: boolean;
           created_at?: string;
         };
+        Relationships: [];
       };
       profiles: {
         Row: {
@@ -66,6 +69,76 @@ export type Database = {
           rol?: RolUsuario;
           created_at?: string;
         };
+        Relationships: [];
+      };
+      propietarios: {
+        Row: {
+          id: string;
+          empresa_id: string;
+          tipo_persona: TipoPersona;
+          rut: string;
+          nombre: string | null;
+          apellido: string | null;
+          razon_social: string | null;
+          email: string | null;
+          telefono: string | null;
+          direccion: string | null;
+          comuna: string | null;
+          region: string | null;
+          banco: string | null;
+          tipo_cuenta: TipoCuentaBancaria | null;
+          numero_cuenta: string | null;
+          titular_cuenta: string | null;
+          rut_titular: string | null;
+          activo: boolean;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          empresa_id: string;
+          tipo_persona?: TipoPersona;
+          rut: string;
+          nombre?: string | null;
+          apellido?: string | null;
+          razon_social?: string | null;
+          email?: string | null;
+          telefono?: string | null;
+          direccion?: string | null;
+          comuna?: string | null;
+          region?: string | null;
+          banco?: string | null;
+          tipo_cuenta?: TipoCuentaBancaria | null;
+          numero_cuenta?: string | null;
+          titular_cuenta?: string | null;
+          rut_titular?: string | null;
+          activo?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          empresa_id?: string;
+          tipo_persona?: TipoPersona;
+          rut?: string;
+          nombre?: string | null;
+          apellido?: string | null;
+          razon_social?: string | null;
+          email?: string | null;
+          telefono?: string | null;
+          direccion?: string | null;
+          comuna?: string | null;
+          region?: string | null;
+          banco?: string | null;
+          tipo_cuenta?: TipoCuentaBancaria | null;
+          numero_cuenta?: string | null;
+          titular_cuenta?: string | null;
+          rut_titular?: string | null;
+          activo?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
       };
     };
     Views: Record<string, never>;
@@ -75,6 +148,8 @@ export type Database = {
     };
     Enums: {
       rol_usuario: RolUsuario;
+      tipo_persona: TipoPersona;
+      tipo_cuenta_bancaria: TipoCuentaBancaria;
     };
   };
 };

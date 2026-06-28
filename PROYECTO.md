@@ -67,13 +67,22 @@ Usuario autentica con Supabase Auth → middleware refresca sesión y protege ru
 ### Tablas Principales
 - `empresas` — tenants del SaaS.
 - `profiles` — extiende `auth.users`; ligа usuario a `empresa_id` y `rol` (admin/propietario/arrendatario).
-<!-- pendiente: tablas de negocio (propiedades, contratos, pagos, ...) -->
+- `propietarios` — dueños de propiedades. Persona natural o jurídica; datos de contacto y bancarios para liquidaciones. `unique(empresa_id, rut)`. Baja lógica (`activo`). RLS solo admin.
+<!-- pendiente: propiedades, propietarios_propiedades (N:M), contratos, arrendatarios, pagos -->
 
 ### Relaciones
 - `profiles.id` → `auth.users.id` (1:1). `profiles.empresa_id` → `empresas.id` (N:1).
+- `propietarios.empresa_id` → `empresas.id` (N:1).
+- Próximo: `propiedades` y tabla puente `propietarios_propiedades` (N:M, soporta copropiedad con `porcentaje_participacion`).
 
 ### Índices Relevantes
-- `profiles(empresa_id)`, `profiles(rol)`.
+- `profiles(empresa_id)`, `profiles(rol)`, `propietarios(empresa_id)`.
+
+### Modelo de datos — convenciones decididas
+- **RUT** se guarda normalizado `cuerpo-dv` (sin puntos), validado con dígito verificador en la frontera (`src/lib/rut.ts`). Único por empresa, no global.
+- **`activo`** (soft-delete) ≠ **`estado`** (ciclo operativo). No mezclarlos.
+- **`updated_at`** mantenido por trigger `set_updated_at()` (compartido).
+- Relación propietario↔propiedad será N:M desde el inicio (copropiedad es realidad del dominio CL).
 
 ### Estrategias de Performance
 <!-- pendiente -->
@@ -107,7 +116,9 @@ Usuario autentica con Supabase Auth → middleware refresca sesión y protege ru
 <!-- ninguno aún -->
 
 ## Deuda Técnica
-<!-- ninguna aún -->
+- [DEUDA] `codigo_interno` de propiedades (RUZ-0001) sin auto-generación — Riesgo: Bajo — Impacto: el admin lo tipea a mano; un contador secuencial por empresa tiene race condition bajo escritura concurrente — Corrección: al construir propiedades, evaluar secuencia por empresa vía función Postgres con bloqueo, o generación diferida.
+- [DEUDA] `database.types.ts` escrito a mano — Riesgo: Bajo — Impacto: puede divergir del esquema real — Corrección: `npm run types:gen` una vez conectado Supabase (sobrescribe el archivo).
+- [DEUDA] `comuna`/`region` como texto libre — Riesgo: Bajo — Impacto: inconsistencia de datos — Corrección: tablas catálogo `ref_regiones`/`ref_comunas` cuando se justifique reporting.
 
 ## Roadmap
 ### Corto plazo
@@ -118,6 +129,7 @@ Usuario autentica con Supabase Auth → middleware refresca sesión y protege ru
 - Pagos, finanzas, tickets de mantención, documentos. Onboarding de segunda empresa (validar multitenancy).
 
 ## Últimos Cambios
+- 2026-06-27 — Módulo **Propietarios** (Paso 1): migración `0002_propietarios.sql` con RLS solo-admin, validación de RUT (dígito verificador), CRUD completo (listado + alta + edición + baja lógica) y navegación. Build verde. Subido `@supabase/ssr` a 0.12.0 (la 0.5.2 rompía la inferencia de tipos de insert/update con supabase-js 2.108).
 - 2026-06-27 — Flujo de login real (SSR): login email/password, logout, área privada con layout protegido y dashboard base por rol. Tipos de BD `empresas`/`profiles` definidos a mano. Commit `cc46b04`. Pendiente: `npm install` + `npm run build` para validar compilación.
 - 2026-06-27 — Definido bootstrap del primer admin: `supabase/bootstrap_admin.sql` (manual, vía service_role en SQL Editor).
 - 2026-06-27 — Git inicializado con primer commit local (`da65bc7`), sin remoto. Registrada restricción de scope personal y de no-push automático.

@@ -1,6 +1,7 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getCurrentProfile } from "@/lib/auth";
-import { APP_NAME } from "@/config/constants";
+import { APP_NAME, ROLES } from "@/config/constants";
 
 export default async function DashboardLayout({
   children,
@@ -15,8 +16,17 @@ export default async function DashboardLayout({
   return (
     <div className="flex min-h-screen flex-col">
       <header className="flex items-center justify-between border-b border-black/10 px-6 py-3">
-        <div className="flex items-baseline gap-3">
-          <span className="font-semibold">{APP_NAME}</span>
+        <div className="flex items-baseline gap-4">
+          <Link href="/dashboard" className="font-semibold">
+            {APP_NAME}
+          </Link>
+          {profile.rol === ROLES.ADMIN && (
+            <nav className="flex gap-4 text-sm">
+              <Link href="/propietarios" className="hover:underline">
+                Propietarios
+              </Link>
+            </nav>
+          )}
           <span className="rounded bg-black/5 px-2 py-0.5 text-xs uppercase tracking-wide">
             {profile.rol}
           </span>

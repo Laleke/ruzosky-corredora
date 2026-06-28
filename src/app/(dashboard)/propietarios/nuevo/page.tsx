@@ -1,0 +1,11 @@
+import { PropietarioForm } from "@/features/propietarios/propietario-form";
+import { crearPropietario } from "@/features/propietarios/actions";
+
+export default function NuevoPropietarioPage() {
+  return (
+    <div className="flex flex-col gap-6">
+      <h1 className="text-xl font-semibold">Nuevo propietario</h1>
+      <PropietarioForm action={crearPropietario} />
+    </div>
+  );
+}
