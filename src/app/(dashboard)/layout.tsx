@@ -28,6 +28,9 @@ export default async function DashboardLayout({
               <Link href="/propietarios" className="hover:underline">
                 Propietarios
               </Link>
+              <Link href="/arrendatarios" className="hover:underline">
+                Arrendatarios
+              </Link>
             </nav>
           )}
           <span className="rounded bg-black/5 px-2 py-0.5 text-xs uppercase tracking-wide">

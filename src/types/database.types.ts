@@ -156,6 +156,60 @@ export type Database = {
         };
         Relationships: [];
       };
+      arrendatarios: {
+        Row: {
+          id: string;
+          empresa_id: string;
+          tipo_persona: TipoPersona;
+          rut: string;
+          nombre: string | null;
+          apellido: string | null;
+          razon_social: string | null;
+          email: string | null;
+          telefono: string | null;
+          direccion: string | null;
+          comuna: string | null;
+          region: string | null;
+          activo: boolean;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          empresa_id: string;
+          tipo_persona?: TipoPersona;
+          rut: string;
+          nombre?: string | null;
+          apellido?: string | null;
+          razon_social?: string | null;
+          email?: string | null;
+          telefono?: string | null;
+          direccion?: string | null;
+          comuna?: string | null;
+          region?: string | null;
+          activo?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          empresa_id?: string;
+          tipo_persona?: TipoPersona;
+          rut?: string;
+          nombre?: string | null;
+          apellido?: string | null;
+          razon_social?: string | null;
+          email?: string | null;
+          telefono?: string | null;
+          direccion?: string | null;
+          comuna?: string | null;
+          region?: string | null;
+          activo?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
       propiedades: {
         Row: {
           id: string;
