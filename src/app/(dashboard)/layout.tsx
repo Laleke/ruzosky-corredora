@@ -22,6 +22,9 @@ export default async function DashboardLayout({
           </Link>
           {profile.rol === ROLES.ADMIN && (
             <nav className="flex gap-4 text-sm">
+              <Link href="/propiedades" className="hover:underline">
+                Propiedades
+              </Link>
               <Link href="/propietarios" className="hover:underline">
                 Propietarios
               </Link>

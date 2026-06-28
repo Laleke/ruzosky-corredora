@@ -68,12 +68,17 @@ Usuario autentica con Supabase Auth → middleware refresca sesión y protege ru
 - `empresas` — tenants del SaaS.
 - `profiles` — extiende `auth.users`; ligа usuario a `empresa_id` y `rol` (admin/propietario/arrendatario).
 - `propietarios` — dueños de propiedades. Persona natural o jurídica; datos de contacto y bancarios para liquidaciones. `unique(empresa_id, rut)`. Baja lógica (`activo`). RLS solo admin.
-<!-- pendiente: propiedades, propietarios_propiedades (N:M), contratos, arrendatarios, pagos -->
+- `propiedades` — inmuebles. Tipo/estado/moneda como enums; `valor_referencial_arriendo` (el canon real va en contrato), `publicada` (portales) ≠ `estado`. `unique(empresa_id, codigo_interno)`. Baja lógica. RLS solo admin. NO tiene `propietario_id`: la relación vive solo en la tabla puente.
+- `propietarios_propiedades` — tabla puente N:M, única fuente de verdad de la relación. `porcentaje_participacion` (copropiedad, check 0–100), `unique(propiedad_id, propietario_id)`. Permite DELETE (desasignar). RLS solo admin.
+<!-- pendiente: contratos, arrendatarios, pagos -->
 
 ### Relaciones
 - `profiles.id` → `auth.users.id` (1:1). `profiles.empresa_id` → `empresas.id` (N:1).
-- `propietarios.empresa_id` → `empresas.id` (N:1).
-- Próximo: `propiedades` y tabla puente `propietarios_propiedades` (N:M, soporta copropiedad con `porcentaje_participacion`).
+- `propietarios.empresa_id`, `propiedades.empresa_id` → `empresas.id` (N:1).
+- `propietarios_propiedades`: N:M entre `propietarios` y `propiedades` (FKs con `on delete cascade`). Es la **única** vía de la relación; `propiedades` no referencia propietarios directamente.
+
+### Reglas de Negocio
+- La participación total de copropietarios en una propiedad no puede superar 100%. Se valida en la acción de asignación (no por constraint de fila); cada fila individual valida 0 < % ≤ 100 por check.
 
 ### Índices Relevantes
 - `profiles(empresa_id)`, `profiles(rol)`, `propietarios(empresa_id)`.
@@ -129,6 +134,7 @@ Usuario autentica con Supabase Auth → middleware refresca sesión y protege ru
 - Pagos, finanzas, tickets de mantención, documentos. Onboarding de segunda empresa (validar multitenancy).
 
 ## Últimos Cambios
+- 2026-06-27 — Módulos **Propiedades** (Paso 2) y **relación N:M** (Paso 3): migraciones `0003_propiedades.sql` y `0004_propietarios_propiedades.sql`. Propiedades con enums (tipo/estado/moneda), `publicada`, `fecha_adquisicion`, CRUD + baja lógica. Tabla puente como única fuente de verdad; asignación/desasignación de propietarios con validación de participación ≤ 100% y detalle de propiedad mostrando copropietarios. Build verde.
 - 2026-06-27 — Módulo **Propietarios** (Paso 1): migración `0002_propietarios.sql` con RLS solo-admin, validación de RUT (dígito verificador), CRUD completo (listado + alta + edición + baja lógica) y navegación. Build verde. Subido `@supabase/ssr` a 0.12.0 (la 0.5.2 rompía la inferencia de tipos de insert/update con supabase-js 2.108).
 - 2026-06-27 — Flujo de login real (SSR): login email/password, logout, área privada con layout protegido y dashboard base por rol. Tipos de BD `empresas`/`profiles` definidos a mano. Commit `cc46b04`. Pendiente: `npm install` + `npm run build` para validar compilación.
 - 2026-06-27 — Definido bootstrap del primer admin: `supabase/bootstrap_admin.sql` (manual, vía service_role en SQL Editor).

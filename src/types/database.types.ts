@@ -16,6 +16,22 @@ export type Json =
 export type RolUsuario = "admin" | "propietario" | "arrendatario";
 export type TipoPersona = "persona_natural" | "persona_juridica";
 export type TipoCuentaBancaria = "corriente" | "vista" | "ahorro" | "rut";
+export type TipoPropiedad =
+  | "departamento"
+  | "casa"
+  | "oficina"
+  | "local_comercial"
+  | "bodega"
+  | "estacionamiento"
+  | "terreno"
+  | "otro";
+export type EstadoPropiedad =
+  | "disponible"
+  | "reservada"
+  | "arrendada"
+  | "mantencion"
+  | "inactiva";
+export type Moneda = "CLP" | "UF";
 
 export type Database = {
   public: {
@@ -140,6 +156,120 @@ export type Database = {
         };
         Relationships: [];
       };
+      propiedades: {
+        Row: {
+          id: string;
+          empresa_id: string;
+          codigo_interno: string | null;
+          tipo: TipoPropiedad;
+          direccion: string;
+          numero: string | null;
+          departamento: string | null;
+          comuna: string | null;
+          region: string | null;
+          rol_sii: string | null;
+          dormitorios: number | null;
+          banos: number | null;
+          superficie_util_m2: number | null;
+          superficie_total_m2: number | null;
+          estacionamientos: number | null;
+          bodegas: number | null;
+          estado: EstadoPropiedad;
+          moneda: Moneda;
+          valor_referencial_arriendo: number | null;
+          gasto_comun_estimado: number | null;
+          fecha_adquisicion: string | null;
+          observaciones: string | null;
+          publicada: boolean;
+          activo: boolean;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          empresa_id: string;
+          codigo_interno?: string | null;
+          tipo?: TipoPropiedad;
+          direccion: string;
+          numero?: string | null;
+          departamento?: string | null;
+          comuna?: string | null;
+          region?: string | null;
+          rol_sii?: string | null;
+          dormitorios?: number | null;
+          banos?: number | null;
+          superficie_util_m2?: number | null;
+          superficie_total_m2?: number | null;
+          estacionamientos?: number | null;
+          bodegas?: number | null;
+          estado?: EstadoPropiedad;
+          moneda?: Moneda;
+          valor_referencial_arriendo?: number | null;
+          gasto_comun_estimado?: number | null;
+          fecha_adquisicion?: string | null;
+          observaciones?: string | null;
+          publicada?: boolean;
+          activo?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          empresa_id?: string;
+          codigo_interno?: string | null;
+          tipo?: TipoPropiedad;
+          direccion?: string;
+          numero?: string | null;
+          departamento?: string | null;
+          comuna?: string | null;
+          region?: string | null;
+          rol_sii?: string | null;
+          dormitorios?: number | null;
+          banos?: number | null;
+          superficie_util_m2?: number | null;
+          superficie_total_m2?: number | null;
+          estacionamientos?: number | null;
+          bodegas?: number | null;
+          estado?: EstadoPropiedad;
+          moneda?: Moneda;
+          valor_referencial_arriendo?: number | null;
+          gasto_comun_estimado?: number | null;
+          fecha_adquisicion?: string | null;
+          observaciones?: string | null;
+          publicada?: boolean;
+          activo?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+      propietarios_propiedades: {
+        Row: {
+          id: string;
+          empresa_id: string;
+          propietario_id: string;
+          propiedad_id: string;
+          porcentaje_participacion: number;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          empresa_id: string;
+          propietario_id: string;
+          propiedad_id: string;
+          porcentaje_participacion?: number;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          empresa_id?: string;
+          propietario_id?: string;
+          propiedad_id?: string;
+          porcentaje_participacion?: number;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
     };
     Views: Record<string, never>;
     Functions: {
@@ -150,6 +280,9 @@ export type Database = {
       rol_usuario: RolUsuario;
       tipo_persona: TipoPersona;
       tipo_cuenta_bancaria: TipoCuentaBancaria;
+      tipo_propiedad: TipoPropiedad;
+      estado_propiedad: EstadoPropiedad;
+      moneda: Moneda;
     };
   };
 };
