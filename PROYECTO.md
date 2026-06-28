@@ -11,6 +11,26 @@ Implementado: scaffold base (Next.js App Router, PWA Serwist, clientes Supabase,
 Ciclo operable de punta a punta: crear propietario → propiedad → asociar copropietarios → arrendatario → contrato → generar cargos del mes → registrar pagos → ver deuda.
 Pendiente: aplicar las 7 migraciones en un proyecto Supabase real + bootstrap admin, `npm run types:gen`, íconos PWA, push a GitHub. Luego: dashboard financiero, liquidaciones a propietarios.
 
+## Punto de Continuación (handoff — actualizar al cerrar cada sesión)
+
+**Última sesión: 2026-06-27.** Se construyó el MVP operativo completo (6 módulos) y la guía de validación.
+
+**Lo último que hicimos (en orden):**
+1. Scaffold base (Next.js App Router + PWA Serwist + Supabase SSR + RLS multitenant).
+2. Auth: login/logout, dashboard por rol, doble barrera (middleware + layout).
+3. Bootstrap admin (`supabase/bootstrap_admin.sql`).
+4. Módulos de negocio: Propietarios → Propiedades (+copropiedad N:M) → Arrendatarios → Contratos (+sincronización de estado de propiedad) → Cobros (cargos + pagos).
+5. Guía `docs/PUESTA_EN_MARCHA.md` para validar end-to-end.
+- Todo **compila** (`next build` verde). 7 migraciones (0001–0007) listas. Commits **locales** (último: ver `git log`), **sin push** (lo hace Eduardo, cuenta personal).
+
+**Lo que debemos hacer (próximo):**
+1. **PRIMERO — validar el MVP end-to-end** contra un Supabase real siguiendo `docs/PUESTA_EN_MARCHA.md`. NO avanzar a módulos nuevos hasta validar. Pendiente de Eduardo: crear proyecto Supabase, correr migraciones + bootstrap, probar el ciclo, verificar RLS.
+2. Pendientes operativos: `npm run types:gen`, íconos PWA reales, push a GitHub personal.
+3. **Después de validar** → siguiente módulo: **Dashboard financiero** (deuda, morosidad, ingresos), luego Liquidaciones a propietarios.
+- Opcional ofrecido y no entregado aún: script SQL del test multitenant (2ª empresa + usuario) para la verificación de RLS.
+
+**Reglas de trabajo activas:** responder en español chileno; nunca `git push`/`remote` automático; scopes personales (no la org empresarial) en GitHub/Supabase/Vercel; `@supabase/ssr` alineado con `supabase-js`.
+
 ## Arquitectura
 Serverless, modular, multitenant. Frontend en Vercel; backend, BD, auth y storage en Supabase.
 
