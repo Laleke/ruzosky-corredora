@@ -82,7 +82,15 @@ Usuario autentica con Supabase Auth → middleware refresca sesión y protege ru
 - Helper SQL `auth_empresa_id()` y `auth_rol()` (Postgres functions) para usar en políticas RLS.
 
 ## APIs y Endpoints
-- No se exponen endpoints REST propios. El acceso es vía SDK Supabase con RLS. RPC/Edge Functions cuando se requiera lógica privilegiada.
+- No se exponen endpoints REST propios de negocio. El acceso a datos es vía SDK Supabase con RLS. RPC/Edge Functions cuando se requiera lógica privilegiada.
+- `POST /auth/signout` — route handler que cierra sesión y redirige a `/login`.
+- Login: Server Action `signIn` (email/password) en `src/app/(auth)/login/actions.ts`.
+
+## Autenticación y Acceso
+- **Método:** email + password. **Sin auto-registro**: el admin da de alta a los usuarios. Decisión 2026-06-27.
+- Páginas: `/login` (pública, redirige a `/dashboard` si ya hay sesión); área privada bajo route group `(dashboard)`.
+- Doble protección: middleware (redirige rutas privadas sin sesión) + `DashboardLayout` (exige `profile`, no solo `auth.users`).
+- Raíz `/` redirige a `/dashboard` o `/login` según sesión.
 
 ## Observabilidad
 <!-- pendiente: estrategia de logging/auditoría a definir (Supabase logs + tabla auditoría por empresa) -->
@@ -110,6 +118,7 @@ Usuario autentica con Supabase Auth → middleware refresca sesión y protege ru
 - Pagos, finanzas, tickets de mantención, documentos. Onboarding de segunda empresa (validar multitenancy).
 
 ## Últimos Cambios
-- 2026-06-27 — Definido bootstrap del primer admin: `supabase/bootstrap_admin.sql` (manual, vía service_role en SQL Editor). Próximo paso: flujo de login (SSR + redirect por rol).
+- 2026-06-27 — Flujo de login real (SSR): login email/password, logout, área privada con layout protegido y dashboard base por rol. Tipos de BD `empresas`/`profiles` definidos a mano. Commit `cc46b04`. Pendiente: `npm install` + `npm run build` para validar compilación.
+- 2026-06-27 — Definido bootstrap del primer admin: `supabase/bootstrap_admin.sql` (manual, vía service_role en SQL Editor).
 - 2026-06-27 — Git inicializado con primer commit local (`da65bc7`), sin remoto. Registrada restricción de scope personal y de no-push automático.
 - 2026-06-27 — Creación del scaffold base: Next.js App Router, PWA (Serwist), clientes Supabase `@supabase/ssr`, migración inicial de tenancy/auth con RLS. Sin módulos de negocio.
