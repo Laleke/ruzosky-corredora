@@ -71,7 +71,9 @@ Usuario autentica con Supabase Auth → middleware refresca sesión y protege ru
 - `propiedades` — inmuebles. Tipo/estado/moneda como enums; `valor_referencial_arriendo` (el canon real va en contrato), `publicada` (portales) ≠ `estado`. `unique(empresa_id, codigo_interno)`. Baja lógica. RLS solo admin. NO tiene `propietario_id`: la relación vive solo en la tabla puente.
 - `propietarios_propiedades` — tabla puente N:M, única fuente de verdad de la relación. `porcentaje_participacion` (copropiedad, check 0–100), `unique(propiedad_id, propietario_id)`. Permite DELETE (desasignar). RLS solo admin.
 - `arrendatarios` — inquilinos. Misma forma que propietarios pero sin datos bancarios. Reutiliza enum `tipo_persona`. `unique(empresa_id, rut)`. Baja lógica. RLS solo admin.
-<!-- pendiente: contratos (+ contratos_arrendatarios), pagos -->
+- `contratos` — núcleo del negocio. 1 propiedad + canon (CLP/UF) + reajuste + comisión + administración + estado. `numero_contrato` editable único por empresa. Baja lógica. RLS solo admin.
+- `contratos_arrendatarios` — tabla puente N:M contrato↔arrendatarios (matrimonios/codeudores/representantes). `unique(contrato_id, arrendatario_id)`. DELETE permitido. RLS solo admin.
+<!-- pendiente: pagos -->
 
 ### Relaciones
 - `profiles.id` → `auth.users.id` (1:1). `profiles.empresa_id` → `empresas.id` (N:1).
@@ -80,6 +82,12 @@ Usuario autentica con Supabase Auth → middleware refresca sesión y protege ru
 
 ### Reglas de Negocio
 - La participación total de copropietarios en una propiedad no puede superar 100%. Se valida en la acción de asignación (no por constraint de fila); cada fila individual valida 0 < % ≤ 100 por check.
+- **Sincronización contrato→propiedad (contrato = fuente de verdad), en capa de aplicación:**
+  - contrato `vigente` o `renovado` → `propiedad.estado = arrendada`.
+  - contrato `terminado` → si no queda otro contrato activo (vigente/renovado) en la propiedad → `propiedad.estado = disponible`.
+  - contrato `vencido` o `borrador` → no toca la propiedad (en Chile el arrendatario suele seguir ocupando tras el vencimiento).
+- **Restricción:** no se permite poner un contrato en `vigente` si la propiedad ya tiene otro contrato activo (validado contra los contratos, no contra `propiedad.estado`).
+- Reajuste IPC/UF exige `periodicidad_reajuste_meses` > 0. Si hay `tipo_comision`, exige valor. Si `cobra_administracion`, exige monto o porcentaje.
 
 ### Índices Relevantes
 - `profiles(empresa_id)`, `profiles(rol)`, `propietarios(empresa_id)`.
@@ -117,6 +125,7 @@ Usuario autentica con Supabase Auth → middleware refresca sesión y protege ru
 
 ## Riesgos Activos
 - [RIESGO] RLS mal configurado = fuga de datos entre tenants. Mitigación: toda tabla nueva nace con RLS habilitado y políticas por `empresa_id`; revisión obligatoria.
+- [RIESGO] Sincronización contrato↔propiedad NO atómica (dos escrituras separadas; Supabase-JS no hace transacción multi-statement desde el cliente). Severidad: Baja con concurrencia de admin. Mitigación: el contrato es la fuente de verdad y permite reconciliar. Si crece la concurrencia, mover a función Postgres con transacción.
 
 ## Problemas Conocidos
 <!-- ninguno aún -->
@@ -126,7 +135,8 @@ Usuario autentica con Supabase Auth → middleware refresca sesión y protege ru
 - [DEUDA] `database.types.ts` escrito a mano — Riesgo: Bajo — Impacto: puede divergir del esquema real — Corrección: `npm run types:gen` una vez conectado Supabase (sobrescribe el archivo).
 - [DEUDA] `comuna`/`region` como texto libre — Riesgo: Bajo — Impacto: inconsistencia de datos — Corrección: tablas catálogo `ref_regiones`/`ref_comunas` cuando se justifique reporting.
 
-## Modelo aprobado — Contratos (próximo, NO implementado aún)
+<!-- Modelo de Contratos: IMPLEMENTADO en 0006. Se conserva el detalle aprobado abajo como referencia. -->
+## Modelo aprobado — Contratos (IMPLEMENTADO en migración 0006)
 Reglas de negocio confirmadas para cuando se construya:
 - **1 contrato = 1 propiedad + N arrendatarios** → tabla puente `contratos_arrendatarios` (sin `arrendatario_id` directo en contrato). Soporta matrimonios, codeudores, representantes.
 - **Canon vive en el contrato** (`canon_monto`, `canon_moneda` CLP/UF), independiente del `valor_referencial_arriendo` de la propiedad.
@@ -138,13 +148,14 @@ Reglas de negocio confirmadas para cuando se construya:
 
 ## Roadmap
 ### Corto plazo
-- **Contratos** (+ `contratos_arrendatarios`): el núcleo del negocio.
+- **Pagos** (sobre contratos vigentes): registro de cobros, estado al día/moroso.
 ### Mediano plazo
-- Pagos (sobre contratos vigentes), liquidaciones a propietarios.
+- Liquidaciones a propietarios (canon − comisión − administración). Reajuste automático según `periodicidad_reajuste_meses`.
 ### Largo plazo
 - Finanzas, tickets de mantención, documentos. Portal de propietario/arrendatario (políticas RLS específicas). Onboarding de segunda empresa (validar multitenancy). Íconos PWA y `types:gen`.
 
 ## Últimos Cambios
+- 2026-06-27 — Módulo **Contratos** (Paso 5, núcleo): migración `0006_contratos.sql` (+ `contratos_arrendatarios`), enums reajuste/comisión/estado, CRUD, asignación N:M de arrendatarios, y **sincronización automática contrato→propiedad** con el contrato como fuente de verdad. Build verde.
 - 2026-06-27 — Módulo **Arrendatarios** (Paso 4): migración `0005_arrendatarios.sql` (reutiliza enum `tipo_persona`, RLS solo-admin, baja lógica) + CRUD completo. Aprobado y registrado el modelo de Contratos (próximo paso). Build verde.
 - 2026-06-27 — Módulos **Propiedades** (Paso 2) y **relación N:M** (Paso 3): migraciones `0003_propiedades.sql` y `0004_propietarios_propiedades.sql`. Propiedades con enums (tipo/estado/moneda), `publicada`, `fecha_adquisicion`, CRUD + baja lógica. Tabla puente como única fuente de verdad; asignación/desasignación de propietarios con validación de participación ≤ 100% y detalle de propiedad mostrando copropietarios. Build verde.
 - 2026-06-27 — Módulo **Propietarios** (Paso 1): migración `0002_propietarios.sql` con RLS solo-admin, validación de RUT (dígito verificador), CRUD completo (listado + alta + edición + baja lógica) y navegación. Build verde. Subido `@supabase/ssr` a 0.12.0 (la 0.5.2 rompía la inferencia de tipos de insert/update con supabase-js 2.108).

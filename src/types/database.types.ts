@@ -32,6 +32,14 @@ export type EstadoPropiedad =
   | "mantencion"
   | "inactiva";
 export type Moneda = "CLP" | "UF";
+export type ReajusteTipo = "sin_reajuste" | "IPC" | "UF";
+export type TipoComision = "porcentaje" | "monto_fijo";
+export type EstadoContrato =
+  | "borrador"
+  | "vigente"
+  | "vencido"
+  | "terminado"
+  | "renovado";
 
 export type Database = {
   public: {
@@ -324,6 +332,102 @@ export type Database = {
         };
         Relationships: [];
       };
+      contratos: {
+        Row: {
+          id: string;
+          empresa_id: string;
+          numero_contrato: string | null;
+          propiedad_id: string;
+          fecha_firma: string | null;
+          fecha_inicio: string;
+          fecha_termino: string | null;
+          canon_monto: number;
+          canon_moneda: Moneda;
+          reajuste_tipo: ReajusteTipo;
+          periodicidad_reajuste_meses: number | null;
+          tipo_comision: TipoComision | null;
+          comision_monto: number | null;
+          cobra_administracion: boolean;
+          administracion_monto: number | null;
+          administracion_porcentaje: number | null;
+          estado: EstadoContrato;
+          observaciones: string | null;
+          activo: boolean;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          empresa_id: string;
+          numero_contrato?: string | null;
+          propiedad_id: string;
+          fecha_firma?: string | null;
+          fecha_inicio: string;
+          fecha_termino?: string | null;
+          canon_monto: number;
+          canon_moneda?: Moneda;
+          reajuste_tipo?: ReajusteTipo;
+          periodicidad_reajuste_meses?: number | null;
+          tipo_comision?: TipoComision | null;
+          comision_monto?: number | null;
+          cobra_administracion?: boolean;
+          administracion_monto?: number | null;
+          administracion_porcentaje?: number | null;
+          estado?: EstadoContrato;
+          observaciones?: string | null;
+          activo?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          empresa_id?: string;
+          numero_contrato?: string | null;
+          propiedad_id?: string;
+          fecha_firma?: string | null;
+          fecha_inicio?: string;
+          fecha_termino?: string | null;
+          canon_monto?: number;
+          canon_moneda?: Moneda;
+          reajuste_tipo?: ReajusteTipo;
+          periodicidad_reajuste_meses?: number | null;
+          tipo_comision?: TipoComision | null;
+          comision_monto?: number | null;
+          cobra_administracion?: boolean;
+          administracion_monto?: number | null;
+          administracion_porcentaje?: number | null;
+          estado?: EstadoContrato;
+          observaciones?: string | null;
+          activo?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+      contratos_arrendatarios: {
+        Row: {
+          id: string;
+          empresa_id: string;
+          contrato_id: string;
+          arrendatario_id: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          empresa_id: string;
+          contrato_id: string;
+          arrendatario_id: string;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          empresa_id?: string;
+          contrato_id?: string;
+          arrendatario_id?: string;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
     };
     Views: Record<string, never>;
     Functions: {
@@ -337,6 +441,9 @@ export type Database = {
       tipo_propiedad: TipoPropiedad;
       estado_propiedad: EstadoPropiedad;
       moneda: Moneda;
+      reajuste_tipo: ReajusteTipo;
+      tipo_comision: TipoComision;
+      estado_contrato: EstadoContrato;
     };
   };
 };
