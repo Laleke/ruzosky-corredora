@@ -40,6 +40,20 @@ export type EstadoContrato =
   | "vencido"
   | "terminado"
   | "renovado";
+export type TipoCargo =
+  | "arriendo"
+  | "gasto_comun"
+  | "administracion"
+  | "multa"
+  | "ajuste"
+  | "otro";
+export type EstadoCargo = "pendiente" | "parcial" | "pagado" | "vencido";
+export type MedioPago =
+  | "transferencia"
+  | "efectivo"
+  | "cheque"
+  | "tarjeta"
+  | "otro";
 
 export type Database = {
   public: {
@@ -428,6 +442,90 @@ export type Database = {
         };
         Relationships: [];
       };
+      cargos: {
+        Row: {
+          id: string;
+          empresa_id: string;
+          contrato_id: string;
+          periodo: string;
+          tipo_cargo: TipoCargo;
+          fecha_emision: string;
+          fecha_vencimiento: string | null;
+          monto: number;
+          estado: EstadoCargo;
+          saldo_pendiente: number;
+          observaciones: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          empresa_id: string;
+          contrato_id: string;
+          periodo: string;
+          tipo_cargo?: TipoCargo;
+          fecha_emision: string;
+          fecha_vencimiento?: string | null;
+          monto: number;
+          estado?: EstadoCargo;
+          saldo_pendiente: number;
+          observaciones?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          empresa_id?: string;
+          contrato_id?: string;
+          periodo?: string;
+          tipo_cargo?: TipoCargo;
+          fecha_emision?: string;
+          fecha_vencimiento?: string | null;
+          monto?: number;
+          estado?: EstadoCargo;
+          saldo_pendiente?: number;
+          observaciones?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+      pagos: {
+        Row: {
+          id: string;
+          empresa_id: string;
+          cargo_id: string;
+          fecha_pago: string;
+          monto_pagado: number;
+          medio_pago: MedioPago | null;
+          referencia: string | null;
+          observaciones: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          empresa_id: string;
+          cargo_id: string;
+          fecha_pago: string;
+          monto_pagado: number;
+          medio_pago?: MedioPago | null;
+          referencia?: string | null;
+          observaciones?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          empresa_id?: string;
+          cargo_id?: string;
+          fecha_pago?: string;
+          monto_pagado?: number;
+          medio_pago?: MedioPago | null;
+          referencia?: string | null;
+          observaciones?: string | null;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
     };
     Views: Record<string, never>;
     Functions: {
@@ -444,6 +542,9 @@ export type Database = {
       reajuste_tipo: ReajusteTipo;
       tipo_comision: TipoComision;
       estado_contrato: EstadoContrato;
+      tipo_cargo: TipoCargo;
+      estado_cargo: EstadoCargo;
+      medio_pago: MedioPago;
     };
   };
 };

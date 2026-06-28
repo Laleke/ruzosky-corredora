@@ -6,9 +6,10 @@
 El producto es una **PWA** (no app nativa): funciona como web e instalable en Android e iPhone. Multitenant desde el diseño, pero opera inicialmente con una sola empresa (Ruzosky Corredora).
 
 ## Estado Actual
-**Fase: scaffold base del sistema (sin módulos de negocio).**
-Implementado: estructura del proyecto Next.js (App Router), configuración PWA (Serwist), clientes Supabase (browser/server/middleware), fundación de multitenancy + auth (migración inicial con `empresas`, `profiles`, RLS).
-Pendiente: módulos de negocio (propiedades, contratos, pagos, etc.), UI de login y dashboard, generación de tipos de BD.
+**Fase: MVP operativo completo (en código; falta correr migraciones en Supabase real).**
+Implementado: scaffold base (Next.js App Router, PWA Serwist, clientes Supabase, RLS multitenant), auth con login/logout y dashboard por rol, y los módulos de negocio: **Propietarios, Propiedades (+ copropiedad N:M), Arrendatarios, Contratos (+ sincronización de estado de propiedad), y Cobros (cargos + pagos)**. Todo compila (`next build` verde).
+Ciclo operable de punta a punta: crear propietario → propiedad → asociar copropietarios → arrendatario → contrato → generar cargos del mes → registrar pagos → ver deuda.
+Pendiente: aplicar las 7 migraciones en un proyecto Supabase real + bootstrap admin, `npm run types:gen`, íconos PWA, push a GitHub. Luego: dashboard financiero, liquidaciones a propietarios.
 
 ## Arquitectura
 Serverless, modular, multitenant. Frontend en Vercel; backend, BD, auth y storage en Supabase.
@@ -73,7 +74,8 @@ Usuario autentica con Supabase Auth → middleware refresca sesión y protege ru
 - `arrendatarios` — inquilinos. Misma forma que propietarios pero sin datos bancarios. Reutiliza enum `tipo_persona`. `unique(empresa_id, rut)`. Baja lógica. RLS solo admin.
 - `contratos` — núcleo del negocio. 1 propiedad + canon (CLP/UF) + reajuste + comisión + administración + estado. `numero_contrato` editable único por empresa. Baja lógica. RLS solo admin.
 - `contratos_arrendatarios` — tabla puente N:M contrato↔arrendatarios (matrimonios/codeudores/representantes). `unique(contrato_id, arrendatario_id)`. DELETE permitido. RLS solo admin.
-<!-- pendiente: pagos -->
+- `cargos` — deuda generada por contrato/período/tipo. `unique(contrato_id, periodo, tipo_cargo)`. `saldo_pendiente` y `estado` recalculados por la app. RLS solo admin.
+- `pagos` — abonos sobre un cargo (soporta pago parcial). `medio_pago` enum. RLS solo admin.
 
 ### Relaciones
 - `profiles.id` → `auth.users.id` (1:1). `profiles.empresa_id` → `empresas.id` (N:1).
@@ -88,6 +90,7 @@ Usuario autentica con Supabase Auth → middleware refresca sesión y protege ru
   - contrato `vencido` o `borrador` → no toca la propiedad (en Chile el arrendatario suele seguir ocupando tras el vencimiento).
 - **Restricción:** no se permite poner un contrato en `vigente` si la propiedad ya tiene otro contrato activo (validado contra los contratos, no contra `propiedad.estado`).
 - Reajuste IPC/UF exige `periodicidad_reajuste_meses` > 0. Si hay `tipo_comision`, exige valor. Si `cobra_administracion`, exige monto o porcentaje.
+- **Cobros (cargos + pagos):** la deuda (cargo) existe antes del pago. Un pago abona a un cargo; `saldo_pendiente = monto − Σ pagos`; `estado` = pagado (saldo≤0) / parcial (hubo abonos) / pendiente. **`vencido` se deriva en lectura** (saldo>0 y `fecha_vencimiento < hoy`), no se almacena (evita cron). No se permite pago que supere el saldo. Generación de arriendos del mes es **asistida por botón** (no cron); upsert idempotente por `(contrato, periodo, tipo)`. **Reajuste NO automático en MVP.**
 
 ### Índices Relevantes
 - `profiles(empresa_id)`, `profiles(rol)`, `propietarios(empresa_id)`.
@@ -148,13 +151,14 @@ Reglas de negocio confirmadas para cuando se construya:
 
 ## Roadmap
 ### Corto plazo
-- **Pagos** (sobre contratos vigentes): registro de cobros, estado al día/moroso.
+- Conectar Supabase real (migraciones 0001–0007 + bootstrap), validar el ciclo en runtime. Íconos PWA, push.
 ### Mediano plazo
-- Liquidaciones a propietarios (canon − comisión − administración). Reajuste automático según `periodicidad_reajuste_meses`.
+- Dashboard financiero (deuda, morosidad, ingresos). Liquidaciones a propietarios (canon − comisión − administración). Motor de reajuste automático (IPC/UF) según `periodicidad_reajuste_meses`.
 ### Largo plazo
-- Finanzas, tickets de mantención, documentos. Portal de propietario/arrendatario (políticas RLS específicas). Onboarding de segunda empresa (validar multitenancy). Íconos PWA y `types:gen`.
+- Documentos, tickets de mantención. Portal de propietario/arrendatario (políticas RLS específicas). Onboarding de segunda empresa (validar multitenancy).
 
 ## Últimos Cambios
+- 2026-06-27 — Módulo **Cobros** (Paso 6, cierra MVP): migración `0007_cobros.sql` (`cargos` + `pagos`), enums tipo_cargo/estado_cargo/medio_pago. Generación asistida de arriendos del mes (idempotente), cargos manuales, pagos parciales con recálculo de saldo/estado, `vencido` derivado en lectura, deuda total. Build verde.
 - 2026-06-27 — Módulo **Contratos** (Paso 5, núcleo): migración `0006_contratos.sql` (+ `contratos_arrendatarios`), enums reajuste/comisión/estado, CRUD, asignación N:M de arrendatarios, y **sincronización automática contrato→propiedad** con el contrato como fuente de verdad. Build verde.
 - 2026-06-27 — Módulo **Arrendatarios** (Paso 4): migración `0005_arrendatarios.sql` (reutiliza enum `tipo_persona`, RLS solo-admin, baja lógica) + CRUD completo. Aprobado y registrado el modelo de Contratos (próximo paso). Build verde.
 - 2026-06-27 — Módulos **Propiedades** (Paso 2) y **relación N:M** (Paso 3): migraciones `0003_propiedades.sql` y `0004_propietarios_propiedades.sql`. Propiedades con enums (tipo/estado/moneda), `publicada`, `fecha_adquisicion`, CRUD + baja lógica. Tabla puente como única fuente de verdad; asignación/desasignación de propietarios con validación de participación ≤ 100% y detalle de propiedad mostrando copropietarios. Build verde.
