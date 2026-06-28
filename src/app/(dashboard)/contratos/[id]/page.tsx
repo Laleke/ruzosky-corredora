@@ -42,9 +42,9 @@ export default async function DetalleContratoPage({
     .filter((p) => p.activo || p.id === contrato.propiedad_id)
     .map((p) => ({
       id: p.id,
-      label: `${p.codigo_interno ? `${p.codigo_interno} · ` : ""}${p.direccion}${
-        p.numero ? ` ${p.numero}` : ""
-      }`,
+      label: `${p.codigo_interno ? `${p.codigo_interno} · ` : ""}${
+        p.direccion ?? "(sin dirección)"
+      }${p.numero ? ` ${p.numero}` : ""}`,
     }));
 
   const yaVinculados = new Set(vinculados.map((v) => v.arrendatario_id));

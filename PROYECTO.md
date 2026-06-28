@@ -89,7 +89,7 @@ Usuario autentica con Supabase Auth → middleware refresca sesión y protege ru
 - `empresas` — tenants del SaaS.
 - `profiles` — extiende `auth.users`; ligа usuario a `empresa_id` y `rol` (admin/propietario/arrendatario).
 - `propietarios` — dueños de propiedades. Persona natural o jurídica; datos de contacto y bancarios para liquidaciones. `unique(empresa_id, rut)`. Baja lógica (`activo`). RLS solo admin.
-- `propiedades` — inmuebles. Tipo/estado/moneda como enums; `valor_referencial_arriendo` (el canon real va en contrato), `publicada` (portales) ≠ `estado`. `unique(empresa_id, codigo_interno)`. Baja lógica. RLS solo admin. NO tiene `propietario_id`: la relación vive solo en la tabla puente.
+- `propiedades` — inmuebles. Tipo/estado/moneda como enums; `valor_referencial_arriendo` (el canon real va en contrato), `publicada` (portales) ≠ `estado`. `codigo_interno` **autogenerado y no editable** (comuna+tipo+correlativo); `unique(empresa_id, codigo_interno)`. `direccion` nullable (permite guardar incompleta; mínimo para crear = comuna+tipo). Baja lógica. RLS solo admin. NO tiene `propietario_id`: la relación vive solo en la tabla puente.
 - `propietarios_propiedades` — tabla puente N:M, única fuente de verdad de la relación. `porcentaje_participacion` (copropiedad, check 0–100), `unique(propiedad_id, propietario_id)`. Permite DELETE (desasignar). RLS solo admin.
 - `arrendatarios` — inquilinos. Misma forma que propietarios pero sin datos bancarios. Reutiliza enum `tipo_persona`. `unique(empresa_id, rut)`. Baja lógica. RLS solo admin.
 - `contratos` — núcleo del negocio. 1 propiedad + canon (CLP/UF) + reajuste + comisión + administración + estado. `numero_contrato` editable único por empresa. Baja lógica. RLS solo admin.
@@ -154,7 +154,7 @@ Usuario autentica con Supabase Auth → middleware refresca sesión y protege ru
 <!-- ninguno aún -->
 
 ## Deuda Técnica
-- [DEUDA] `codigo_interno` de propiedades (RUZ-0001) sin auto-generación — Riesgo: Bajo — Impacto: el admin lo tipea a mano; un contador secuencial por empresa tiene race condition bajo escritura concurrente — Corrección: al construir propiedades, evaluar secuencia por empresa vía función Postgres con bloqueo, o generación diferida.
+- [RESUELTO 2026-06-28] `codigo_interno` ahora se autogenera (`[2 iniciales comuna][inicial tipo][correlativo 4]`, ej. PRD0001) en la capa de app al crear, no editable. Correlativo por prefijo dentro de la empresa, con reintento ante colisión (unique constraint). Riesgo residual de carrera: Bajo (concurrencia de admin); si crece, mover a secuencia Postgres con bloqueo.
 - [DEUDA] `database.types.ts` escrito a mano — Riesgo: Bajo — Impacto: puede divergir del esquema real — Corrección: `npm run types:gen` una vez conectado Supabase (sobrescribe el archivo).
 - [DEUDA] `comuna`/`region` como texto libre — Riesgo: Bajo — Impacto: inconsistencia de datos — Corrección: tablas catálogo `ref_regiones`/`ref_comunas` cuando se justifique reporting.
 
@@ -178,6 +178,7 @@ Reglas de negocio confirmadas para cuando se construya:
 - Documentos, tickets de mantención. Portal de propietario/arrendatario (políticas RLS específicas). Onboarding de segunda empresa (validar multitenancy).
 
 ## Últimos Cambios
+- 2026-06-28 — Íconos PWA reales (edificio burdeo, `scripts/gen-icons.mjs` con sharp). **Código interno autogenerado** y no editable; **propiedades guardables incompletas** (migración `0008`, `direccion` nullable; mínimo crear = comuna+tipo). Build verde. **Requiere aplicar `0008` en Supabase.**
 - 2026-06-28 — **Rediseño UI** (sistema de diseño grafito + burdeo): tokens en `globals.css` (@theme), tipografía Inter, clases reutilizables en `src/components/ui.ts`, sidebar lateral responsivo (`src/components/sidebar.tsx`), login con panel de marca, dashboard con KPIs (`features/dashboard`), y restyle de todos los listados/formularios/detalles (PageHeader, tarjetas, badges de estado, lucide-react). Build verde. Pendiente: íconos PWA reales.
 - 2026-06-28 — MVP validado end-to-end en Supabase real; desplegado en Vercel (`ruzosky-corredora.vercel.app`), instalable en celular. Repo en `github.com/Laleke/ruzosky-corredora` (identidad git local = Laleke, no la de trabajo).
 - 2026-06-27 — Módulo **Cobros** (Paso 6, cierra MVP): migración `0007_cobros.sql` (`cargos` + `pagos`), enums tipo_cargo/estado_cargo/medio_pago. Generación asistida de arriendos del mes (idempotente), cargos manuales, pagos parciales con recálculo de saldo/estado, `vencido` derivado en lectura, deuda total. Build verde.

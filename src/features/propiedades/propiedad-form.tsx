@@ -56,11 +56,12 @@ export function PropiedadForm({
   return (
     <form action={formAction} className="flex max-w-3xl flex-col gap-6">
       <section className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-        <Campo
-          label="Código interno"
-          name="codigo_interno"
-          defaultValue={propiedad?.codigo_interno}
-        />
+        <div className="flex flex-col gap-1 text-sm">
+          <span className="font-medium text-ink">Código interno</span>
+          <div className="rounded-lg border border-line bg-stone-50 px-3 py-2 text-muted">
+            {propiedad?.codigo_interno ?? "Se genera automáticamente al guardar"}
+          </div>
+        </div>
         <label className="flex flex-col gap-1 text-sm">
           <span className="font-medium">Tipo</span>
           <select
@@ -83,7 +84,6 @@ export function PropiedadForm({
           label="Dirección"
           name="direccion"
           defaultValue={propiedad?.direccion}
-          required
         />
         <Campo label="Número" name="numero" defaultValue={propiedad?.numero} />
         <Campo
@@ -91,7 +91,7 @@ export function PropiedadForm({
           name="departamento"
           defaultValue={propiedad?.departamento}
         />
-        <Campo label="Comuna" name="comuna" defaultValue={propiedad?.comuna} />
+        <Campo label="Comuna" name="comuna" defaultValue={propiedad?.comuna} required />
         <Campo label="Región" name="region" defaultValue={propiedad?.region} />
         <Campo
           label="Rol SII"

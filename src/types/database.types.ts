@@ -238,7 +238,7 @@ export type Database = {
           empresa_id: string;
           codigo_interno: string | null;
           tipo: TipoPropiedad;
-          direccion: string;
+          direccion: string | null;
           numero: string | null;
           departamento: string | null;
           comuna: string | null;
@@ -266,7 +266,7 @@ export type Database = {
           empresa_id: string;
           codigo_interno?: string | null;
           tipo?: TipoPropiedad;
-          direccion: string;
+          direccion?: string | null;
           numero?: string | null;
           departamento?: string | null;
           comuna?: string | null;
@@ -294,7 +294,7 @@ export type Database = {
           empresa_id?: string;
           codigo_interno?: string | null;
           tipo?: TipoPropiedad;
-          direccion?: string;
+          direccion?: string | null;
           numero?: string | null;
           departamento?: string | null;
           comuna?: string | null;

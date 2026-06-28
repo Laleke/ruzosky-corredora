@@ -2,16 +2,20 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import type { SupabaseClient } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentProfile } from "@/lib/auth";
 import type { PropiedadInsert } from "./types";
 import type {
+  Database,
   TipoPropiedad,
   EstadoPropiedad,
   Moneda,
 } from "@/types/database.types";
 
 export type PropiedadFormState = { error: string | null };
+
+type DB = SupabaseClient<Database>;
 
 const TIPOS: TipoPropiedad[] = [
   "departamento", "casa", "oficina", "local_comercial",
@@ -41,12 +45,62 @@ function decimal(formData: FormData, campo: string): number | null {
   return Number.isFinite(n) ? n : null;
 }
 
+/** Iniciales de comuna: primeras letras de las 2 palabras significativas, o 2 letras. */
+function inicialesComuna(comuna: string): string {
+  const stop = ["de", "del", "la", "las", "los", "el", "y"];
+  const palabras = comuna
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "")
+    .replace(/[^a-zA-Z\s]/g, "")
+    .trim()
+    .split(/\s+/)
+    .filter((w) => w && !stop.includes(w.toLowerCase()));
+
+  if (palabras.length >= 2) {
+    return (palabras[0][0] + palabras[1][0]).toUpperCase();
+  }
+  const w = palabras[0] ?? "XX";
+  return (w.slice(0, 2) || "XX").toUpperCase().padEnd(2, "X");
+}
+
+const INICIAL_TIPO: Record<TipoPropiedad, string> = {
+  departamento: "D",
+  casa: "C",
+  oficina: "O",
+  local_comercial: "L",
+  bodega: "B",
+  estacionamiento: "E",
+  terreno: "T",
+  otro: "X",
+};
+
+/**
+ * Genera un código interno único: [2 iniciales comuna][inicial tipo][correlativo].
+ * El correlativo es por prefijo dentro de la empresa.
+ */
+async function generarCodigoInterno(
+  supabase: DB,
+  empresaId: string,
+  comuna: string,
+  tipo: TipoPropiedad
+): Promise<string> {
+  const prefijo = inicialesComuna(comuna) + INICIAL_TIPO[tipo];
+
+  const { data } = await supabase
+    .from("propiedades")
+    .select("codigo_interno")
+    .eq("empresa_id", empresaId)
+    .like("codigo_interno", `${prefijo}%`);
+
+  const usados = new Set((data ?? []).map((r) => r.codigo_interno));
+  let n = usados.size + 1;
+  while (usados.has(`${prefijo}${String(n).padStart(4, "0")}`)) n++;
+  return `${prefijo}${String(n).padStart(4, "0")}`;
+}
+
 function parse(
   formData: FormData
-): { data: Omit<PropiedadInsert, "empresa_id"> } | { error: string } {
-  const direccion = texto(formData, "direccion");
-  if (!direccion) return { error: "La dirección es obligatoria." };
-
+): { data: Omit<PropiedadInsert, "empresa_id" | "codigo_interno"> } | { error: string } {
   const tipoRaw = String(formData.get("tipo") ?? "");
   const tipo = (TIPOS as string[]).includes(tipoRaw)
     ? (tipoRaw as TipoPropiedad)
@@ -64,9 +118,8 @@ function parse(
 
   return {
     data: {
-      codigo_interno: texto(formData, "codigo_interno"),
       tipo,
-      direccion,
+      direccion: texto(formData, "direccion"),
       numero: texto(formData, "numero"),
       departamento: texto(formData, "departamento"),
       comuna: texto(formData, "comuna"),
@@ -106,15 +159,34 @@ export async function crearPropiedad(
   const parsed = parse(formData);
   if ("error" in parsed) return { error: parsed.error };
 
+  const comuna = parsed.data.comuna;
+  if (!comuna) {
+    return { error: "La comuna es obligatoria (se usa para generar el código interno)." };
+  }
+
   const supabase = await createClient();
-  const { error } = await supabase
-    .from("propiedades")
-    .insert({ ...parsed.data, empresa_id: profile.empresa_id });
 
-  if (error) return { error: traducirError(error.message) };
+  // Genera código e inserta, reintentando ante colisión de unicidad.
+  for (let intento = 0; intento < 5; intento++) {
+    const codigo_interno = await generarCodigoInterno(
+      supabase,
+      profile.empresa_id,
+      comuna,
+      parsed.data.tipo ?? "departamento"
+    );
+    const { error } = await supabase
+      .from("propiedades")
+      .insert({ ...parsed.data, empresa_id: profile.empresa_id, codigo_interno });
 
-  revalidatePath("/propiedades");
-  redirect("/propiedades");
+    if (!error) {
+      revalidatePath("/propiedades");
+      redirect("/propiedades");
+    }
+    if (!error.message.includes("duplicate") && !error.message.includes("unique")) {
+      return { error: traducirError(error.message) };
+    }
+  }
+  return { error: "No se pudo generar un código interno único. Reintenta." };
 }
 
 export async function actualizarPropiedad(

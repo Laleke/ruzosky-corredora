@@ -56,7 +56,7 @@ export default async function PropiedadesPage() {
                     <tr key={p.id} className="transition-colors hover:bg-stone-50/50">
                       <td className={`${ui.td} text-muted`}>{p.codigo_interno ?? "—"}</td>
                       <td className={`${ui.td} font-medium`}>
-                        {p.direccion}
+                        {p.direccion ?? <span className="text-muted">(sin dirección)</span>}
                         {p.numero ? ` ${p.numero}` : ""}
                         {p.departamento ? `, ${p.departamento}` : ""}
                       </td>
