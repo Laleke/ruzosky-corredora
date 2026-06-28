@@ -2,6 +2,7 @@
 
 import { useActionState, useState } from "react";
 import Link from "next/link";
+import { ui } from "@/components/ui";
 import type { PropietarioFormState } from "./actions";
 import type { Propietario } from "./types";
 
@@ -10,8 +11,7 @@ type Action = (
   formData: FormData
 ) => Promise<PropietarioFormState>;
 
-const inputCls =
-  "rounded-md border border-black/15 px-3 py-2 outline-none focus:border-black/40";
+const inputCls = ui.input;
 
 function Campo({
   label,
@@ -119,8 +119,8 @@ export function PropietarioForm({
         <Campo label="Región" name="region" defaultValue={propietario?.region} />
       </section>
 
-      <fieldset className="grid grid-cols-1 gap-4 rounded-md border border-black/10 p-4 sm:grid-cols-2">
-        <legend className="px-1 text-sm font-semibold">
+      <fieldset className="grid grid-cols-1 gap-4 rounded-xl border border-line p-4 sm:grid-cols-2">
+        <legend className="px-1 text-sm font-semibold text-ink">
           Datos bancarios (liquidaciones)
         </legend>
         <Campo label="Banco" name="banco" defaultValue={propietario?.banco} />
@@ -156,23 +156,16 @@ export function PropietarioForm({
       </fieldset>
 
       {state.error && (
-        <p className="text-sm text-red-600" role="alert">
+        <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700" role="alert">
           {state.error}
         </p>
       )}
 
       <div className="flex gap-3">
-        <button
-          type="submit"
-          disabled={pending}
-          className="rounded-md bg-black px-4 py-2 font-medium text-white disabled:opacity-50"
-        >
+        <button type="submit" disabled={pending} className={ui.btnPrimary}>
           {pending ? "Guardando…" : "Guardar"}
         </button>
-        <Link
-          href="/propietarios"
-          className="rounded-md border border-black/15 px-4 py-2"
-        >
+        <Link href="/propietarios" className={ui.btnSecondary}>
           Cancelar
         </Link>
       </div>

@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { listArrendatarios } from "@/features/arrendatarios/queries";
 import { cambiarActivoArrendatario } from "@/features/arrendatarios/actions";
+import { PageHeader } from "@/components/page-header";
+import { ui, badge } from "@/components/ui";
 
 function nombreMostrar(a: {
   tipo_persona: string;
@@ -16,70 +18,62 @@ export default async function ArrendatariosPage() {
   const arrendatarios = await listArrendatarios();
 
   return (
-    <div className="flex flex-col gap-4">
-      <div className="flex items-center justify-between">
-        <h1 className="text-xl font-semibold">Arrendatarios</h1>
-        <Link
-          href="/arrendatarios/nuevo"
-          className="rounded-md bg-black px-4 py-2 text-sm font-medium text-white"
-        >
-          Nuevo arrendatario
-        </Link>
-      </div>
+    <div>
+      <PageHeader
+        titulo="Arrendatarios"
+        descripcion="Inquilinos vinculados a los contratos."
+        accion={{ href: "/arrendatarios/nuevo", label: "Nuevo arrendatario" }}
+      />
 
       {arrendatarios.length === 0 ? (
-        <p className="opacity-60">Aún no hay arrendatarios registrados.</p>
+        <div className={`${ui.card} p-10 text-center text-sm text-muted`}>
+          Aún no hay arrendatarios registrados.
+        </div>
       ) : (
-        <div className="overflow-x-auto">
-          <table className="w-full border-collapse text-sm">
-            <thead>
-              <tr className="border-b border-black/10 text-left">
-                <th className="py-2 pr-4">Nombre / Razón social</th>
-                <th className="py-2 pr-4">RUT</th>
-                <th className="py-2 pr-4">Email</th>
-                <th className="py-2 pr-4">Teléfono</th>
-                <th className="py-2 pr-4">Estado</th>
-                <th className="py-2 pr-4"></th>
-              </tr>
-            </thead>
-            <tbody>
-              {arrendatarios.map((a) => (
-                <tr key={a.id} className="border-b border-black/5">
-                  <td className="py-2 pr-4">{nombreMostrar(a)}</td>
-                  <td className="py-2 pr-4">{a.rut}</td>
-                  <td className="py-2 pr-4">{a.email ?? "—"}</td>
-                  <td className="py-2 pr-4">{a.telefono ?? "—"}</td>
-                  <td className="py-2 pr-4">
-                    <span className={a.activo ? "text-green-700" : "text-black/40"}>
-                      {a.activo ? "Activo" : "Inactivo"}
-                    </span>
-                  </td>
-                  <td className="flex gap-3 py-2 pr-4">
-                    <Link
-                      href={`/arrendatarios/${a.id}`}
-                      className="text-blue-700 hover:underline"
-                    >
-                      Editar
-                    </Link>
-                    <form
-                      action={cambiarActivoArrendatario.bind(
-                        null,
-                        a.id,
-                        !a.activo
-                      )}
-                    >
-                      <button
-                        type="submit"
-                        className="text-black/50 hover:underline"
-                      >
-                        {a.activo ? "Desactivar" : "Activar"}
-                      </button>
-                    </form>
-                  </td>
+        <div className={`${ui.card} overflow-hidden`}>
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead className="border-b border-line bg-stone-50/60">
+                <tr>
+                  <th className={ui.th}>Nombre / Razón social</th>
+                  <th className={ui.th}>RUT</th>
+                  <th className={ui.th}>Email</th>
+                  <th className={ui.th}>Teléfono</th>
+                  <th className={ui.th}>Estado</th>
+                  <th className={ui.th}></th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody className="divide-y divide-line">
+                {arrendatarios.map((a) => (
+                  <tr key={a.id} className="transition-colors hover:bg-stone-50/50">
+                    <td className={`${ui.td} font-medium`}>{nombreMostrar(a)}</td>
+                    <td className={`${ui.td} text-muted`}>{a.rut}</td>
+                    <td className={`${ui.td} text-muted`}>{a.email ?? "—"}</td>
+                    <td className={`${ui.td} text-muted`}>{a.telefono ?? "—"}</td>
+                    <td className={ui.td}>
+                      <span className={badge(a.activo ? "success" : "neutral")}>
+                        {a.activo ? "Activo" : "Inactivo"}
+                      </span>
+                    </td>
+                    <td className={`${ui.td} text-right`}>
+                      <div className="flex justify-end gap-4">
+                        <Link href={`/arrendatarios/${a.id}`} className={ui.linkAction}>
+                          Editar
+                        </Link>
+                        <form
+                          action={cambiarActivoArrendatario.bind(null, a.id, !a.activo)}
+                        >
+                          <button type="submit" className="text-sm text-muted hover:text-ink">
+                            {a.activo ? "Desactivar" : "Activar"}
+                          </button>
+                        </form>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
     </div>

@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { listPropietarios } from "@/features/propietarios/queries";
 import { cambiarActivoPropietario } from "@/features/propietarios/actions";
+import { PageHeader } from "@/components/page-header";
+import { ui, badge } from "@/components/ui";
 
 function nombreMostrar(p: {
   tipo_persona: string;
@@ -16,74 +18,62 @@ export default async function PropietariosPage() {
   const propietarios = await listPropietarios();
 
   return (
-    <div className="flex flex-col gap-4">
-      <div className="flex items-center justify-between">
-        <h1 className="text-xl font-semibold">Propietarios</h1>
-        <Link
-          href="/propietarios/nuevo"
-          className="rounded-md bg-black px-4 py-2 text-sm font-medium text-white"
-        >
-          Nuevo propietario
-        </Link>
-      </div>
+    <div>
+      <PageHeader
+        titulo="Propietarios"
+        descripcion="Dueños de las propiedades en administración."
+        accion={{ href: "/propietarios/nuevo", label: "Nuevo propietario" }}
+      />
 
       {propietarios.length === 0 ? (
-        <p className="opacity-60">Aún no hay propietarios registrados.</p>
+        <div className={`${ui.card} p-10 text-center text-sm text-muted`}>
+          Aún no hay propietarios registrados.
+        </div>
       ) : (
-        <div className="overflow-x-auto">
-          <table className="w-full border-collapse text-sm">
-            <thead>
-              <tr className="border-b border-black/10 text-left">
-                <th className="py-2 pr-4">Nombre / Razón social</th>
-                <th className="py-2 pr-4">RUT</th>
-                <th className="py-2 pr-4">Email</th>
-                <th className="py-2 pr-4">Teléfono</th>
-                <th className="py-2 pr-4">Estado</th>
-                <th className="py-2 pr-4"></th>
-              </tr>
-            </thead>
-            <tbody>
-              {propietarios.map((p) => (
-                <tr key={p.id} className="border-b border-black/5">
-                  <td className="py-2 pr-4">{nombreMostrar(p)}</td>
-                  <td className="py-2 pr-4">{p.rut}</td>
-                  <td className="py-2 pr-4">{p.email ?? "—"}</td>
-                  <td className="py-2 pr-4">{p.telefono ?? "—"}</td>
-                  <td className="py-2 pr-4">
-                    <span
-                      className={
-                        p.activo ? "text-green-700" : "text-black/40"
-                      }
-                    >
-                      {p.activo ? "Activo" : "Inactivo"}
-                    </span>
-                  </td>
-                  <td className="flex gap-3 py-2 pr-4">
-                    <Link
-                      href={`/propietarios/${p.id}`}
-                      className="text-blue-700 hover:underline"
-                    >
-                      Editar
-                    </Link>
-                    <form
-                      action={cambiarActivoPropietario.bind(
-                        null,
-                        p.id,
-                        !p.activo
-                      )}
-                    >
-                      <button
-                        type="submit"
-                        className="text-black/50 hover:underline"
-                      >
-                        {p.activo ? "Desactivar" : "Activar"}
-                      </button>
-                    </form>
-                  </td>
+        <div className={`${ui.card} overflow-hidden`}>
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead className="border-b border-line bg-stone-50/60">
+                <tr>
+                  <th className={ui.th}>Nombre / Razón social</th>
+                  <th className={ui.th}>RUT</th>
+                  <th className={ui.th}>Email</th>
+                  <th className={ui.th}>Teléfono</th>
+                  <th className={ui.th}>Estado</th>
+                  <th className={ui.th}></th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody className="divide-y divide-line">
+                {propietarios.map((p) => (
+                  <tr key={p.id} className="transition-colors hover:bg-stone-50/50">
+                    <td className={`${ui.td} font-medium`}>{nombreMostrar(p)}</td>
+                    <td className={`${ui.td} text-muted`}>{p.rut}</td>
+                    <td className={`${ui.td} text-muted`}>{p.email ?? "—"}</td>
+                    <td className={`${ui.td} text-muted`}>{p.telefono ?? "—"}</td>
+                    <td className={ui.td}>
+                      <span className={badge(p.activo ? "success" : "neutral")}>
+                        {p.activo ? "Activo" : "Inactivo"}
+                      </span>
+                    </td>
+                    <td className={`${ui.td} text-right`}>
+                      <div className="flex justify-end gap-4">
+                        <Link href={`/propietarios/${p.id}`} className={ui.linkAction}>
+                          Editar
+                        </Link>
+                        <form
+                          action={cambiarActivoPropietario.bind(null, p.id, !p.activo)}
+                        >
+                          <button type="submit" className="text-sm text-muted hover:text-ink">
+                            {p.activo ? "Desactivar" : "Activar"}
+                          </button>
+                        </form>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
     </div>

@@ -12,6 +12,7 @@ import {
 } from "@/features/contratos/queries";
 import { listPropiedades } from "@/features/propiedades/queries";
 import { listArrendatarios } from "@/features/arrendatarios/queries";
+import { ui } from "@/components/ui";
 
 function nombreArrendatario(a: {
   tipo_persona: string;
@@ -54,7 +55,9 @@ export default async function DetalleContratoPage({
   return (
     <div className="flex flex-col gap-10">
       <section className="flex flex-col gap-6">
-        <h1 className="text-xl font-semibold">Editar contrato</h1>
+        <h1 className="text-2xl font-semibold tracking-tight text-ink">
+          Editar contrato
+        </h1>
         <ContratoForm
           action={actualizarContrato.bind(null, id)}
           contrato={contrato}
@@ -63,44 +66,39 @@ export default async function DetalleContratoPage({
       </section>
 
       <section className="flex flex-col gap-4">
-        <h2 className="text-lg font-semibold">Arrendatarios del contrato</h2>
+        <h2 className="text-lg font-semibold text-ink">Arrendatarios del contrato</h2>
 
-        {vinculados.length === 0 ? (
-          <p className="opacity-60">Sin arrendatarios asignados.</p>
-        ) : (
-          <table className="w-full max-w-2xl border-collapse text-sm">
-            <thead>
-              <tr className="border-b border-black/10 text-left">
-                <th className="py-2 pr-4">Arrendatario</th>
-                <th className="py-2 pr-4">RUT</th>
-                <th className="py-2 pr-4"></th>
-              </tr>
-            </thead>
-            <tbody>
-              {vinculados.map((v) => (
-                <tr key={v.vinculo_id} className="border-b border-black/5">
-                  <td className="py-2 pr-4">{v.nombre}</td>
-                  <td className="py-2 pr-4">{v.rut}</td>
-                  <td className="py-2 pr-4">
-                    <form
-                      action={quitarArrendatario.bind(null, v.vinculo_id, id)}
-                    >
-                      <button
-                        type="submit"
-                        className="text-red-600 hover:underline"
-                      >
-                        Quitar
-                      </button>
-                    </form>
-                  </td>
+        {vinculados.length > 0 && (
+          <div className={`${ui.card} overflow-hidden`}>
+            <table className="w-full">
+              <thead className="border-b border-line bg-stone-50/60">
+                <tr>
+                  <th className={ui.th}>Arrendatario</th>
+                  <th className={ui.th}>RUT</th>
+                  <th className={ui.th}></th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody className="divide-y divide-line">
+                {vinculados.map((v) => (
+                  <tr key={v.vinculo_id}>
+                    <td className={`${ui.td} font-medium`}>{v.nombre}</td>
+                    <td className={`${ui.td} text-muted`}>{v.rut}</td>
+                    <td className={`${ui.td} text-right`}>
+                      <form action={quitarArrendatario.bind(null, v.vinculo_id, id)}>
+                        <button type="submit" className="text-sm text-red-600 hover:text-red-700">
+                          Quitar
+                        </button>
+                      </form>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         )}
 
-        <div className="max-w-2xl rounded-md border border-black/10 p-4">
-          <h3 className="mb-3 text-sm font-semibold">Asignar arrendatario</h3>
+        <div className={`${ui.card} p-4`}>
+          <h3 className="mb-3 text-sm font-semibold text-ink">Asignar arrendatario</h3>
           <AsignarArrendatario
             action={asignarArrendatario.bind(null, id)}
             opciones={opcionesArrendatarios}

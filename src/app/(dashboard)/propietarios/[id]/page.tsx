@@ -17,7 +17,9 @@ export default async function EditarPropietarioPage({
 
   return (
     <div className="flex flex-col gap-6">
-      <h1 className="text-xl font-semibold">Editar propietario</h1>
+      <h1 className="text-2xl font-semibold tracking-tight text-ink">
+        Editar propietario
+      </h1>
       <PropietarioForm action={action} propietario={propietario} />
     </div>
   );

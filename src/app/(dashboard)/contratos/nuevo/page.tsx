@@ -15,7 +15,9 @@ export default async function NuevoContratoPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <h1 className="text-xl font-semibold">Nuevo contrato</h1>
+      <h1 className="text-2xl font-semibold tracking-tight text-ink">
+        Nuevo contrato
+      </h1>
       <ContratoForm action={crearContrato} propiedades={opciones} />
     </div>
   );

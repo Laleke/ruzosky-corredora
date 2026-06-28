@@ -2,9 +2,10 @@
 
 import { useActionState } from "react";
 import Link from "next/link";
+import { ui } from "@/components/ui";
 import { crearCargo, type CobroFormState } from "./actions";
 
-const inputCls = "rounded-md border border-black/15 px-3 py-2";
+const inputCls = ui.input;
 
 export function CargoForm({
   contratos,
@@ -74,20 +75,16 @@ export function CargoForm({
       </label>
 
       {state.error && (
-        <p className="text-sm text-red-600" role="alert">
+        <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700" role="alert">
           {state.error}
         </p>
       )}
 
       <div className="flex gap-3">
-        <button
-          type="submit"
-          disabled={pending}
-          className="rounded-md bg-black px-4 py-2 font-medium text-white disabled:opacity-50"
-        >
+        <button type="submit" disabled={pending} className={ui.btnPrimary}>
           {pending ? "Guardando…" : "Crear cargo"}
         </button>
-        <Link href="/cobros" className="rounded-md border border-black/15 px-4 py-2">
+        <Link href="/cobros" className={ui.btnSecondary}>
           Cancelar
         </Link>
       </div>

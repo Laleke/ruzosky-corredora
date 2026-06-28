@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { listCargos } from "@/features/cobros/queries";
 import { GenerarArriendos } from "@/features/cobros/generar-arriendos";
+import { PageHeader } from "@/components/page-header";
+import { ui, badge } from "@/components/ui";
 
 const TIPO_LABEL: Record<string, string> = {
   arriendo: "Arriendo",
@@ -15,19 +17,18 @@ function monto(n: number): string {
   return `$${Number(n).toLocaleString("es-CL")}`;
 }
 
-/** Deriva 'vencido' en lectura: vencido si tiene saldo y pasó su vencimiento. */
 function estadoMostrar(
   estado: string,
   saldo: number,
   fechaVencimiento: string | null,
   hoy: string
-): { label: string; cls: string } {
-  if (estado === "pagado") return { label: "Pagado", cls: "text-green-700" };
+): { label: string; tone: Parameters<typeof badge>[0] } {
+  if (estado === "pagado") return { label: "Pagado", tone: "success" };
   if (saldo > 0 && fechaVencimiento && fechaVencimiento < hoy) {
-    return { label: "Vencido", cls: "text-red-600" };
+    return { label: "Vencido", tone: "danger" };
   }
-  if (estado === "parcial") return { label: "Parcial", cls: "text-amber-600" };
-  return { label: "Pendiente", cls: "text-black/60" };
+  if (estado === "parcial") return { label: "Parcial", tone: "warning" };
+  return { label: "Pendiente", tone: "neutral" };
 }
 
 export default async function CobrosPage() {
@@ -36,79 +37,79 @@ export default async function CobrosPage() {
   const deudaTotal = cargos.reduce((acc, c) => acc + Number(c.saldo_pendiente), 0);
 
   return (
-    <div className="flex flex-col gap-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-xl font-semibold">Cobros y pagos</h1>
-        <Link
-          href="/cobros/nuevo"
-          className="rounded-md bg-black px-4 py-2 text-sm font-medium text-white"
-        >
-          Nuevo cargo
-        </Link>
-      </div>
+    <div>
+      <PageHeader
+        titulo="Cobros y pagos"
+        descripcion="Cargos generados, saldos y morosidad."
+        accion={{ href: "/cobros/nuevo", label: "Nuevo cargo" }}
+      />
 
-      <div className="rounded-md border border-black/10 p-4">
-        <h2 className="mb-3 text-sm font-semibold">Generación asistida</h2>
-        <GenerarArriendos />
-      </div>
-
-      <div className="flex items-baseline justify-between">
-        <h2 className="text-lg font-semibold">Cargos</h2>
-        <span className="text-sm opacity-70">
-          Deuda pendiente total: <strong>{monto(deudaTotal)}</strong>
-        </span>
+      <div className="mb-6 grid grid-cols-1 gap-4 lg:grid-cols-3">
+        <div className={`${ui.card} p-5 lg:col-span-2`}>
+          <h2 className="mb-3 text-sm font-semibold text-ink">Generación asistida</h2>
+          <GenerarArriendos />
+        </div>
+        <div className={`${ui.card} flex flex-col justify-center p-5`}>
+          <span className="text-sm font-medium text-muted">Deuda pendiente total</span>
+          <span className="mt-1 text-2xl font-semibold tracking-tight text-ink">
+            {monto(deudaTotal)}
+          </span>
+        </div>
       </div>
 
       {cargos.length === 0 ? (
-        <p className="opacity-60">Aún no hay cargos. Genera los del mes o crea uno.</p>
+        <div className={`${ui.card} p-10 text-center text-sm text-muted`}>
+          Aún no hay cargos. Genera los del mes o crea uno.
+        </div>
       ) : (
-        <div className="overflow-x-auto">
-          <table className="w-full border-collapse text-sm">
-            <thead>
-              <tr className="border-b border-black/10 text-left">
-                <th className="py-2 pr-4">Período</th>
-                <th className="py-2 pr-4">Contrato / Propiedad</th>
-                <th className="py-2 pr-4">Tipo</th>
-                <th className="py-2 pr-4">Monto</th>
-                <th className="py-2 pr-4">Saldo</th>
-                <th className="py-2 pr-4">Estado</th>
-                <th className="py-2 pr-4"></th>
-              </tr>
-            </thead>
-            <tbody>
-              {cargos.map((c) => {
-                const est = estadoMostrar(
-                  c.estado,
-                  Number(c.saldo_pendiente),
-                  c.fecha_vencimiento,
-                  hoy
-                );
-                return (
-                  <tr key={c.id} className="border-b border-black/5">
-                    <td className="py-2 pr-4">{c.periodo.slice(0, 7)}</td>
-                    <td className="py-2 pr-4">
-                      {c.numero_contrato ? `${c.numero_contrato} · ` : ""}
-                      {c.propiedad_direccion}
-                    </td>
-                    <td className="py-2 pr-4">
-                      {TIPO_LABEL[c.tipo_cargo] ?? c.tipo_cargo}
-                    </td>
-                    <td className="py-2 pr-4">{monto(c.monto)}</td>
-                    <td className="py-2 pr-4">{monto(c.saldo_pendiente)}</td>
-                    <td className={`py-2 pr-4 ${est.cls}`}>{est.label}</td>
-                    <td className="py-2 pr-4">
-                      <Link
-                        href={`/cobros/${c.id}`}
-                        className="text-blue-700 hover:underline"
-                      >
-                        Detalle
-                      </Link>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
+        <div className={`${ui.card} overflow-hidden`}>
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead className="border-b border-line bg-stone-50/60">
+                <tr>
+                  <th className={ui.th}>Período</th>
+                  <th className={ui.th}>Contrato / Propiedad</th>
+                  <th className={ui.th}>Tipo</th>
+                  <th className={ui.th}>Monto</th>
+                  <th className={ui.th}>Saldo</th>
+                  <th className={ui.th}>Estado</th>
+                  <th className={ui.th}></th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-line">
+                {cargos.map((c) => {
+                  const est = estadoMostrar(
+                    c.estado,
+                    Number(c.saldo_pendiente),
+                    c.fecha_vencimiento,
+                    hoy
+                  );
+                  return (
+                    <tr key={c.id} className="transition-colors hover:bg-stone-50/50">
+                      <td className={`${ui.td} text-muted`}>{c.periodo.slice(0, 7)}</td>
+                      <td className={`${ui.td} font-medium`}>
+                        {c.numero_contrato ? `${c.numero_contrato} · ` : ""}
+                        {c.propiedad_direccion}
+                      </td>
+                      <td className={`${ui.td} text-muted`}>
+                        {TIPO_LABEL[c.tipo_cargo] ?? c.tipo_cargo}
+                      </td>
+                      <td className={ui.td}>{monto(c.monto)}</td>
+                      <td className={`${ui.td} font-medium`}>{monto(c.saldo_pendiente)}</td>
+                      <td className={ui.td}>
+                        <span className={badge(est.tone)}>{est.label}</span>
+                      </td>
+                      <td className={`${ui.td} text-right`}>
+                        <Link href={`/cobros/${c.id}`} className={ui.linkAction}>
+                          Detalle
+                        </Link>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
     </div>

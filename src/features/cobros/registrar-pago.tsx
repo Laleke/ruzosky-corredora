@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState } from "react";
+import { ui } from "@/components/ui";
 import type { CobroFormState } from "./actions";
 
 type Action = (
@@ -8,7 +9,7 @@ type Action = (
   formData: FormData
 ) => Promise<CobroFormState>;
 
-const inputCls = "rounded-md border border-black/15 px-3 py-2";
+const inputCls = ui.input;
 
 export function RegistrarPago({
   action,
@@ -33,7 +34,7 @@ export function RegistrarPago({
           step="any"
           min="0"
           required
-          className={`w-36 ${inputCls}`}
+          className={`w-36 ${ui.input}`}
         />
       </label>
       <label className="flex flex-col gap-1 text-sm">
@@ -54,11 +55,7 @@ export function RegistrarPago({
         <span className="font-medium">Referencia</span>
         <input name="referencia" type="text" className={inputCls} />
       </label>
-      <button
-        type="submit"
-        disabled={pending}
-        className="rounded-md bg-black px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
-      >
+      <button type="submit" disabled={pending} className={ui.btnPrimary}>
         {pending ? "Registrando…" : "Registrar pago"}
       </button>
       {state.error && (

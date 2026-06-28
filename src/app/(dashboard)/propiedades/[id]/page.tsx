@@ -11,6 +11,7 @@ import {
   getPropietariosAsignados,
 } from "@/features/propiedades/queries";
 import { listPropietarios } from "@/features/propietarios/queries";
+import { ui } from "@/components/ui";
 
 function nombrePropietario(p: {
   tipo_persona: string;
@@ -48,7 +49,9 @@ export default async function DetallePropiedadPage({
   return (
     <div className="flex flex-col gap-10">
       <section className="flex flex-col gap-6">
-        <h1 className="text-xl font-semibold">Editar propiedad</h1>
+        <h1 className="text-2xl font-semibold tracking-tight text-ink">
+          Editar propiedad
+        </h1>
         <PropiedadForm
           action={actualizarPropiedad.bind(null, id)}
           propiedad={propiedad}
@@ -57,50 +60,45 @@ export default async function DetallePropiedadPage({
 
       <section className="flex flex-col gap-4">
         <div className="flex items-baseline justify-between">
-          <h2 className="text-lg font-semibold">Propietarios asociados</h2>
-          <span className="text-sm opacity-60">
-            Participación total: {sumaParticipacion}%
+          <h2 className="text-lg font-semibold text-ink">Propietarios asociados</h2>
+          <span className="text-sm text-muted">
+            Participación total: <strong className="text-ink">{sumaParticipacion}%</strong>
           </span>
         </div>
 
-        {asignados.length === 0 ? (
-          <p className="opacity-60">Sin propietarios asignados.</p>
-        ) : (
-          <table className="w-full max-w-2xl border-collapse text-sm">
-            <thead>
-              <tr className="border-b border-black/10 text-left">
-                <th className="py-2 pr-4">Propietario</th>
-                <th className="py-2 pr-4">RUT</th>
-                <th className="py-2 pr-4">Participación</th>
-                <th className="py-2 pr-4"></th>
-              </tr>
-            </thead>
-            <tbody>
-              {asignados.map((a) => (
-                <tr key={a.vinculo_id} className="border-b border-black/5">
-                  <td className="py-2 pr-4">{a.nombre}</td>
-                  <td className="py-2 pr-4">{a.rut}</td>
-                  <td className="py-2 pr-4">{a.porcentaje_participacion}%</td>
-                  <td className="py-2 pr-4">
-                    <form
-                      action={quitarPropietario.bind(null, a.vinculo_id, id)}
-                    >
-                      <button
-                        type="submit"
-                        className="text-red-600 hover:underline"
-                      >
-                        Quitar
-                      </button>
-                    </form>
-                  </td>
+        {asignados.length > 0 && (
+          <div className={`${ui.card} overflow-hidden`}>
+            <table className="w-full">
+              <thead className="border-b border-line bg-stone-50/60">
+                <tr>
+                  <th className={ui.th}>Propietario</th>
+                  <th className={ui.th}>RUT</th>
+                  <th className={ui.th}>Participación</th>
+                  <th className={ui.th}></th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody className="divide-y divide-line">
+                {asignados.map((a) => (
+                  <tr key={a.vinculo_id}>
+                    <td className={`${ui.td} font-medium`}>{a.nombre}</td>
+                    <td className={`${ui.td} text-muted`}>{a.rut}</td>
+                    <td className={ui.td}>{a.porcentaje_participacion}%</td>
+                    <td className={`${ui.td} text-right`}>
+                      <form action={quitarPropietario.bind(null, a.vinculo_id, id)}>
+                        <button type="submit" className="text-sm text-red-600 hover:text-red-700">
+                          Quitar
+                        </button>
+                      </form>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         )}
 
-        <div className="max-w-2xl rounded-md border border-black/10 p-4">
-          <h3 className="mb-3 text-sm font-semibold">Asignar propietario</h3>
+        <div className={`${ui.card} p-4`}>
+          <h3 className="mb-3 text-sm font-semibold text-ink">Asignar propietario</h3>
           <AsignarPropietario
             action={asignarPropietario.bind(null, id)}
             opciones={opciones}

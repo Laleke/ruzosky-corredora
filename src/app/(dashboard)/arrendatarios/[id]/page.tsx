@@ -16,7 +16,9 @@ export default async function EditarArrendatarioPage({
 
   return (
     <div className="flex flex-col gap-6">
-      <h1 className="text-xl font-semibold">Editar arrendatario</h1>
+      <h1 className="text-2xl font-semibold tracking-tight text-ink">
+        Editar arrendatario
+      </h1>
       <ArrendatarioForm action={action} arrendatario={arrendatario} />
     </div>
   );

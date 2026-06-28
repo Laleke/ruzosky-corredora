@@ -2,6 +2,7 @@
 
 import { useActionState } from "react";
 import Link from "next/link";
+import { ui } from "@/components/ui";
 import type { ContratoFormState } from "./actions";
 import type { Contrato } from "./types";
 
@@ -10,8 +11,7 @@ type Action = (
   formData: FormData
 ) => Promise<ContratoFormState>;
 
-const inputCls =
-  "rounded-md border border-black/15 px-3 py-2 outline-none focus:border-black/40";
+const inputCls = ui.input;
 
 function Campo({
   label,
@@ -117,8 +117,8 @@ export function ContratoForm({
         </label>
       </section>
 
-      <fieldset className="grid grid-cols-1 gap-4 rounded-md border border-black/10 p-4 sm:grid-cols-3">
-        <legend className="px-1 text-sm font-semibold">Canon y reajuste</legend>
+      <fieldset className="grid grid-cols-1 gap-4 rounded-xl border border-line p-4 sm:grid-cols-3">
+        <legend className="px-1 text-sm font-semibold text-ink">Canon y reajuste</legend>
         <Campo
           label="Canon"
           name="canon_monto"
@@ -157,8 +157,8 @@ export function ContratoForm({
         />
       </fieldset>
 
-      <fieldset className="grid grid-cols-1 gap-4 rounded-md border border-black/10 p-4 sm:grid-cols-3">
-        <legend className="px-1 text-sm font-semibold">
+      <fieldset className="grid grid-cols-1 gap-4 rounded-xl border border-line p-4 sm:grid-cols-3">
+        <legend className="px-1 text-sm font-semibold text-ink">
           Comisión y administración
         </legend>
         <label className="flex flex-col gap-1 text-sm">
@@ -213,23 +213,16 @@ export function ContratoForm({
       </label>
 
       {state.error && (
-        <p className="text-sm text-red-600" role="alert">
+        <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700" role="alert">
           {state.error}
         </p>
       )}
 
       <div className="flex gap-3">
-        <button
-          type="submit"
-          disabled={pending}
-          className="rounded-md bg-black px-4 py-2 font-medium text-white disabled:opacity-50"
-        >
+        <button type="submit" disabled={pending} className={ui.btnPrimary}>
           {pending ? "Guardando…" : "Guardar"}
         </button>
-        <Link
-          href="/contratos"
-          className="rounded-md border border-black/15 px-4 py-2"
-        >
+        <Link href="/contratos" className={ui.btnSecondary}>
           Cancelar
         </Link>
       </div>

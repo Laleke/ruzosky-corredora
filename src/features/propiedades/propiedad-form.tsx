@@ -2,6 +2,7 @@
 
 import { useActionState } from "react";
 import Link from "next/link";
+import { ui } from "@/components/ui";
 import type { PropiedadFormState } from "./actions";
 import type { Propiedad } from "./types";
 
@@ -10,8 +11,7 @@ type Action = (
   formData: FormData
 ) => Promise<PropiedadFormState>;
 
-const inputCls =
-  "rounded-md border border-black/15 px-3 py-2 outline-none focus:border-black/40";
+const inputCls = ui.input;
 
 function Campo({
   label,
@@ -100,8 +100,8 @@ export function PropiedadForm({
         />
       </section>
 
-      <fieldset className="grid grid-cols-2 gap-4 rounded-md border border-black/10 p-4 sm:grid-cols-4">
-        <legend className="px-1 text-sm font-semibold">Características</legend>
+      <fieldset className="grid grid-cols-2 gap-4 rounded-xl border border-line p-4 sm:grid-cols-4">
+        <legend className="px-1 text-sm font-semibold text-ink">Características</legend>
         <Campo
           label="Dormitorios"
           name="dormitorios"
@@ -140,8 +140,8 @@ export function PropiedadForm({
         />
       </fieldset>
 
-      <fieldset className="grid grid-cols-1 gap-4 rounded-md border border-black/10 p-4 sm:grid-cols-3">
-        <legend className="px-1 text-sm font-semibold">
+      <fieldset className="grid grid-cols-1 gap-4 rounded-xl border border-line p-4 sm:grid-cols-3">
+        <legend className="px-1 text-sm font-semibold text-ink">
           Estado y valorización
         </legend>
         <label className="flex flex-col gap-1 text-sm">
@@ -208,23 +208,16 @@ export function PropiedadForm({
       </label>
 
       {state.error && (
-        <p className="text-sm text-red-600" role="alert">
+        <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700" role="alert">
           {state.error}
         </p>
       )}
 
       <div className="flex gap-3">
-        <button
-          type="submit"
-          disabled={pending}
-          className="rounded-md bg-black px-4 py-2 font-medium text-white disabled:opacity-50"
-        >
+        <button type="submit" disabled={pending} className={ui.btnPrimary}>
           {pending ? "Guardando…" : "Guardar"}
         </button>
-        <Link
-          href="/propiedades"
-          className="rounded-md border border-black/15 px-4 py-2"
-        >
+        <Link href="/propiedades" className={ui.btnSecondary}>
           Cancelar
         </Link>
       </div>

@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState } from "react";
+import { ui } from "@/components/ui";
 import type { ContratoFormState } from "./actions";
 
 type Action = (
@@ -29,11 +30,7 @@ export function AsignarArrendatario({
     <form action={formAction} className="flex flex-wrap items-end gap-3">
       <label className="flex flex-col gap-1 text-sm">
         <span className="font-medium">Arrendatario</span>
-        <select
-          name="arrendatario_id"
-          required
-          className="rounded-md border border-black/15 px-3 py-2"
-        >
+        <select name="arrendatario_id" required className={ui.input}>
           <option value="">Selecciona…</option>
           {opciones.map((o) => (
             <option key={o.id} value={o.id}>
@@ -42,11 +39,7 @@ export function AsignarArrendatario({
           ))}
         </select>
       </label>
-      <button
-        type="submit"
-        disabled={pending}
-        className="rounded-md bg-black px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
-      >
+      <button type="submit" disabled={pending} className={ui.btnPrimary}>
         {pending ? "Asignando…" : "Asignar"}
       </button>
       {state.error && (
