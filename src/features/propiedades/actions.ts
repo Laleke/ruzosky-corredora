@@ -101,6 +101,11 @@ async function generarCodigoInterno(
 function parse(
   formData: FormData
 ): { data: Omit<PropiedadInsert, "empresa_id" | "codigo_interno"> } | { error: string } {
+  const region = texto(formData, "region");
+  if (!region) return { error: "La región es obligatoria." };
+  const comuna = texto(formData, "comuna");
+  if (!comuna) return { error: "La comuna es obligatoria." };
+
   const tipoRaw = String(formData.get("tipo") ?? "");
   const tipo = (TIPOS as string[]).includes(tipoRaw)
     ? (tipoRaw as TipoPropiedad)

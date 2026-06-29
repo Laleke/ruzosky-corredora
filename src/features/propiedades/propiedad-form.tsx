@@ -1,8 +1,10 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useState, useMemo } from "react";
 import Link from "next/link";
 import { ui } from "@/components/ui";
+import { Combobox } from "@/components/combobox";
+import { NOMBRES_REGIONES, comunasDeRegion } from "@/data/chile";
 import type { PropiedadFormState } from "./actions";
 import type { Propiedad } from "./types";
 
@@ -52,16 +54,13 @@ export function PropiedadForm({
   propiedad?: Propiedad;
 }) {
   const [state, formAction, pending] = useActionState(action, { error: null });
+  const [region, setRegion] = useState(propiedad?.region ?? "");
+  const [comuna, setComuna] = useState(propiedad?.comuna ?? "");
+  const comunas = useMemo(() => comunasDeRegion(region), [region]);
 
   return (
     <form action={formAction} className="flex max-w-3xl flex-col gap-6">
       <section className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-        <div className="flex flex-col gap-1 text-sm">
-          <span className="font-medium text-ink">Código interno</span>
-          <div className="rounded-lg border border-line bg-stone-50 px-3 py-2 text-muted">
-            {propiedad?.codigo_interno ?? "Se genera automáticamente al guardar"}
-          </div>
-        </div>
         <label className="flex flex-col gap-1 text-sm">
           <span className="font-medium">Tipo</span>
           <select
@@ -80,24 +79,46 @@ export function PropiedadForm({
           </select>
         </label>
 
-        <Campo
-          label="Dirección"
-          name="direccion"
-          defaultValue={propiedad?.direccion}
-        />
+        <label className="flex flex-col gap-1 text-sm">
+          <span className="font-medium">
+            Región <span className="text-red-600">*</span>
+          </span>
+          <Combobox
+            name="region"
+            options={NOMBRES_REGIONES}
+            value={region}
+            onChange={(v) => {
+              setRegion(v);
+              setComuna("");
+            }}
+            placeholder="Selecciona o escribe…"
+            required
+          />
+        </label>
+
+        <label className="flex flex-col gap-1 text-sm">
+          <span className="font-medium">
+            Comuna <span className="text-red-600">*</span>
+          </span>
+          <Combobox
+            name="comuna"
+            options={comunas}
+            value={comuna}
+            onChange={setComuna}
+            placeholder={region ? "Selecciona o escribe…" : "Elige una región primero"}
+            disabled={!region}
+            required
+          />
+        </label>
+
+        <Campo label="Dirección" name="direccion" defaultValue={propiedad?.direccion} />
         <Campo label="Número" name="numero" defaultValue={propiedad?.numero} />
         <Campo
           label="Depto / Casa"
           name="departamento"
           defaultValue={propiedad?.departamento}
         />
-        <Campo label="Comuna" name="comuna" defaultValue={propiedad?.comuna} required />
-        <Campo label="Región" name="region" defaultValue={propiedad?.region} />
-        <Campo
-          label="Rol SII"
-          name="rol_sii"
-          defaultValue={propiedad?.rol_sii}
-        />
+        <Campo label="Rol SII" name="rol_sii" defaultValue={propiedad?.rol_sii} />
       </section>
 
       <fieldset className="grid grid-cols-2 gap-4 rounded-xl border border-line p-4 sm:grid-cols-4">
