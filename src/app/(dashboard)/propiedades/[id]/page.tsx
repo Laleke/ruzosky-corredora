@@ -18,11 +18,11 @@ const TIPO_LABEL: Record<string, string> = {
   otro: "Otro",
 };
 const ESTADO: Record<string, { label: string; tone: Parameters<typeof badge>[0] }> = {
-  disponible: { label: "Disponible", tone: "success" },
+  disponible: { label: "Disponible", tone: "neutral" },
   reservada: { label: "Reservada", tone: "info" },
-  arrendada: { label: "Arrendada", tone: "neutral" },
+  arrendada: { label: "Arrendada", tone: "success" },
   mantencion: { label: "Mantención", tone: "warning" },
-  inactiva: { label: "Inactiva", tone: "neutral" },
+  inactiva: { label: "Inactiva", tone: "danger" },
 };
 
 function dinero(v: number | null, moneda: string): string {
@@ -132,7 +132,15 @@ export default async function DetallePropiedadPage({
       )}
 
       <div className={`${ui.card} p-5`}>
-        <h2 className="mb-4 text-sm font-semibold text-ink">Propietarios asociados</h2>
+        <div className="mb-4 flex items-center justify-between">
+          <h2 className="text-sm font-semibold text-ink">Propietarios asociados</h2>
+          <Link
+            href={`/propiedades/${id}/editar`}
+            className={`${ui.btnSecondary} px-3 py-1.5 text-xs`}
+          >
+            Asignar propietario
+          </Link>
+        </div>
         {asignados.length === 0 ? (
           <p className="text-sm text-muted">Sin propietarios asociados.</p>
         ) : (

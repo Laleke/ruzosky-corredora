@@ -5,11 +5,11 @@ import { PageHeader } from "@/components/page-header";
 import { ui, badge } from "@/components/ui";
 
 const ESTADO: Record<string, { label: string; tone: Parameters<typeof badge>[0] }> = {
-  disponible: { label: "Disponible", tone: "success" },
+  disponible: { label: "Disponible", tone: "neutral" },
   reservada: { label: "Reservada", tone: "info" },
-  arrendada: { label: "Arrendada", tone: "neutral" },
+  arrendada: { label: "Arrendada", tone: "success" },
   mantencion: { label: "Mantención", tone: "warning" },
-  inactiva: { label: "Inactiva", tone: "neutral" },
+  inactiva: { label: "Inactiva", tone: "danger" },
 };
 
 function formatoValor(valor: number | null, moneda: string): string {
