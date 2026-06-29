@@ -102,7 +102,7 @@ export default async function DetallePropiedadPage({
         <Dato label="Región" value={p.region} />
         <Dato label="Comuna" value={p.comuna} />
         <Dato label="Tipo" value={TIPO_LABEL[p.tipo] ?? p.tipo} />
-        <Dato label="Dirección" value={p.direccion} />
+        <Dato label="Calle" value={p.direccion} />
         <Dato label="Número" value={p.numero} />
         <Dato label="Depto / Casa" value={p.departamento} />
         <Dato label="Rol SII" value={p.rol_sii} />

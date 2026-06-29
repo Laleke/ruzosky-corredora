@@ -38,7 +38,9 @@ export function CargoForm({
           <select name="tipo_cargo" className={inputCls} defaultValue="gasto_comun">
             <option value="arriendo">Arriendo</option>
             <option value="gasto_comun">Gasto común</option>
-            <option value="administracion">Administración</option>
+            <option value="luz">Luz</option>
+            <option value="agua">Agua</option>
+            <option value="internet">Internet</option>
             <option value="multa">Multa</option>
             <option value="ajuste">Ajuste</option>
             <option value="otro">Otro</option>

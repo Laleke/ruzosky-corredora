@@ -27,10 +27,11 @@ function parse(
   if (!rutNormalizado) return { error: "RUT inválido." };
 
   const nombre = valorOpcional(formData, "nombre");
+  const apellido = valorOpcional(formData, "apellido");
   const razon_social = valorOpcional(formData, "razon_social");
 
-  if (tipo_persona === "persona_natural" && !nombre) {
-    return { error: "El nombre es obligatorio para persona natural." };
+  if (tipo_persona === "persona_natural" && (!nombre || !apellido)) {
+    return { error: "Nombres y apellidos son obligatorios para persona natural." };
   }
   if (tipo_persona === "persona_juridica" && !razon_social) {
     return { error: "La razón social es obligatoria para persona jurídica." };
@@ -41,11 +42,12 @@ function parse(
       tipo_persona,
       rut: rutNormalizado,
       nombre,
-      apellido: valorOpcional(formData, "apellido"),
+      apellido,
       razon_social,
       email: valorOpcional(formData, "email"),
       telefono: valorOpcional(formData, "telefono"),
       direccion: valorOpcional(formData, "direccion"),
+      numero: valorOpcional(formData, "numero"),
       comuna: valorOpcional(formData, "comuna"),
       region: valorOpcional(formData, "region"),
     },

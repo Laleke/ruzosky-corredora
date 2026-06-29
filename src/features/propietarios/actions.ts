@@ -34,8 +34,8 @@ function parse(
   const apellido = valorOpcional(formData, "apellido");
   const razon_social = valorOpcional(formData, "razon_social");
 
-  if (tipo_persona === "persona_natural" && !nombre) {
-    return { error: "El nombre es obligatorio para persona natural." };
+  if (tipo_persona === "persona_natural" && (!nombre || !apellido)) {
+    return { error: "Nombres y apellidos son obligatorios para persona natural." };
   }
   if (tipo_persona === "persona_juridica" && !razon_social) {
     return { error: "La razón social es obligatoria para persona jurídica." };
@@ -66,6 +66,7 @@ function parse(
       email: valorOpcional(formData, "email"),
       telefono: valorOpcional(formData, "telefono"),
       direccion: valorOpcional(formData, "direccion"),
+      numero: valorOpcional(formData, "numero"),
       comuna: valorOpcional(formData, "comuna"),
       region: valorOpcional(formData, "region"),
       banco: valorOpcional(formData, "banco"),

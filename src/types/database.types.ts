@@ -44,6 +44,9 @@ export type TipoCargo =
   | "arriendo"
   | "gasto_comun"
   | "administracion"
+  | "luz"
+  | "agua"
+  | "internet"
   | "multa"
   | "ajuste"
   | "otro";
@@ -123,6 +126,7 @@ export type Database = {
           direccion: string | null;
           comuna: string | null;
           region: string | null;
+          numero: string | null;
           banco: string | null;
           tipo_cuenta: TipoCuentaBancaria | null;
           numero_cuenta: string | null;
@@ -145,6 +149,7 @@ export type Database = {
           direccion?: string | null;
           comuna?: string | null;
           region?: string | null;
+          numero?: string | null;
           banco?: string | null;
           tipo_cuenta?: TipoCuentaBancaria | null;
           numero_cuenta?: string | null;
@@ -167,6 +172,7 @@ export type Database = {
           direccion?: string | null;
           comuna?: string | null;
           region?: string | null;
+          numero?: string | null;
           banco?: string | null;
           tipo_cuenta?: TipoCuentaBancaria | null;
           numero_cuenta?: string | null;
@@ -192,6 +198,7 @@ export type Database = {
           direccion: string | null;
           comuna: string | null;
           region: string | null;
+          numero: string | null;
           activo: boolean;
           created_at: string;
           updated_at: string;
@@ -209,6 +216,7 @@ export type Database = {
           direccion?: string | null;
           comuna?: string | null;
           region?: string | null;
+          numero?: string | null;
           activo?: boolean;
           created_at?: string;
           updated_at?: string;
@@ -226,6 +234,7 @@ export type Database = {
           direccion?: string | null;
           comuna?: string | null;
           region?: string | null;
+          numero?: string | null;
           activo?: boolean;
           created_at?: string;
           updated_at?: string;

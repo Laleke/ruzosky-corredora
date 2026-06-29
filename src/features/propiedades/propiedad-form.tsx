@@ -125,7 +125,7 @@ export function PropiedadForm({
           />
         </label>
 
-        <Campo label="Dirección" name="direccion" defaultValue={propiedad?.direccion} />
+        <Campo label="Calle" name="direccion" defaultValue={propiedad?.direccion} />
         <Campo label="Número" name="numero" defaultValue={propiedad?.numero} />
         <Campo
           label="Depto / Casa"
