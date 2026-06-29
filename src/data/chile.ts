@@ -153,6 +153,29 @@ export const REGIONES: { nombre: string; comunas: string[] }[] = [
 
 export const NOMBRES_REGIONES = REGIONES.map((r) => r.nombre);
 
+/** Bancos e instituciones financieras de Chile (para datos de pago). */
+export const BANCOS: string[] = [
+  "BancoEstado",
+  "Banco de Chile",
+  "Banco Santander",
+  "Banco BCI",
+  "Banco Itaú",
+  "Scotiabank Chile",
+  "Banco Falabella",
+  "Banco Ripley",
+  "Banco Security",
+  "Banco BICE",
+  "Banco Internacional",
+  "Banco Consorcio",
+  "Banco BTG Pactual",
+  "HSBC Bank Chile",
+  "Coopeuch",
+  "Tenpo",
+  "MACH",
+  "Mercado Pago",
+  "Tapp Caja Los Andes",
+];
+
 /** Comunas de una región (match case-insensitive); [] si no se reconoce. */
 export function comunasDeRegion(region: string): string[] {
   const r = REGIONES.find(

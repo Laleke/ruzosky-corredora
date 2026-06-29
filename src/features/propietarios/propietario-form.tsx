@@ -3,6 +3,8 @@
 import { useActionState, useState } from "react";
 import Link from "next/link";
 import { ui } from "@/components/ui";
+import { Combobox } from "@/components/combobox";
+import { BANCOS } from "@/data/chile";
 import type { PropietarioFormState } from "./actions";
 import type { Propietario } from "./types";
 
@@ -54,6 +56,7 @@ export function PropietarioForm({
   const [tipoPersona, setTipoPersona] = useState(
     propietario?.tipo_persona ?? "persona_natural"
   );
+  const [banco, setBanco] = useState(propietario?.banco ?? "");
   const esNatural = tipoPersona === "persona_natural";
 
   return (
@@ -123,7 +126,16 @@ export function PropietarioForm({
         <legend className="px-1 text-sm font-semibold text-ink">
           Datos bancarios (liquidaciones)
         </legend>
-        <Campo label="Banco" name="banco" defaultValue={propietario?.banco} />
+        <label className="flex flex-col gap-1 text-sm">
+          <span className="font-medium">Banco</span>
+          <Combobox
+            name="banco"
+            options={BANCOS}
+            value={banco}
+            onChange={setBanco}
+            placeholder="Selecciona o escribe…"
+          />
+        </label>
         <label className="flex flex-col gap-1 text-sm">
           <span className="font-medium">Tipo de cuenta</span>
           <select
