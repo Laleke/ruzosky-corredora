@@ -15,6 +15,12 @@ type Action = (
 
 const inputCls = ui.input;
 
+/** Máscara de Rol SII: dígitos en formato #####-##### (manzana-predio). */
+function formatRol(raw: string): string {
+  const d = raw.replace(/\D/g, "").slice(0, 10);
+  return d.length <= 5 ? d : `${d.slice(0, 5)}-${d.slice(5)}`;
+}
+
 function Campo({
   label,
   name,
@@ -57,6 +63,9 @@ export function PropiedadForm({
   const [region, setRegion] = useState(propiedad?.region ?? "");
   const [comuna, setComuna] = useState(propiedad?.comuna ?? "");
   const comunas = useMemo(() => comunasDeRegion(region), [region]);
+  const [rolSii, setRolSii] = useState(propiedad?.rol_sii ?? "");
+  const [tieneEst, setTieneEst] = useState((propiedad?.estacionamientos ?? 0) > 0);
+  const [tieneBod, setTieneBod] = useState((propiedad?.bodegas ?? 0) > 0);
 
   return (
     <form action={formAction} className="flex max-w-3xl flex-col gap-6">
@@ -118,7 +127,17 @@ export function PropiedadForm({
           name="departamento"
           defaultValue={propiedad?.departamento}
         />
-        <Campo label="Rol SII" name="rol_sii" defaultValue={propiedad?.rol_sii} />
+        <label className="flex flex-col gap-1 text-sm">
+          <span className="font-medium">Rol SII</span>
+          <input
+            name="rol_sii"
+            value={rolSii}
+            onChange={(e) => setRolSii(formatRol(e.target.value))}
+            inputMode="numeric"
+            placeholder="#####-#####"
+            className={inputCls}
+          />
+        </label>
       </section>
 
       <fieldset className="grid grid-cols-2 gap-4 rounded-xl border border-line p-4 sm:grid-cols-4">
@@ -135,18 +154,48 @@ export function PropiedadForm({
           type="number"
           defaultValue={propiedad?.banos}
         />
-        <Campo
-          label="Estacionamientos"
-          name="estacionamientos"
-          type="number"
-          defaultValue={propiedad?.estacionamientos}
-        />
-        <Campo
-          label="Bodegas"
-          name="bodegas"
-          type="number"
-          defaultValue={propiedad?.bodegas}
-        />
+        <div className="flex flex-col gap-1.5 text-sm">
+          <label className="flex items-center gap-2">
+            <input
+              type="checkbox"
+              checked={tieneEst}
+              onChange={(e) => setTieneEst(e.target.checked)}
+            />
+            <span className="font-medium">Estacionamiento</span>
+          </label>
+          {tieneEst && (
+            <input
+              name="estacionamientos"
+              type="number"
+              min="1"
+              step="1"
+              defaultValue={propiedad?.estacionamientos ?? 1}
+              placeholder="N°"
+              className={inputCls}
+            />
+          )}
+        </div>
+        <div className="flex flex-col gap-1.5 text-sm">
+          <label className="flex items-center gap-2">
+            <input
+              type="checkbox"
+              checked={tieneBod}
+              onChange={(e) => setTieneBod(e.target.checked)}
+            />
+            <span className="font-medium">Bodega</span>
+          </label>
+          {tieneBod && (
+            <input
+              name="bodegas"
+              type="number"
+              min="1"
+              step="1"
+              defaultValue={propiedad?.bodegas ?? 1}
+              placeholder="N°"
+              className={inputCls}
+            />
+          )}
+        </div>
         <Campo
           label="Sup. útil (m²)"
           name="superficie_util_m2"

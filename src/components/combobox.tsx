@@ -5,8 +5,9 @@ import { ChevronDown } from "lucide-react";
 import { ui } from "@/components/ui";
 
 /**
- * Desplegable con buscador: filtra opciones al escribir.
- * Controlado por el padre (value/onChange). El input lleva `name` para el form.
+ * Desplegable con buscador. El valor real viaja en un input OCULTO con `name`,
+ * y el campo de texto es solo de búsqueda (sin name, anti-autofill) para que el
+ * teclado/memoria del navegador no interfiera con la selección.
  */
 export function Combobox({
   name,
@@ -30,23 +31,33 @@ export function Combobox({
   const q = value.trim().toLowerCase();
   const filtradas = (
     q ? options.filter((o) => o.toLowerCase().includes(q)) : options
-  ).slice(0, 60);
+  ).slice(0, 80);
 
   return (
     <div className="relative">
+      {/* Valor real para el formulario */}
+      <input type="hidden" name={name} value={value} />
+      {/* Campo de búsqueda (no se autocompleta) */}
       <input
-        name={name}
+        type="text"
+        role="combobox"
+        aria-expanded={open}
         value={value}
         required={required}
         disabled={disabled}
         autoComplete="off"
+        autoCorrect="off"
+        autoCapitalize="off"
+        spellCheck={false}
+        data-lpignore="true"
+        data-1p-ignore="true"
         placeholder={placeholder}
         onChange={(e) => {
           onChange(e.target.value);
           setOpen(true);
         }}
         onFocus={() => setOpen(true)}
-        onBlur={() => setTimeout(() => setOpen(false), 120)}
+        onBlur={() => setTimeout(() => setOpen(false), 150)}
         className={`${ui.input} pr-9`}
       />
       <ChevronDown
