@@ -1,26 +1,59 @@
 import { notFound } from "next/navigation";
-import { PropiedadForm } from "@/features/propiedades/propiedad-form";
-import { AsignarPropietario } from "@/features/propiedades/asignar-propietario";
-import {
-  actualizarPropiedad,
-  asignarPropietario,
-  quitarPropietario,
-} from "@/features/propiedades/actions";
+import Link from "next/link";
+import { Pencil } from "lucide-react";
 import {
   getPropiedad,
   getPropietariosAsignados,
 } from "@/features/propiedades/queries";
-import { listPropietarios } from "@/features/propietarios/queries";
-import { ui } from "@/components/ui";
+import { ui, badge } from "@/components/ui";
 
-function nombrePropietario(p: {
-  tipo_persona: string;
-  nombre: string | null;
-  apellido: string | null;
-  razon_social: string | null;
-}): string {
-  if (p.tipo_persona === "persona_juridica") return p.razon_social ?? "—";
-  return [p.nombre, p.apellido].filter(Boolean).join(" ") || "—";
+const TIPO_LABEL: Record<string, string> = {
+  departamento: "Departamento",
+  casa: "Casa",
+  oficina: "Oficina",
+  local_comercial: "Local comercial",
+  bodega: "Bodega",
+  estacionamiento: "Estacionamiento",
+  terreno: "Terreno",
+  otro: "Otro",
+};
+const ESTADO: Record<string, { label: string; tone: Parameters<typeof badge>[0] }> = {
+  disponible: { label: "Disponible", tone: "success" },
+  reservada: { label: "Reservada", tone: "info" },
+  arrendada: { label: "Arrendada", tone: "neutral" },
+  mantencion: { label: "Mantención", tone: "warning" },
+  inactiva: { label: "Inactiva", tone: "neutral" },
+};
+
+function dinero(v: number | null, moneda: string): string {
+  if (v === null) return "—";
+  return moneda === "UF"
+    ? `UF ${v.toLocaleString("es-CL")}`
+    : `$${v.toLocaleString("es-CL")}`;
+}
+
+function Dato({ label, value }: { label: string; value: React.ReactNode }) {
+  return (
+    <div>
+      <dt className="text-xs uppercase tracking-wide text-muted">{label}</dt>
+      <dd className="mt-0.5 text-sm text-ink">{value || "—"}</dd>
+    </div>
+  );
+}
+
+function Bloque({
+  titulo,
+  children,
+}: {
+  titulo: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className={`${ui.card} p-5`}>
+      <h2 className="mb-4 text-sm font-semibold text-ink">{titulo}</h2>
+      <dl className="grid grid-cols-2 gap-x-6 gap-y-4 sm:grid-cols-3">{children}</dl>
+    </div>
+  );
 }
 
 export default async function DetallePropiedadPage({
@@ -29,82 +62,92 @@ export default async function DetallePropiedadPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const [propiedad, asignados, propietarios] = await Promise.all([
+  const [p, asignados] = await Promise.all([
     getPropiedad(id),
     getPropietariosAsignados(id),
-    listPropietarios(),
   ]);
-  if (!propiedad) notFound();
+  if (!p) notFound();
 
-  const yaAsignados = new Set(asignados.map((a) => a.propietario_id));
-  const opciones = propietarios
-    .filter((p) => p.activo && !yaAsignados.has(p.id))
-    .map((p) => ({ id: p.id, label: `${nombrePropietario(p)} · ${p.rut}` }));
-
-  const sumaParticipacion = asignados.reduce(
-    (acc, a) => acc + Number(a.porcentaje_participacion),
-    0
-  );
+  const est = ESTADO[p.estado] ?? { label: p.estado, tone: "neutral" as const };
 
   return (
-    <div className="flex flex-col gap-10">
-      <section className="flex flex-col gap-6">
-        <h1 className="text-2xl font-semibold tracking-tight text-ink">
-          Editar propiedad
-        </h1>
-        <PropiedadForm
-          action={actualizarPropiedad.bind(null, id)}
-          propiedad={propiedad}
-        />
-      </section>
-
-      <section className="flex flex-col gap-4">
-        <div className="flex items-baseline justify-between">
-          <h2 className="text-lg font-semibold text-ink">Propietarios asociados</h2>
-          <span className="text-sm text-muted">
-            Participación total: <strong className="text-ink">{sumaParticipacion}%</strong>
-          </span>
-        </div>
-
-        {asignados.length > 0 && (
-          <div className={`${ui.card} overflow-hidden`}>
-            <table className="w-full">
-              <thead className="border-b border-line bg-stone-50/60">
-                <tr>
-                  <th className={ui.th}>Propietario</th>
-                  <th className={ui.th}>RUT</th>
-                  <th className={ui.th}>Participación</th>
-                  <th className={ui.th}></th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-line">
-                {asignados.map((a) => (
-                  <tr key={a.vinculo_id}>
-                    <td className={`${ui.td} font-medium`}>{a.nombre}</td>
-                    <td className={`${ui.td} text-muted`}>{a.rut}</td>
-                    <td className={ui.td}>{a.porcentaje_participacion}%</td>
-                    <td className={`${ui.td} text-right`}>
-                      <form action={quitarPropietario.bind(null, a.vinculo_id, id)}>
-                        <button type="submit" className="text-sm text-red-600 hover:text-red-700">
-                          Quitar
-                        </button>
-                      </form>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+    <div className="flex flex-col gap-6">
+      <div>
+        <Link href="/propiedades" className="text-sm text-muted hover:text-ink">
+          ← Volver a propiedades
+        </Link>
+        <div className="mt-2 flex items-start justify-between gap-4">
+          <div>
+            <h1 className="text-2xl font-semibold tracking-tight text-ink">
+              {p.direccion ?? "Propiedad sin dirección"}
+              {p.numero ? ` ${p.numero}` : ""}
+            </h1>
+            <div className="mt-2 flex items-center gap-2">
+              {p.codigo_interno && (
+                <span className={badge("info")}>{p.codigo_interno}</span>
+              )}
+              <span className={badge(est.tone)}>{est.label}</span>
+              {p.publicada && <span className={badge("success")}>Publicada</span>}
+              {!p.activo && <span className={badge("neutral")}>Inactiva</span>}
+            </div>
           </div>
-        )}
-
-        <div className={`${ui.card} p-4`}>
-          <h3 className="mb-3 text-sm font-semibold text-ink">Asignar propietario</h3>
-          <AsignarPropietario
-            action={asignarPropietario.bind(null, id)}
-            opciones={opciones}
-          />
+          <Link href={`/propiedades/${id}/editar`} className={ui.btnPrimary}>
+            <Pencil size={16} />
+            Editar
+          </Link>
         </div>
-      </section>
+      </div>
+
+      <Bloque titulo="Ubicación">
+        <Dato label="Región" value={p.region} />
+        <Dato label="Comuna" value={p.comuna} />
+        <Dato label="Tipo" value={TIPO_LABEL[p.tipo] ?? p.tipo} />
+        <Dato label="Dirección" value={p.direccion} />
+        <Dato label="Número" value={p.numero} />
+        <Dato label="Depto / Casa" value={p.departamento} />
+        <Dato label="Rol SII" value={p.rol_sii} />
+      </Bloque>
+
+      <Bloque titulo="Características">
+        <Dato label="Dormitorios" value={p.dormitorios} />
+        <Dato label="Baños" value={p.banos} />
+        <Dato label="Estacionamientos" value={p.estacionamientos} />
+        <Dato label="Bodegas" value={p.bodegas} />
+        <Dato label="Sup. útil" value={p.superficie_util_m2 ? `${p.superficie_util_m2} m²` : null} />
+        <Dato label="Sup. total" value={p.superficie_total_m2 ? `${p.superficie_total_m2} m²` : null} />
+      </Bloque>
+
+      <Bloque titulo="Valorización">
+        <Dato label="Moneda" value={p.moneda} />
+        <Dato label="Valor ref. arriendo" value={dinero(p.valor_referencial_arriendo, p.moneda)} />
+        <Dato label="Gasto común estimado" value={dinero(p.gasto_comun_estimado, p.moneda)} />
+        <Dato label="Fecha adquisición" value={p.fecha_adquisicion} />
+      </Bloque>
+
+      {p.observaciones && (
+        <div className={`${ui.card} p-5`}>
+          <h2 className="mb-2 text-sm font-semibold text-ink">Observaciones</h2>
+          <p className="text-sm text-ink">{p.observaciones}</p>
+        </div>
+      )}
+
+      <div className={`${ui.card} p-5`}>
+        <h2 className="mb-4 text-sm font-semibold text-ink">Propietarios asociados</h2>
+        {asignados.length === 0 ? (
+          <p className="text-sm text-muted">Sin propietarios asociados.</p>
+        ) : (
+          <ul className="divide-y divide-line">
+            {asignados.map((a) => (
+              <li key={a.vinculo_id} className="flex items-center justify-between py-2 text-sm">
+                <span className="text-ink">
+                  {a.nombre} <span className="text-muted">· {a.rut}</span>
+                </span>
+                <span className="font-medium text-ink">{a.porcentaje_participacion}%</span>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
     </div>
   );
 }

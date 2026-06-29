@@ -69,6 +69,11 @@ export function PropiedadForm({
 
   return (
     <form action={formAction} className="flex max-w-3xl flex-col gap-6">
+      <p className="rounded-lg bg-burgundy-50/60 px-3 py-2 text-sm text-muted">
+        Los campos con <span className="font-medium text-red-600">*</span> son
+        obligatorios. Mínimo para guardar: tipo, región y comuna; el resto puede
+        completarse después. El código interno se genera solo.
+      </p>
       <section className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <label className="flex flex-col gap-1 text-sm">
           <span className="font-medium">Tipo</span>
@@ -169,8 +174,10 @@ export function PropiedadForm({
               type="number"
               min="1"
               step="1"
-              defaultValue={propiedad?.estacionamientos ?? 1}
-              placeholder="N°"
+              required
+              defaultValue={propiedad?.estacionamientos ?? ""}
+              placeholder="N° de estacionamientos"
+              title="Indica cuántos estacionamientos tiene la propiedad"
               className={inputCls}
             />
           )}
@@ -190,8 +197,10 @@ export function PropiedadForm({
               type="number"
               min="1"
               step="1"
-              defaultValue={propiedad?.bodegas ?? 1}
-              placeholder="N°"
+              required
+              defaultValue={propiedad?.bodegas ?? ""}
+              placeholder="N° de bodegas"
+              title="Indica cuántas bodegas tiene la propiedad"
               className={inputCls}
             />
           )}
