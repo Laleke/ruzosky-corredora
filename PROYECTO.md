@@ -13,23 +13,29 @@ Pendiente: aplicar las 7 migraciones en un proyecto Supabase real + bootstrap ad
 
 ## Punto de Continuación (handoff — actualizar al cerrar cada sesión)
 
-**Última sesión: 2026-06-27.** Se construyó el MVP operativo completo (6 módulos) y la guía de validación.
+**Última sesión: 2026-06-29.** App **en producción** (Vercel) y desplegándose con cada push. Nombre de la app: **Ruzosky Prop**. Repo `github.com/Laleke/ruzosky-corredora`.
 
-**Lo último que hicimos (en orden):**
-1. Scaffold base (Next.js App Router + PWA Serwist + Supabase SSR + RLS multitenant).
-2. Auth: login/logout, dashboard por rol, doble barrera (middleware + layout).
-3. Bootstrap admin (`supabase/bootstrap_admin.sql`).
-4. Módulos de negocio: Propietarios → Propiedades (+copropiedad N:M) → Arrendatarios → Contratos (+sincronización de estado de propiedad) → Cobros (cargos + pagos).
-5. Guía `docs/PUESTA_EN_MARCHA.md` para validar end-to-end.
-- Todo **compila** (`next build` verde). 7 migraciones (0001–0007) listas. Commits **locales** (último: ver `git log`), **sin push** (lo hace Eduardo, cuenta personal).
+**Estado actual:**
+- MVP completo + módulo **Liquidaciones a propietarios** terminado (Fase 1A + ajustes finales). Build de producción verde. Desplegado.
+- **14 migraciones** (`0001`–`0014`). Eduardo las aplica manualmente en el SQL Editor de Supabase, **en orden estricto**.
+- Auth, dashboard con KPIs, y módulos: Propietarios, Propiedades (+copropiedad N:M), Arrendatarios, Contratos (+sincronización de estado), Cobros (cargos+pagos), Liquidaciones (cálculo auto + ajustes manuales + corretaje único + numeración + auditoría + PDF).
+- Rediseño UI grafito+burdeo, sidebar responsivo, borrador automático en formularios, catálogo Chile (regiones/comunas/bancos), íconos PWA.
 
-**Lo que debemos hacer (próximo):**
-1. **PRIMERO — validar el MVP end-to-end** contra un Supabase real siguiendo `docs/PUESTA_EN_MARCHA.md`. NO avanzar a módulos nuevos hasta validar. Pendiente de Eduardo: crear proyecto Supabase, correr migraciones + bootstrap, probar el ciclo, verificar RLS.
-2. Pendientes operativos: `npm run types:gen`, íconos PWA reales, push a GitHub personal.
-3. **Después de validar** → siguiente módulo: **Dashboard financiero** (deuda, morosidad, ingresos), luego Liquidaciones a propietarios.
-- Opcional ofrecido y no entregado aún: script SQL del test multitenant (2ª empresa + usuario) para la verificación de RLS.
+**Lo último de esta sesión:**
+1. Formularios de personas: región/comuna selectables dependientes, teléfono con `+`, Nombres/Apellidos, calle+número, banco desplegable. Borrador automático en todos los forms de creación.
+2. `codigo_interno` (propiedad) y `numero_contrato` autogenerados y ocultos.
+3. Módulo **Liquidaciones** completo (migraciones 0011–0014). Doc `docs/QA_LIQUIDACIONES.md`.
+4. Rename a "Ruzosky Prop". Fix: contrato vuelve al listado al guardar.
 
-**Reglas de trabajo activas:** responder en español chileno; nunca `git push`/`remote` automático; scopes personales (no la org empresarial) en GitHub/Supabase/Vercel; `@supabase/ssr` alineado con `supabase-js`.
+**Pendiente / próximo:**
+1. Eduardo: aplicar migraciones `0009`–`0014` en Supabase si falta alguna (ver error de orden: 0011 antes que 0012). Validar Liquidaciones con `docs/QA_LIQUIDACIONES.md`.
+2. Reinstalar la PWA en el celular para tomar nombre/ícono nuevos (iOS: Safari → Compartir → Agregar a inicio; Android: Chrome ⋮ → Instalar).
+3. Próximos módulos sugeridos: **adjuntar comprobante de pago** (Storage; `comprobante_url` ya existe), **dashboard financiero**, **notificaciones** (email/WhatsApp — sí tienen API real), **motor de reajuste** (IPC/UF), portales propietario/arrendatario, documentos, tickets.
+4. Integración deudas de servicios (Enel/Aguas Andinas): no hay API pública; evaluar agregador (Fintoc/Floid/Servipag) como research aparte.
+
+**Flujo de trabajo:** construir → `next build` verde → commit local → **push a GitHub** (Eduardo autoriza; el push lo ejecuta el asistente cuando lo pide) → Vercel redespliega. Eduardo suele relayar respuestas de ChatGPT (co-diseñador) y pedir "respuesta para ChatGPT".
+
+**Reglas activas:** español chileno; scopes personales (no org empresarial) en GitHub/Supabase/Vercel; identidad git local = Laleke (no email casinoexpress); `@supabase/ssr` alineado con `supabase-js`; toda tabla nueva con `empresa_id` + RLS solo-admin.
 
 ## Arquitectura
 Serverless, modular, multitenant. Frontend en Vercel; backend, BD, auth y storage en Supabase.
