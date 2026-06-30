@@ -18,8 +18,8 @@ export default async function LoginPage() {
             R
           </span>
           <div className="leading-tight">
-            <p className="text-lg font-semibold text-white">Ruzosky</p>
-            <p className="text-sm text-white/50">Prop</p>
+            <p className="text-lg font-semibold text-white">Ruzosky Prop</p>
+            <p className="text-sm text-white/50">Administración inmobiliaria</p>
           </div>
         </div>
         <div>

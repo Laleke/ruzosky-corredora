@@ -59,8 +59,8 @@ function Marca() {
         R
       </span>
       <div className="leading-tight">
-        <p className="text-sm font-semibold text-white">Ruzosky</p>
-        <p className="text-xs text-white/50">Prop</p>
+        <p className="text-sm font-semibold text-white">Ruzosky Prop</p>
+        <p className="text-xs text-white/50">Administración</p>
       </div>
     </div>
   );
