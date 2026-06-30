@@ -76,6 +76,7 @@ export default async function LiquidacionesPage({
             <table className="w-full">
               <thead className="border-b border-line bg-stone-50/60">
                 <tr>
+                  <th className={ui.th}>N°</th>
                   <th className={ui.th}>Período</th>
                   <th className={ui.th}>Propietario</th>
                   <th className={ui.th}>Total</th>
@@ -89,6 +90,7 @@ export default async function LiquidacionesPage({
                   const est = ESTADO[l.estado] ?? { label: l.estado, tone: "neutral" as const };
                   return (
                     <tr key={l.id} className="transition-colors hover:bg-stone-50/50">
+                      <td className={`${ui.td} text-muted`}>{l.numero ?? "—"}</td>
                       <td className={`${ui.td} font-medium`}>{l.periodo.slice(0, 7)}</td>
                       <td className={ui.td}>{l.propietario_nombre}</td>
                       <td className={`${ui.td} font-medium`}>{clp(l.total_liquidacion)}</td>

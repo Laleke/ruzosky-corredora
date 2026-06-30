@@ -45,16 +45,17 @@ export default async function DetalleLiquidacionPage({
       <div className="flex items-start justify-between gap-4">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight text-ink">
-            Liquidación {liq.periodo.slice(0, 7)}
+            {liq.numero ?? "Liquidación"}
           </h1>
           <p className="mt-1 text-sm text-muted">
-            {liq.propietario_nombre} · generada {liq.fecha_generacion}
+            Período {liq.periodo.slice(0, 7)} · {liq.propietario_nombre} · generada{" "}
+            {liq.fecha_generacion}
           </p>
           <span className={`mt-2 inline-flex ${badge(est.tone)}`}>{est.label}</span>
         </div>
         <div className="no-print flex gap-2">
           <BotonImprimir />
-          {liq.estado !== "anulada" && (
+          {liq.estado === "pendiente" && (
             <form action={anularLiquidacion.bind(null, id)}>
               <button type="submit" className={`${ui.btnSecondary} text-red-600`}>
                 Anular
@@ -75,7 +76,15 @@ export default async function DetalleLiquidacionPage({
             ) : (
               ingresos.map((d) => (
                 <tr key={d.id}>
-                  <td className={ui.td}>{d.concepto}</td>
+                  <td className={ui.td}>
+                    {d.concepto}
+                    {d.referencia_tipo === "manual" && (
+                      <span className="ml-2 text-xs text-muted">(ajuste)</span>
+                    )}
+                    {d.observacion && (
+                      <span className="block text-xs text-muted">{d.observacion}</span>
+                    )}
+                  </td>
                   <td className={`${ui.td} text-right font-medium`}>{clp(d.monto)}</td>
                 </tr>
               ))
@@ -95,7 +104,15 @@ export default async function DetalleLiquidacionPage({
             ) : (
               descuentos.map((d) => (
                 <tr key={d.id}>
-                  <td className={ui.td}>{d.concepto}</td>
+                  <td className={ui.td}>
+                    {d.concepto}
+                    {d.referencia_tipo === "manual" && (
+                      <span className="ml-2 text-xs text-muted">(ajuste)</span>
+                    )}
+                    {d.observacion && (
+                      <span className="block text-xs text-muted">{d.observacion}</span>
+                    )}
+                  </td>
                   <td className={`${ui.td} text-right font-medium`}>{clp(d.monto)}</td>
                 </tr>
               ))
