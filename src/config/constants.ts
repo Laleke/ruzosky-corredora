@@ -9,4 +9,4 @@ export const ROLES = {
 
 export type Rol = (typeof ROLES)[keyof typeof ROLES];
 
-export const APP_NAME = "Ruzosky Corredora";
+export const APP_NAME = "Ruzosky Prop";

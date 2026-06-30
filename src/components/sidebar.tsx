@@ -58,7 +58,7 @@ function Marca() {
       </span>
       <div className="leading-tight">
         <p className="text-sm font-semibold text-white">Ruzosky</p>
-        <p className="text-xs text-white/50">Corredora</p>
+        <p className="text-xs text-white/50">Prop</p>
       </div>
     </div>
   );
@@ -95,7 +95,7 @@ export function Sidebar({
           <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-burgundy text-sm font-bold text-white">
             R
           </span>
-          <span className="font-semibold text-ink">Ruzosky</span>
+          <span className="font-semibold text-ink">Ruzosky Prop</span>
         </div>
         <button
           onClick={() => setAbierto(true)}

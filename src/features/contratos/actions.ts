@@ -248,7 +248,7 @@ export async function crearContrato(
 
   revalidatePath("/contratos");
   revalidatePath("/propiedades");
-  redirect(`/contratos/${data.id}`);
+  redirect("/contratos");
 }
 
 export async function actualizarContrato(

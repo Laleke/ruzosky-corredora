@@ -19,7 +19,7 @@ export default async function LoginPage() {
           </span>
           <div className="leading-tight">
             <p className="text-lg font-semibold text-white">Ruzosky</p>
-            <p className="text-sm text-white/50">Corredora</p>
+            <p className="text-sm text-white/50">Prop</p>
           </div>
         </div>
         <div>
@@ -43,7 +43,7 @@ export default async function LoginPage() {
             <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-burgundy text-lg font-bold text-white">
               R
             </span>
-            <span className="text-lg font-semibold text-ink">Ruzosky Corredora</span>
+            <span className="text-lg font-semibold text-ink">Ruzosky Prop</span>
           </div>
           <div>
             <h1 className="text-2xl font-semibold tracking-tight text-ink">

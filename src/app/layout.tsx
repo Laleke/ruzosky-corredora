@@ -9,7 +9,7 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "Ruzosky Corredora",
+  title: "Ruzosky Prop",
   description: "Administración inmobiliaria centralizada",
   manifest: "/manifest.webmanifest",
   icons: {
@@ -19,7 +19,7 @@ export const metadata: Metadata = {
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
-    title: "Ruzosky",
+    title: "Ruzosky Prop",
   },
 };
 
