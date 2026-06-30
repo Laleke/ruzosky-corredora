@@ -71,7 +71,7 @@ export async function calcularLiquidacion(
   const { data: contratos } = await supabase
     .from("contratos")
     .select(
-      "id, propiedad_id, canon_monto, cobra_administracion, administracion_monto, administracion_porcentaje, tipo_comision, comision_monto, fecha_inicio"
+      "id, propiedad_id, canon_monto, cobra_administracion, administracion_monto, administracion_porcentaje, tipo_comision, comision_monto, corretaje_liquidado"
     )
     .in("propiedad_id", propiedadIds)
     .eq("activo", true);
@@ -151,7 +151,8 @@ export async function calcularLiquidacion(
       }
     }
 
-    if (c.tipo_comision && c.fecha_inicio?.slice(0, 7) === ym) {
+    // Corretaje: se cobra una sola vez por contrato (mientras no esté liquidado).
+    if (c.tipo_comision && !c.corretaje_liquidado) {
       const raw =
         c.tipo_comision === "porcentaje"
           ? (Number(c.canon_monto) * Number(c.comision_monto ?? 0)) / 100
