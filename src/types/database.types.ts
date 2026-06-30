@@ -377,6 +377,7 @@ export type Database = {
           administracion_porcentaje: number | null;
           estado: EstadoContrato;
           observaciones: string | null;
+          corretaje_liquidado: boolean;
           activo: boolean;
           created_at: string;
           updated_at: string;
@@ -400,6 +401,7 @@ export type Database = {
           administracion_porcentaje?: number | null;
           estado?: EstadoContrato;
           observaciones?: string | null;
+          corretaje_liquidado?: boolean;
           activo?: boolean;
           created_at?: string;
           updated_at?: string;
@@ -423,6 +425,7 @@ export type Database = {
           administracion_porcentaje?: number | null;
           estado?: EstadoContrato;
           observaciones?: string | null;
+          corretaje_liquidado?: boolean;
           activo?: boolean;
           created_at?: string;
           updated_at?: string;
@@ -552,6 +555,7 @@ export type Database = {
           fecha_pago: string | null;
           pago_observacion: string | null;
           comprobante_url: string | null;
+          numero: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -569,6 +573,7 @@ export type Database = {
           fecha_pago?: string | null;
           pago_observacion?: string | null;
           comprobante_url?: string | null;
+          numero?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -586,6 +591,7 @@ export type Database = {
           fecha_pago?: string | null;
           pago_observacion?: string | null;
           comprobante_url?: string | null;
+          numero?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -600,6 +606,7 @@ export type Database = {
           concepto: string;
           referencia_tipo: string | null;
           referencia_id: string | null;
+          observacion: string | null;
           monto: number;
           created_at: string;
         };
@@ -611,6 +618,7 @@ export type Database = {
           concepto: string;
           referencia_tipo?: string | null;
           referencia_id?: string | null;
+          observacion?: string | null;
           monto: number;
           created_at?: string;
         };
@@ -622,6 +630,7 @@ export type Database = {
           concepto?: string;
           referencia_tipo?: string | null;
           referencia_id?: string | null;
+          observacion?: string | null;
           monto?: number;
           created_at?: string;
         };
