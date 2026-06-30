@@ -169,6 +169,8 @@ export default async function NuevaLiquidacionPage({
                 </h2>
                 <ConfirmarForm
                   action={generarLiquidacion.bind(null, propietarioId, periodo)}
+                  subtotalIngresos={preview.subtotal_ingresos}
+                  subtotalDescuentos={preview.subtotal_descuentos}
                 />
               </div>
             </>
