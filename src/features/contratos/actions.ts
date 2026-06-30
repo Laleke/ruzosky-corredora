@@ -86,10 +86,34 @@ async function sincronizarPropiedad(
   // 'vencido' y 'borrador': no tocan la propiedad.
 }
 
+/** Número de contrato correlativo por empresa (4 dígitos), con reintento. */
+async function generarNumeroContrato(
+  supabase: DB,
+  empresaId: string
+): Promise<string> {
+  const { count } = await supabase
+    .from("contratos")
+    .select("*", { count: "exact", head: true })
+    .eq("empresa_id", empresaId);
+
+  const { data } = await supabase
+    .from("contratos")
+    .select("numero_contrato")
+    .eq("empresa_id", empresaId);
+  const usados = new Set((data ?? []).map((r) => r.numero_contrato));
+
+  let n = (count ?? 0) + 1;
+  while (usados.has(String(n).padStart(4, "0"))) n++;
+  return String(n).padStart(4, "0");
+}
+
 function parse(
   formData: FormData
 ):
-  | { data: Omit<ContratoInsert, "empresa_id">; estado: EstadoContrato }
+  | {
+      data: Omit<ContratoInsert, "empresa_id" | "numero_contrato">;
+      estado: EstadoContrato;
+    }
   | { error: string } {
   const propiedad_id = texto(formData, "propiedad_id");
   if (!propiedad_id) return { error: "Selecciona una propiedad." };
@@ -156,7 +180,6 @@ function parse(
 
   return {
     data: {
-      numero_contrato: texto(formData, "numero_contrato"),
       propiedad_id,
       fecha_firma: texto(formData, "fecha_firma"),
       fecha_inicio,
@@ -203,9 +226,14 @@ export async function crearContrato(
     }
   }
 
+  const numero_contrato = await generarNumeroContrato(
+    supabase,
+    profile.empresa_id
+  );
+
   const { data, error } = await supabase
     .from("contratos")
-    .insert({ ...parsed.data, empresa_id: profile.empresa_id })
+    .insert({ ...parsed.data, empresa_id: profile.empresa_id, numero_contrato })
     .select("id")
     .single();
 

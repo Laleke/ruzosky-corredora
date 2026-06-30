@@ -3,6 +3,7 @@
 import { useActionState } from "react";
 import Link from "next/link";
 import { ui } from "@/components/ui";
+import { useFormDraft } from "@/components/use-form-draft";
 import type { ContratoFormState } from "./actions";
 import type { Contrato } from "./types";
 
@@ -54,15 +55,17 @@ export function ContratoForm({
   propiedades: { id: string; label: string }[];
 }) {
   const [state, formAction, pending] = useActionState(action, { error: null });
+  const draftKey = contrato ? null : "ruzosky:draft:contrato";
+  const { ref, clear } = useFormDraft(draftKey);
 
   return (
-    <form action={formAction} className="flex max-w-3xl flex-col gap-6">
+    <form ref={ref} action={formAction} onSubmit={clear} className="flex max-w-3xl flex-col gap-6">
+      <p className="rounded-lg bg-burgundy-50/60 px-3 py-2 text-sm text-muted">
+        Los campos con <span className="font-medium text-red-600">*</span> son
+        obligatorios. El número de contrato se genera solo. Lo escrito se guarda
+        como borrador por si la app se recarga.
+      </p>
       <section className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-        <Campo
-          label="Número de contrato"
-          name="numero_contrato"
-          defaultValue={contrato?.numero_contrato}
-        />
         <label className="flex flex-col gap-1 text-sm">
           <span className="font-medium">
             Propiedad <span className="text-red-600">*</span>

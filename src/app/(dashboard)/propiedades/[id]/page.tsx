@@ -134,12 +134,14 @@ export default async function DetallePropiedadPage({
       <div className={`${ui.card} p-5`}>
         <div className="mb-4 flex items-center justify-between">
           <h2 className="text-sm font-semibold text-ink">Propietarios asociados</h2>
-          <Link
-            href={`/propiedades/${id}/editar`}
-            className={`${ui.btnSecondary} px-3 py-1.5 text-xs`}
-          >
-            Asignar propietario
-          </Link>
+          {asignados.length === 0 && (
+            <Link
+              href={`/propiedades/${id}/editar`}
+              className={`${ui.btnSecondary} px-3 py-1.5 text-xs`}
+            >
+              Asignar propietario
+            </Link>
+          )}
         </div>
         {asignados.length === 0 ? (
           <p className="text-sm text-muted">Sin propietarios asociados.</p>

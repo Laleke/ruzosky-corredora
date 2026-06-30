@@ -1,9 +1,10 @@
 "use client";
 
-import { useActionState, useState, useMemo } from "react";
+import { useActionState, useState, useMemo, useEffect } from "react";
 import Link from "next/link";
 import { ui } from "@/components/ui";
 import { Combobox } from "@/components/combobox";
+import { useFormDraft, readDraft } from "@/components/use-form-draft";
 import { NOMBRES_REGIONES, comunasDeRegion } from "@/data/chile";
 import type { PropiedadFormState } from "./actions";
 import type { Propiedad } from "./types";
@@ -60,6 +61,9 @@ export function PropiedadForm({
   propiedad?: Propiedad;
 }) {
   const [state, formAction, pending] = useActionState(action, { error: null });
+  const draftKey = propiedad ? null : "ruzosky:draft:propiedad";
+  const { ref, clear } = useFormDraft(draftKey, ["region", "comuna", "rol_sii"]);
+
   const [region, setRegion] = useState(propiedad?.region ?? "");
   const [comuna, setComuna] = useState(propiedad?.comuna ?? "");
   const comunas = useMemo(() => comunasDeRegion(region), [region]);
@@ -67,12 +71,24 @@ export function PropiedadForm({
   const [tieneEst, setTieneEst] = useState((propiedad?.estacionamientos ?? 0) > 0);
   const [tieneBod, setTieneBod] = useState((propiedad?.bodegas ?? 0) > 0);
 
+  // Restaura campos controlados desde el borrador.
+  useEffect(() => {
+    const d = readDraft(draftKey);
+    if (d.region) setRegion(d.region);
+    if (d.comuna) setComuna(d.comuna);
+    if (d.rol_sii) setRolSii(d.rol_sii);
+    if (d.estacionamientos) setTieneEst(true);
+    if (d.bodegas) setTieneBod(true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   return (
-    <form action={formAction} className="flex max-w-3xl flex-col gap-6">
+    <form ref={ref} action={formAction} onSubmit={clear} className="flex max-w-3xl flex-col gap-6">
       <p className="rounded-lg bg-burgundy-50/60 px-3 py-2 text-sm text-muted">
         Los campos con <span className="font-medium text-red-600">*</span> son
         obligatorios. Mínimo para guardar: tipo, región y comuna; el resto puede
-        completarse después. El código interno se genera solo.
+        completarse después. El código interno se genera solo. Lo escrito se
+        guarda como borrador por si la app se recarga.
       </p>
       <section className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <label className="flex flex-col gap-1 text-sm">
