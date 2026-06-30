@@ -10,6 +10,7 @@ import {
   UserSquare2,
   FileText,
   Receipt,
+  Wallet,
   LogOut,
   Menu,
   X,
@@ -22,6 +23,7 @@ const NAV = [
   { href: "/arrendatarios", label: "Arrendatarios", icon: UserSquare2 },
   { href: "/contratos", label: "Contratos", icon: FileText },
   { href: "/cobros", label: "Cobros y pagos", icon: Receipt },
+  { href: "/liquidaciones", label: "Liquidaciones", icon: Wallet },
 ];
 
 function NavLinks({ onNavigate }: { onNavigate?: () => void }) {
@@ -90,7 +92,7 @@ export function Sidebar({
   return (
     <>
       {/* Topbar móvil */}
-      <header className="sticky top-0 z-30 flex items-center justify-between border-b border-line bg-white px-4 py-3 md:hidden">
+      <header className="no-print sticky top-0 z-30 flex items-center justify-between border-b border-line bg-white px-4 py-3 md:hidden">
         <div className="flex items-center gap-2">
           <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-burgundy text-sm font-bold text-white">
             R
@@ -107,7 +109,7 @@ export function Sidebar({
       </header>
 
       {/* Sidebar desktop */}
-      <aside className="fixed inset-y-0 left-0 z-30 hidden w-64 flex-col bg-ink md:flex">
+      <aside className="no-print fixed inset-y-0 left-0 z-30 hidden w-64 flex-col bg-ink md:flex">
         <Marca />
         <NavLinks />
         <div className="mx-3 mb-2 rounded-lg bg-white/5 px-3 py-2.5">
