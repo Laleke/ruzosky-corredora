@@ -57,6 +57,8 @@ export type MedioPago =
   | "cheque"
   | "tarjeta"
   | "otro";
+export type EstadoLiquidacion = "pendiente" | "pagada" | "anulada";
+export type TipoDetalleLiquidacion = "ingreso" | "descuento";
 
 export type Database = {
   public: {
@@ -535,6 +537,132 @@ export type Database = {
         };
         Relationships: [];
       };
+      liquidaciones: {
+        Row: {
+          id: string;
+          empresa_id: string;
+          propietario_id: string;
+          periodo: string;
+          fecha_generacion: string;
+          subtotal_ingresos: number;
+          subtotal_descuentos: number;
+          total_liquidacion: number;
+          estado: EstadoLiquidacion;
+          observaciones: string | null;
+          fecha_pago: string | null;
+          pago_observacion: string | null;
+          comprobante_url: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          empresa_id: string;
+          propietario_id: string;
+          periodo: string;
+          fecha_generacion: string;
+          subtotal_ingresos?: number;
+          subtotal_descuentos?: number;
+          total_liquidacion?: number;
+          estado?: EstadoLiquidacion;
+          observaciones?: string | null;
+          fecha_pago?: string | null;
+          pago_observacion?: string | null;
+          comprobante_url?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          empresa_id?: string;
+          propietario_id?: string;
+          periodo?: string;
+          fecha_generacion?: string;
+          subtotal_ingresos?: number;
+          subtotal_descuentos?: number;
+          total_liquidacion?: number;
+          estado?: EstadoLiquidacion;
+          observaciones?: string | null;
+          fecha_pago?: string | null;
+          pago_observacion?: string | null;
+          comprobante_url?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+      liquidacion_detalles: {
+        Row: {
+          id: string;
+          empresa_id: string;
+          liquidacion_id: string;
+          tipo: TipoDetalleLiquidacion;
+          concepto: string;
+          referencia_tipo: string | null;
+          referencia_id: string | null;
+          monto: number;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          empresa_id: string;
+          liquidacion_id: string;
+          tipo: TipoDetalleLiquidacion;
+          concepto: string;
+          referencia_tipo?: string | null;
+          referencia_id?: string | null;
+          monto: number;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          empresa_id?: string;
+          liquidacion_id?: string;
+          tipo?: TipoDetalleLiquidacion;
+          concepto?: string;
+          referencia_tipo?: string | null;
+          referencia_id?: string | null;
+          monto?: number;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
+      auditoria: {
+        Row: {
+          id: string;
+          empresa_id: string;
+          usuario_id: string | null;
+          usuario_email: string | null;
+          accion: string;
+          entidad_tipo: string;
+          entidad_id: string | null;
+          datos: Json | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          empresa_id: string;
+          usuario_id?: string | null;
+          usuario_email?: string | null;
+          accion: string;
+          entidad_tipo: string;
+          entidad_id?: string | null;
+          datos?: Json | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          empresa_id?: string;
+          usuario_id?: string | null;
+          usuario_email?: string | null;
+          accion?: string;
+          entidad_tipo?: string;
+          entidad_id?: string | null;
+          datos?: Json | null;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
     };
     Views: Record<string, never>;
     Functions: {
@@ -554,6 +682,8 @@ export type Database = {
       tipo_cargo: TipoCargo;
       estado_cargo: EstadoCargo;
       medio_pago: MedioPago;
+      estado_liquidacion: EstadoLiquidacion;
+      tipo_detalle_liquidacion: TipoDetalleLiquidacion;
     };
   };
 };
