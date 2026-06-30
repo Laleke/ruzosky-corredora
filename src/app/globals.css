@@ -31,3 +31,16 @@ body {
   scrollbar-width: thin;
   scrollbar-color: #d6d3d1 transparent;
 }
+
+/* Impresión / PDF: oculta navegación y deja solo el contenido */
+@media print {
+  .no-print {
+    display: none !important;
+  }
+  .print-reset {
+    padding-left: 0 !important;
+  }
+  body {
+    background: #fff;
+  }
+}

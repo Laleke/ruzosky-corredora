@@ -96,6 +96,9 @@ Usuario autentica con Supabase Auth → middleware refresca sesión y protege ru
 - `contratos_arrendatarios` — tabla puente N:M contrato↔arrendatarios (matrimonios/codeudores/representantes). `unique(contrato_id, arrendatario_id)`. DELETE permitido. RLS solo admin.
 - `cargos` — deuda generada por contrato/período/tipo. `unique(contrato_id, periodo, tipo_cargo)`. `saldo_pendiente` y `estado` recalculados por la app. RLS solo admin.
 - `pagos` — abonos sobre un cargo (soporta pago parcial). `medio_pago` enum. RLS solo admin.
+- `liquidaciones` — monto a transferir al propietario por período. Estados pendiente/pagada/anulada; subtotales + total; registro de pago (fecha/observación) + `comprobante_url` (estructura futura). Único por (empresa, propietario, período) salvo anuladas. RLS solo admin.
+- `liquidacion_detalles` — líneas (ingreso/descuento) con `concepto`, `referencia_tipo`/`referencia_id` (trazabilidad a cargo/contrato). RLS solo admin.
+- `auditoria` — eventos genéricos (usuario, acción, entidad, datos jsonb). RLS solo admin. Helper `src/lib/auditoria.ts`.
 
 ### Relaciones
 - `profiles.id` → `auth.users.id` (1:1). `profiles.empresa_id` → `empresas.id` (N:1).
@@ -178,6 +181,7 @@ Reglas de negocio confirmadas para cuando se construya:
 - Documentos, tickets de mantención. Portal de propietario/arrendatario (políticas RLS específicas). Onboarding de segunda empresa (validar multitenancy).
 
 ## Últimos Cambios
+- 2026-06-29 — **Módulo Liquidaciones a propietarios** (Fase 1A, migración `0011`): cálculo automático por propietario+período (ingresos = pagos efectivos ponderados por % de participación; descuentos = comisión administración mensual + corretaje en mes de inicio), asistente con vista previa, listado con filtros, detalle con detalle de líneas, registro de pago, anulación, PDF vía impresión, y **sistema de auditoría** (`auditoria` + helper). RLS solo-admin. **Requiere aplicar `0011` en Supabase.** Reglas de negocio del cálculo documentadas; ajustes manuales/mantenciones quedan como estructura preparada (no UI aún).
 - 2026-06-29 — Borrador automático extendido a formularios de propiedad y contrato. **`numero_contrato` autogenerado** (correlativo por empresa) y oculto del formulario, igual patrón que `codigo_interno`. En detalle de propiedad, el botón "Asignar propietario" se muestra solo si no hay propietarios asignados.
 - 2026-06-29 — Formularios de personas (propietario/arrendatario): región/comuna como combobox dependiente (orden región→comuna), teléfono numérico con `+`, **Nombres/Apellidos** ambos obligatorios (persona natural), dirección separada en **Calle + Número** (migración `0009` agrega `numero`). **Borrador automático** en localStorage (`use-form-draft`) que restaura lo escrito si la app se recarga (causa del "se borraba todo": redeploys frecuentes). Cargo: se quita Administración del formulario y se agregan **Luz/Agua/Internet** (migración `0010` agrega valores al enum `tipo_cargo`). **Requiere aplicar 0009 y 0010 en Supabase.**
 - 2026-06-28 — Propiedades: código interno **oculto** del form; orden tipo→región→comuna→resto; **región y comuna obligatorias** como **combobox con buscador** (catálogo Chile en `src/data/chile.ts`, comuna dependiente de región). Componente `src/components/combobox.tsx`.
