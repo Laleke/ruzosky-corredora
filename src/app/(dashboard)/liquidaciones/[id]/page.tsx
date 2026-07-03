@@ -1,11 +1,16 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { getLiquidacion, getDetalles } from "@/features/liquidaciones/queries";
+import {
+  getLiquidacion,
+  getDetalles,
+  getGastosDeLiquidacion,
+} from "@/features/liquidaciones/queries";
 import { anularLiquidacion } from "@/features/liquidaciones/actions";
 import {
   BotonImprimir,
   MarcarPagadaForm,
 } from "@/features/liquidaciones/acciones-detalle";
+import { CATEGORIA_GASTO_LABEL } from "@/features/gastos/constants";
 import { ui, badge } from "@/components/ui";
 
 const ESTADO: Record<string, { label: string; tone: Parameters<typeof badge>[0] }> = {
@@ -24,14 +29,19 @@ export default async function DetalleLiquidacionPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const [liq, detalles] = await Promise.all([
+  const [liq, detalles, gastos] = await Promise.all([
     getLiquidacion(id),
     getDetalles(id),
+    getGastosDeLiquidacion(id),
   ]);
   if (!liq) notFound();
 
   const ingresos = detalles.filter((d) => d.tipo === "ingreso");
-  const descuentos = detalles.filter((d) => d.tipo === "descuento");
+  // Los gastos se muestran en su propia sección; se excluyen de "Descuentos".
+  const descuentos = detalles.filter(
+    (d) => d.tipo === "descuento" && d.referencia_tipo !== "gasto"
+  );
+  const subtotalGastos = gastos.reduce((a, g) => a + g.monto, 0);
   const est = ESTADO[liq.estado] ?? { label: liq.estado, tone: "neutral" as const };
 
   return (
@@ -120,6 +130,38 @@ export default async function DetalleLiquidacionPage({
           </tbody>
         </table>
       </div>
+
+      {gastos.length > 0 && (
+        <div className={`${ui.card} overflow-hidden`}>
+          <div className="border-b border-line bg-stone-50/60 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-muted">
+            Gastos descontados
+          </div>
+          <table className="w-full">
+            <tbody className="divide-y divide-line">
+              {gastos.map((g) => (
+                <tr key={g.gasto_id}>
+                  <td className={ui.td}>
+                    {g.descripcion}
+                    <span className="block text-xs text-muted">
+                      {CATEGORIA_GASTO_LABEL[
+                        g.categoria as keyof typeof CATEGORIA_GASTO_LABEL
+                      ] ?? g.categoria}{" "}
+                      · {g.fecha}
+                    </span>
+                  </td>
+                  <td className={`${ui.td} text-right font-medium`}>{clp(g.monto)}</td>
+                </tr>
+              ))}
+              <tr className="bg-stone-50/40">
+                <td className={`${ui.td} font-medium`}>Subtotal gastos</td>
+                <td className={`${ui.td} text-right font-semibold`}>
+                  − {clp(subtotalGastos)}
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      )}
 
       <div className={`${ui.card} flex flex-col gap-2 p-5`}>
         <div className="flex justify-between text-sm">
