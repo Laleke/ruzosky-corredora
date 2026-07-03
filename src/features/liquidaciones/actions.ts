@@ -7,6 +7,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getCurrentProfile } from "@/lib/auth";
 import { registrarAuditoria } from "@/lib/auditoria";
 import { calcularLiquidacion } from "./queries";
+import { CATEGORIA_GASTO_LABEL } from "@/features/gastos/constants";
 import type { Database } from "@/types/database.types";
 
 export type LiquidacionFormState = { error: string | null };
@@ -93,6 +94,7 @@ export async function generarLiquidacion(
   if (
     calc.ingresos.length === 0 &&
     calc.descuentos.length === 0 &&
+    calc.gastos.length === 0 &&
     ajustes.length === 0
   ) {
     return { error: "No hay movimientos en el período para liquidar." };
@@ -106,8 +108,11 @@ export async function generarLiquidacion(
     ajustes.filter((a) => a.tipo === "descuento").reduce((s, a) => s + a.monto, 0)
   );
   const subtotal_ingresos = r2(calc.subtotal_ingresos + manualIng);
-  const subtotal_descuentos = r2(calc.subtotal_descuentos + manualDesc);
-  const total_liquidacion = r2(subtotal_ingresos - subtotal_descuentos);
+  // Comisiones + ajustes manuales (los gastos se suman tras reclamarlos).
+  const descuentosBase = r2(calc.subtotal_descuentos + manualDesc);
+  // Valores provisionales (incluyen los gastos candidatos); se corrigen tras el claim.
+  let subtotal_descuentos = r2(descuentosBase + calc.subtotal_gastos);
+  let total_liquidacion = r2(subtotal_ingresos - subtotal_descuentos);
 
   const year = ym.slice(0, 4);
   const observaciones =
@@ -151,6 +156,49 @@ export async function generarLiquidacion(
     return { error: "No se pudo asignar número de liquidación. Reintenta." };
   }
 
+  // ---- Reclamo atómico de los gastos descontables ----
+  // El UPDATE condicional (liquidacion_id IS NULL) garantiza que cada gasto se
+  // asocie a una sola liquidación aunque dos usuarios liquiden en paralelo.
+  type GastoClaim = {
+    id: string;
+    categoria: string;
+    descripcion: string;
+    fecha: string;
+    monto: number;
+  };
+  let gastosDescontados: GastoClaim[] = [];
+  if (calc.gastos.length) {
+    const ids = calc.gastos.map((g) => g.gasto_id);
+    const { data: claimed } = await supabase
+      .from("gastos")
+      .update({ liquidacion_id: liqId, estado: "pagado" })
+      .in("id", ids)
+      .is("liquidacion_id", null)
+      .eq("estado", "pendiente")
+      .eq("responsable_pago", "propietario")
+      .eq("descontar_de_liquidacion", true)
+      .select("id, categoria, descripcion, fecha, monto");
+    gastosDescontados = (claimed ?? []).map((g) => ({
+      id: g.id,
+      categoria: g.categoria,
+      descripcion: g.descripcion,
+      fecha: g.fecha,
+      monto: Number(g.monto),
+    }));
+  }
+  const gastosSum = r2(gastosDescontados.reduce((a, g) => a + g.monto, 0));
+
+  // Si algún gasto candidato ya fue reclamado por otra liquidación, recalcula
+  // con los gastos efectivamente asociados.
+  if (gastosSum !== calc.subtotal_gastos) {
+    subtotal_descuentos = r2(descuentosBase + gastosSum);
+    total_liquidacion = r2(subtotal_ingresos - subtotal_descuentos);
+    await supabase
+      .from("liquidaciones")
+      .update({ subtotal_descuentos, total_liquidacion })
+      .eq("id", liqId);
+  }
+
   const lineas = [
     ...calc.ingresos.map((l) => ({ ...l, observacion: null as string | null })),
     ...calc.descuentos.map((l) => ({ ...l, observacion: null as string | null })),
@@ -161,6 +209,14 @@ export async function generarLiquidacion(
       referencia_id: null as string | null,
       observacion: a.observacion,
       monto: r2(a.monto),
+    })),
+    ...gastosDescontados.map((g) => ({
+      tipo: "descuento" as const,
+      concepto: g.descripcion,
+      referencia_tipo: "gasto",
+      referencia_id: g.id,
+      observacion: `${CATEGORIA_GASTO_LABEL[g.categoria as keyof typeof CATEGORIA_GASTO_LABEL] ?? g.categoria} · ${g.fecha}`,
+      monto: g.monto,
     })),
   ];
   await supabase.from("liquidacion_detalles").insert(
@@ -190,9 +246,22 @@ export async function generarLiquidacion(
   await registrarAuditoria(supabase, profile, "liquidacion_creada", "liquidacion", liqId, {
     periodo,
     total: total_liquidacion,
+    gastos_descontados: gastosDescontados.length,
+    monto_gastos: gastosSum,
   });
+  for (const g of gastosDescontados) {
+    await registrarAuditoria(
+      supabase,
+      profile,
+      "gasto_asociado_liquidacion",
+      "gasto",
+      g.id,
+      { liquidacion_id: liqId, monto: g.monto }
+    );
+  }
 
   revalidatePath("/liquidaciones");
+  revalidatePath("/gastos");
   redirect(`/liquidaciones/${liqId}`);
 }
 
@@ -266,9 +335,30 @@ export async function anularLiquidacion(id: string) {
       .in("id", contratosCorretaje);
   }
 
-  await registrarAuditoria(supabase, profile, "liquidacion_anulada", "liquidacion", id, null);
+  // Libera los gastos descontados: vuelven a 'pendiente' y sin liquidación,
+  // quedando disponibles para una futura liquidación.
+  const { data: liberados } = await supabase
+    .from("gastos")
+    .update({ liquidacion_id: null, estado: "pendiente" })
+    .eq("liquidacion_id", id)
+    .select("id, monto");
+  for (const g of liberados ?? []) {
+    await registrarAuditoria(
+      supabase,
+      profile,
+      "gasto_liberado_anulacion",
+      "gasto",
+      g.id,
+      { liquidacion_id: id, monto: Number(g.monto) }
+    );
+  }
+
+  await registrarAuditoria(supabase, profile, "liquidacion_anulada", "liquidacion", id, {
+    gastos_liberados: (liberados ?? []).length,
+  });
 
   revalidatePath("/liquidaciones");
   revalidatePath(`/liquidaciones/${id}`);
+  revalidatePath("/gastos");
   redirect("/liquidaciones");
 }
