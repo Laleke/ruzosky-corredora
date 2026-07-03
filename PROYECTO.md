@@ -173,6 +173,16 @@ Usuario autentica con Supabase Auth → middleware refresca sesión y protege ru
 - [RESUELTO 2026-06-28] `codigo_interno` ahora se autogenera (`[2 iniciales comuna][inicial tipo][correlativo 4]`, ej. PRD0001) en la capa de app al crear, no editable. Correlativo por prefijo dentro de la empresa, con reintento ante colisión (unique constraint). Riesgo residual de carrera: Bajo (concurrencia de admin); si crece, mover a secuencia Postgres con bloqueo.
 - [DEUDA] `database.types.ts` escrito a mano — Riesgo: Bajo — Impacto: puede divergir del esquema real — Corrección: `npm run types:gen` una vez conectado Supabase (sobrescribe el archivo).
 - [DEUDA] `comuna`/`region` como texto libre — Riesgo: Bajo — Impacto: inconsistencia de datos — Corrección: tablas catálogo `ref_regiones`/`ref_comunas` cuando se justifique reporting.
+- [DEUDA / FASE 2 — Gastos] **Obligaciones económicas normalizadas (responsabilidad compartida + cuotas)** — Riesgo: Medio — Impacto: modelo de gastos, cálculo de liquidaciones y reportes.
+  - **Motivación (casos reales del negocio):**
+    1. *Responsabilidad compartida*: hoy un gasto tiene un único `responsable_pago`. En la práctica un mismo gasto se reparte entre propietario y arrendatario (y a veces corredora) en porcentajes o montos distintos. Ej.: reparación $400.000 → propietario 75% / arrendatario 25%; mantención $120.000 → propietario $80.000 / arrendatario $40.000.
+    2. *Pago en cuotas*: un gasto puede descontarse en varias liquidaciones/cobros. Ej.: reparación $600.000 en 6 cuotas de $100.000; comisión extraordinaria en 3 cuotas; seguro anual prorrateado mensual. Cada cuota con su propio estado (pendiente/pagada/anulada), fecha de vencimiento y asociación independiente a una liquidación o cobro.
+  - **Diseño esperado (NO implementar ahora):** **no** extender la tabla `gastos` con más columnas. Normalizar con una **entidad hija** (`gasto_obligaciones` / `gasto_detalles` o equivalente) donde cada fila es una obligación económica independiente y soporta: responsable (propietario/arrendatario/corredora); porcentaje **o** monto fijo; una o múltiples cuotas; estados independientes por cuota; asociación individual a liquidación **o** cobro; y compatibilidad con los datos actuales (backfill: cada gasto existente = una obligación única). `gastos` quedaría como cabecera (descripción, categoría, propiedad, monto total, adjunto); las obligaciones/cuotas viven en la hija.
+  - **Decisiones de la fase actual que dificultan esta evolución (flags explícitos):**
+    - El **descuento automático** lee columnas directas de `gastos` (`responsable_pago='propietario'`, `descontar_de_liquidacion`, `liquidacion_id IS NULL`) en `liquidaciones/queries.calcularLiquidacion`, `gastosDescontables` y el reclamo/liberación en `liquidaciones/actions` (`generarLiquidacion`/`anularLiquidacion`). Al introducir la hija, ese cálculo debe **reapuntarse a las obligaciones/cuotas**, no al gasto. No rompe datos, pero es un refactor obligado de esa capa.
+    - `gastos.liquidacion_id` es **un solo FK** por gasto: incompatible con cuotas asociadas a liquidaciones distintas. En Fase 2 la asociación debe vivir en la cuota; el `liquidacion_id` del gasto queda obsoleto (mantener para gastos de obligación única o migrar a la hija).
+    - **Reportes** (`reportes/queries`) suman `gastos.monto` como total y consideran el gasto íntegro del propietario cuando `responsable_pago='propietario'`. Con responsabilidad compartida deben sumar **la porción de cada responsable** desde la hija (la rentabilidad del propietario solo debe descontar su parte). Refactor de la agregación de gastos.
+    - Ninguno de estos puntos exige romper datos existentes: la hija se agrega de forma aditiva con backfill. Son acoplamientos de **código** a señalar, no de esquema.
 
 <!-- Modelo de Contratos: IMPLEMENTADO en 0006. Se conserva el detalle aprobado abajo como referencia. -->
 ## Modelo aprobado — Contratos (IMPLEMENTADO en migración 0006)
@@ -190,6 +200,7 @@ Reglas de negocio confirmadas para cuando se construya:
 - Conectar Supabase real (migraciones 0001–0007 + bootstrap), validar el ciclo en runtime. Íconos PWA, push.
 ### Mediano plazo
 - Dashboard financiero (deuda, morosidad, ingresos). Liquidaciones a propietarios (canon − comisión − administración). Motor de reajuste automático (IPC/UF) según `periodicidad_reajuste_meses`.
+- **Gastos Fase 2 — obligaciones económicas normalizadas** (responsabilidad compartida propietario/arrendatario/corredora por % o monto + pago en cuotas con estado y asociación independiente). Entidad hija de `gastos`; ver detalle y flags de acoplamiento en `## Deuda Técnica`.
 ### Largo plazo
 - Documentos, tickets de mantención. Portal de propietario/arrendatario (políticas RLS específicas). Onboarding de segunda empresa (validar multitenancy).
 
