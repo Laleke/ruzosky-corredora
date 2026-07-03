@@ -1,5 +1,5 @@
 /**
- * Genera los íconos PWA de Ruzosky (mark: edificio en burdeo).
+ * Genera los íconos PWA de RZK Prop (mark: edificio en burdeo).
  * Uso: node scripts/gen-icons.mjs
  * Salida: public/icons/icon-192.png, icon-512.png, icon-maskable-512.png
  */

@@ -61,7 +61,7 @@ export function PropietarioForm({
   action: Action;
   propietario?: Propietario;
 }) {
-  const draftKey = propietario ? null : "ruzosky:draft:propietario";
+  const draftKey = propietario ? null : "rzk:draft:propietario";
   const { ref, clear } = useFormDraft(draftKey, CONTROLADOS);
 
   const [state, formAction, pending] = useActionState(action, { error: null });

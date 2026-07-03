@@ -1,5 +1,5 @@
 /**
- * Clases de UI centralizadas (sistema de diseño Ruzosky: grafito + burdeo).
+ * Clases de UI centralizadas (sistema de diseño RZK Prop: grafito + burdeo).
  * Strings de Tailwind reutilizables, compatibles con server y client components.
  */
 

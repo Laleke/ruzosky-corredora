@@ -61,7 +61,7 @@ export function PropiedadForm({
   propiedad?: Propiedad;
 }) {
   const [state, formAction, pending] = useActionState(action, { error: null });
-  const draftKey = propiedad ? null : "ruzosky:draft:propiedad";
+  const draftKey = propiedad ? null : "rzk:draft:propiedad";
   const { ref, clear } = useFormDraft(draftKey, ["region", "comuna", "rol_sii"]);
 
   const [region, setRegion] = useState(propiedad?.region ?? "");

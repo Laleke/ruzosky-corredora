@@ -55,7 +55,7 @@ export function ContratoForm({
   propiedades: { id: string; label: string }[];
 }) {
   const [state, formAction, pending] = useActionState(action, { error: null });
-  const draftKey = contrato ? null : "ruzosky:draft:contrato";
+  const draftKey = contrato ? null : "rzk:draft:contrato";
   const { ref, clear } = useFormDraft(draftKey);
 
   return (

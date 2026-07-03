@@ -55,11 +55,11 @@ function NavLinks({ onNavigate }: { onNavigate?: () => void }) {
 function Marca() {
   return (
     <div className="flex items-center gap-2.5 px-5 py-5">
-      <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-burgundy font-bold text-white">
-        R
+      <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-burgundy text-xs font-bold text-white">
+        RZK
       </span>
       <div className="leading-tight">
-        <p className="text-sm font-semibold text-white">Ruzosky Prop</p>
+        <p className="text-sm font-semibold text-white">RZK Prop</p>
         <p className="text-xs text-white/50">Administración</p>
       </div>
     </div>
@@ -94,10 +94,10 @@ export function Sidebar({
       {/* Topbar móvil */}
       <header className="no-print sticky top-0 z-30 flex items-center justify-between border-b border-line bg-white px-4 py-3 md:hidden">
         <div className="flex items-center gap-2">
-          <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-burgundy text-sm font-bold text-white">
-            R
+          <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-burgundy text-[10px] font-bold text-white">
+            RZK
           </span>
-          <span className="font-semibold text-ink">Ruzosky Prop</span>
+          <span className="font-semibold text-ink">RZK Prop</span>
         </div>
         <button
           onClick={() => setAbierto(true)}

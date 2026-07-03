@@ -60,7 +60,7 @@ export function ArrendatarioForm({
   action: Action;
   arrendatario?: Arrendatario;
 }) {
-  const draftKey = arrendatario ? null : "ruzosky:draft:arrendatario";
+  const draftKey = arrendatario ? null : "rzk:draft:arrendatario";
   const { ref, clear } = useFormDraft(draftKey, CONTROLADOS);
 
   const [state, formAction, pending] = useActionState(action, { error: null });

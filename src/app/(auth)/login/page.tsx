@@ -14,11 +14,11 @@ export default async function LoginPage() {
       {/* Panel de marca */}
       <div className="relative hidden flex-col justify-between bg-ink p-12 lg:flex">
         <div className="flex items-center gap-3">
-          <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-burgundy text-lg font-bold text-white">
-            R
+          <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-burgundy text-sm font-bold text-white">
+            RZK
           </span>
           <div className="leading-tight">
-            <p className="text-lg font-semibold text-white">Ruzosky Prop</p>
+            <p className="text-lg font-semibold text-white">RZK Prop</p>
             <p className="text-sm text-white/50">Administración inmobiliaria</p>
           </div>
         </div>
@@ -40,10 +40,10 @@ export default async function LoginPage() {
       <div className="flex items-center justify-center px-6 py-12">
         <div className="flex w-full max-w-sm flex-col gap-8">
           <div className="flex items-center gap-2.5 lg:hidden">
-            <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-burgundy text-lg font-bold text-white">
-              R
+            <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-burgundy text-xs font-bold text-white">
+              RZK
             </span>
-            <span className="text-lg font-semibold text-ink">Ruzosky Prop</span>
+            <span className="text-lg font-semibold text-ink">RZK Prop</span>
           </div>
           <div>
             <h1 className="text-2xl font-semibold tracking-tight text-ink">
