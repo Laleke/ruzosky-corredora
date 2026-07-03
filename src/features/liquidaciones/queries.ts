@@ -7,7 +7,54 @@ import type {
   LiquidacionConPropietario,
   PreviewLiquidacion,
   LineaLiquidacion,
+  LineaGasto,
 } from "./types";
+
+/** Primer día del mes siguiente al período (para acotar gastos por fecha). */
+function inicioMesSiguiente(periodo: string): string {
+  const y = parseInt(periodo.slice(0, 4), 10);
+  const m = parseInt(periodo.slice(5, 7), 10); // 1-12
+  return m >= 12
+    ? `${y + 1}-01-01`
+    : `${y}-${String(m + 1).padStart(2, "0")}-01`;
+}
+
+/**
+ * Gastos del propietario pendientes de descontar en una liquidación del período.
+ * Condiciones (todas): propiedad del propietario, estado='pendiente',
+ * descontar_de_liquidacion=true, responsable_pago='propietario',
+ * liquidacion_id IS NULL, y el gasto pertenece a este propietario (o a la
+ * propiedad sin dueño explícito). Se excluyen los gastos con fecha posterior al
+ * mes del período.
+ */
+async function gastosDescontables(
+  supabase: DB,
+  propietarioId: string,
+  propiedadIds: string[],
+  periodo: string
+): Promise<LineaGasto[]> {
+  if (propiedadIds.length === 0) return [];
+  const { data } = await supabase
+    .from("gastos")
+    .select("id, categoria, descripcion, fecha, monto, propietario_id")
+    .in("propiedad_id", propiedadIds)
+    .eq("estado", "pendiente")
+    .eq("descontar_de_liquidacion", true)
+    .eq("responsable_pago", "propietario")
+    .is("liquidacion_id", null)
+    .lt("fecha", inicioMesSiguiente(periodo))
+    .order("fecha", { ascending: true });
+
+  return (data ?? [])
+    .filter((g) => g.propietario_id == null || g.propietario_id === propietarioId)
+    .map((g) => ({
+      gasto_id: g.id,
+      categoria: g.categoria,
+      descripcion: g.descripcion,
+      fecha: g.fecha,
+      monto: Number(g.monto),
+    }));
+}
 
 type DB = SupabaseClient<Database>;
 
@@ -52,8 +99,10 @@ export async function calcularLiquidacion(
   const vacio: PreviewLiquidacion = {
     ingresos: [],
     descuentos: [],
+    gastos: [],
     subtotal_ingresos: 0,
     subtotal_descuentos: 0,
+    subtotal_gastos: 0,
     total_liquidacion: 0,
   };
 
@@ -68,6 +117,15 @@ export async function calcularLiquidacion(
   );
   const propiedadIds = pps.map((p) => p.propiedad_id);
 
+  // Gastos descontables del propietario (independientes de que haya contratos).
+  const gastos = await gastosDescontables(
+    supabase,
+    propietarioId,
+    propiedadIds,
+    periodo
+  );
+  const subtotal_gastos = r2(gastos.reduce((a, g) => a + g.monto, 0));
+
   const { data: contratos } = await supabase
     .from("contratos")
     .select(
@@ -75,7 +133,15 @@ export async function calcularLiquidacion(
     )
     .in("propiedad_id", propiedadIds)
     .eq("activo", true);
-  if (!contratos || contratos.length === 0) return vacio;
+  if (!contratos || contratos.length === 0) {
+    // Sin contratos no hay ingresos ni comisiones, pero pueden existir gastos.
+    return {
+      ...vacio,
+      gastos,
+      subtotal_gastos,
+      total_liquidacion: r2(-subtotal_gastos),
+    };
+  }
 
   const contratoPorId = new Map(contratos.map((c) => [c.id, c]));
   const contratoIds = contratos.map((c) => c.id);
@@ -175,10 +241,31 @@ export async function calcularLiquidacion(
   return {
     ingresos,
     descuentos,
+    gastos,
     subtotal_ingresos,
     subtotal_descuentos,
-    total_liquidacion: r2(subtotal_ingresos - subtotal_descuentos),
+    subtotal_gastos,
+    total_liquidacion: r2(subtotal_ingresos - subtotal_descuentos - subtotal_gastos),
   };
+}
+
+/** Gastos efectivamente descontados en una liquidación (para el detalle). */
+export async function getGastosDeLiquidacion(
+  liquidacionId: string
+): Promise<LineaGasto[]> {
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("gastos")
+    .select("id, categoria, descripcion, fecha, monto")
+    .eq("liquidacion_id", liquidacionId)
+    .order("fecha", { ascending: true });
+  return (data ?? []).map((g) => ({
+    gasto_id: g.id,
+    categoria: g.categoria,
+    descripcion: g.descripcion,
+    fecha: g.fecha,
+    monto: Number(g.monto),
+  }));
 }
 
 export async function listLiquidaciones(filtros?: {
