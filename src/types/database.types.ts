@@ -59,6 +59,19 @@ export type MedioPago =
   | "otro";
 export type EstadoLiquidacion = "pendiente" | "pagada" | "anulada";
 export type TipoDetalleLiquidacion = "ingreso" | "descuento";
+export type CategoriaGasto =
+  | "mantencion"
+  | "reparacion"
+  | "servicios"
+  | "gastos_comunes"
+  | "contribuciones"
+  | "seguro"
+  | "comision"
+  | "legal"
+  | "administracion"
+  | "otro";
+export type EstadoGasto = "pendiente" | "pagado" | "anulado";
+export type ResponsableGasto = "propietario" | "arrendatario" | "corredora";
 export type CategoriaDocumento =
   | "contrato"
   | "anexo"
@@ -781,6 +794,75 @@ export type Database = {
         };
         Relationships: [];
       };
+      gastos: {
+        Row: {
+          id: string;
+          empresa_id: string;
+          propiedad_id: string;
+          contrato_id: string | null;
+          propietario_id: string | null;
+          arrendatario_id: string | null;
+          liquidacion_id: string | null;
+          documento_id: string | null;
+          categoria: CategoriaGasto;
+          descripcion: string;
+          monto: number;
+          fecha: string;
+          estado: EstadoGasto;
+          responsable_pago: ResponsableGasto;
+          descontar_de_liquidacion: boolean;
+          observaciones: string | null;
+          creado_por: string | null;
+          creado_por_email: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          empresa_id: string;
+          propiedad_id: string;
+          contrato_id?: string | null;
+          propietario_id?: string | null;
+          arrendatario_id?: string | null;
+          liquidacion_id?: string | null;
+          documento_id?: string | null;
+          categoria: CategoriaGasto;
+          descripcion: string;
+          monto: number;
+          fecha: string;
+          estado?: EstadoGasto;
+          responsable_pago: ResponsableGasto;
+          descontar_de_liquidacion?: boolean;
+          observaciones?: string | null;
+          creado_por?: string | null;
+          creado_por_email?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          empresa_id?: string;
+          propiedad_id?: string;
+          contrato_id?: string | null;
+          propietario_id?: string | null;
+          arrendatario_id?: string | null;
+          liquidacion_id?: string | null;
+          documento_id?: string | null;
+          categoria?: CategoriaGasto;
+          descripcion?: string;
+          monto?: number;
+          fecha?: string;
+          estado?: EstadoGasto;
+          responsable_pago?: ResponsableGasto;
+          descontar_de_liquidacion?: boolean;
+          observaciones?: string | null;
+          creado_por?: string | null;
+          creado_por_email?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
     };
     Views: Record<string, never>;
     Functions: {
@@ -803,6 +885,9 @@ export type Database = {
       estado_liquidacion: EstadoLiquidacion;
       tipo_detalle_liquidacion: TipoDetalleLiquidacion;
       categoria_documento: CategoriaDocumento;
+      categoria_gasto: CategoriaGasto;
+      estado_gasto: EstadoGasto;
+      responsable_gasto: ResponsableGasto;
     };
   };
 };
