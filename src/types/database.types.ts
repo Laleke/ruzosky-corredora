@@ -59,6 +59,19 @@ export type MedioPago =
   | "otro";
 export type EstadoLiquidacion = "pendiente" | "pagada" | "anulada";
 export type TipoDetalleLiquidacion = "ingreso" | "descuento";
+export type CategoriaDocumento =
+  | "contrato"
+  | "anexo"
+  | "inventario"
+  | "acta_entrega"
+  | "acta_recepcion"
+  | "liquidacion"
+  | "comprobante_pago"
+  | "factura"
+  | "boleta"
+  | "gasto"
+  | "mantencion"
+  | "otro";
 
 export type Database = {
   public: {
@@ -672,6 +685,102 @@ export type Database = {
         };
         Relationships: [];
       };
+      documentos: {
+        Row: {
+          id: string;
+          empresa_id: string;
+          nombre: string;
+          categoria: CategoriaDocumento;
+          propietario_id: string | null;
+          arrendatario_id: string | null;
+          propiedad_id: string | null;
+          contrato_id: string | null;
+          observaciones: string | null;
+          fecha_documento: string | null;
+          version_actual: number;
+          subido_por: string | null;
+          subido_por_email: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          empresa_id: string;
+          nombre: string;
+          categoria: CategoriaDocumento;
+          propietario_id?: string | null;
+          arrendatario_id?: string | null;
+          propiedad_id?: string | null;
+          contrato_id?: string | null;
+          observaciones?: string | null;
+          fecha_documento?: string | null;
+          version_actual?: number;
+          subido_por?: string | null;
+          subido_por_email?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          empresa_id?: string;
+          nombre?: string;
+          categoria?: CategoriaDocumento;
+          propietario_id?: string | null;
+          arrendatario_id?: string | null;
+          propiedad_id?: string | null;
+          contrato_id?: string | null;
+          observaciones?: string | null;
+          fecha_documento?: string | null;
+          version_actual?: number;
+          subido_por?: string | null;
+          subido_por_email?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+      documento_versiones: {
+        Row: {
+          id: string;
+          empresa_id: string;
+          documento_id: string;
+          version: number;
+          storage_path: string;
+          nombre_archivo: string;
+          tamano_bytes: number;
+          mime_type: string | null;
+          subido_por: string | null;
+          subido_por_email: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          empresa_id: string;
+          documento_id: string;
+          version: number;
+          storage_path: string;
+          nombre_archivo: string;
+          tamano_bytes?: number;
+          mime_type?: string | null;
+          subido_por?: string | null;
+          subido_por_email?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          empresa_id?: string;
+          documento_id?: string;
+          version?: number;
+          storage_path?: string;
+          nombre_archivo?: string;
+          tamano_bytes?: number;
+          mime_type?: string | null;
+          subido_por?: string | null;
+          subido_por_email?: string | null;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
     };
     Views: Record<string, never>;
     Functions: {
@@ -693,6 +802,7 @@ export type Database = {
       medio_pago: MedioPago;
       estado_liquidacion: EstadoLiquidacion;
       tipo_detalle_liquidacion: TipoDetalleLiquidacion;
+      categoria_documento: CategoriaDocumento;
     };
   };
 };
