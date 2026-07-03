@@ -6,14 +6,14 @@
 El producto es una **PWA** (no app nativa): funciona como web e instalable en Android e iPhone. Multitenant desde el diseño, pero opera inicialmente con una sola empresa (RZK Prop).
 
 ## Estado Actual
-**Fase: MVP operativo completo (en código; falta correr migraciones en Supabase real).**
-Implementado: scaffold base (Next.js App Router, PWA Serwist, clientes Supabase, RLS multitenant), auth con login/logout y dashboard por rol, y los módulos de negocio: **Propietarios, Propiedades (+ copropiedad N:M), Arrendatarios, Contratos (+ sincronización de estado de propiedad), y Cobros (cargos + pagos)**. Todo compila (`next build` verde).
-Ciclo operable de punta a punta: crear propietario → propiedad → asociar copropietarios → arrendatario → contrato → generar cargos del mes → registrar pagos → ver deuda.
-Pendiente: aplicar las 7 migraciones en un proyecto Supabase real + bootstrap admin, `npm run types:gen`, íconos PWA, push a GitHub. Luego: dashboard financiero, liquidaciones a propietarios.
+**Fase: en PRODUCCIÓN (Vercel), validado y con datos de prueba limpiados.**
+App **RZK Prop** operativa: auth, dashboard con KPIs, y módulos **Propietarios, Propiedades (+copropiedad N:M), Arrendatarios, Contratos (+sincronización de estado), Cobros (cargos+pagos) y Liquidaciones a propietarios** (todos funcionando). 14 migraciones (`0001`–`0014`) aplicadas en Supabase. Build de producción verde.
+QA de Liquidaciones **aprobado**. Se limpiaron los datos de prueba: se borraron `cargos`, `pagos`, `liquidaciones` (+detalles) y `auditoria`, y se reseteó `contratos.corretaje_liquidado`; el **catastro se conservó** (propietarios, propiedades, arrendatarios, contratos).
+Ciclo operable: propietario → propiedad → copropietarios → arrendatario → contrato → cargos del mes → pagos → deuda → liquidación al propietario.
 
 ## Punto de Continuación (handoff — actualizar al cerrar cada sesión)
 
-**Última sesión: 2026-06-29.** App **en producción** (Vercel) y desplegándose con cada push. Nombre de la app: **RZK Prop**. Repo `github.com/Laleke/ruzosky-corredora`.
+**Última sesión: 2026-06-30.** App **en producción** (Vercel), desplegándose con cada push. Nombre de la app: **RZK Prop** (rebranding completo hecho). Repo `github.com/Laleke/ruzosky-corredora` (nombre de repo/URL sin cambiar, son direcciones reales).
 
 **Estado actual:**
 - MVP completo + módulo **Liquidaciones a propietarios** terminado (Fase 1A + ajustes finales). Build de producción verde. Desplegado.
@@ -21,16 +21,15 @@ Pendiente: aplicar las 7 migraciones en un proyecto Supabase real + bootstrap ad
 - Auth, dashboard con KPIs, y módulos: Propietarios, Propiedades (+copropiedad N:M), Arrendatarios, Contratos (+sincronización de estado), Cobros (cargos+pagos), Liquidaciones (cálculo auto + ajustes manuales + corretaje único + numeración + auditoría + PDF).
 - Rediseño UI grafito+burdeo, sidebar responsivo, borrador automático en formularios, catálogo Chile (regiones/comunas/bancos), íconos PWA.
 
-**Lo último de esta sesión:**
-1. Formularios de personas: región/comuna selectables dependientes, teléfono con `+`, Nombres/Apellidos, calle+número, banco desplegable. Borrador automático en todos los forms de creación.
-2. `codigo_interno` (propiedad) y `numero_contrato` autogenerados y ocultos.
-3. Módulo **Liquidaciones** completo (migraciones 0011–0014). Doc `docs/QA_LIQUIDACIONES.md`.
-4. Rename a "RZK Prop". Fix: contrato vuelve al listado al guardar.
+**Lo último de esta sesión (2026-06-30):**
+1. **Rebranding completo a "RZK Prop"** en todo lo visible (login, sidebar, navbar, metadata, manifest/PWA, monograma "RZK", docs, seed). Sin tocar tablas, migraciones ni las URLs reales (Vercel/GitHub siguen con `ruzosky-corredora`). El email de login real sigue siendo `admin@ruzosky.cl`.
+2. **QA de Liquidaciones aprobado.**
+3. **Limpieza de datos de prueba** ejecutada por Eduardo en SQL Editor: borrados `cargos`, `pagos`, `liquidaciones` (+detalles) y `auditoria`; reseteado `corretaje_liquidado`. Catastro conservado. (Sesión previa: formularios de personas, códigos/números autogenerados, módulo Liquidaciones 0011–0014.)
 
 **Pendiente / próximo:**
-1. Eduardo: aplicar migraciones `0009`–`0014` en Supabase si falta alguna (ver error de orden: 0011 antes que 0012). Validar Liquidaciones con `docs/QA_LIQUIDACIONES.md`.
-2. Reinstalar la PWA en el celular para tomar nombre/ícono nuevos (iOS: Safari → Compartir → Agregar a inicio; Android: Chrome ⋮ → Instalar).
-3. Próximos módulos sugeridos: **adjuntar comprobante de pago** (Storage; `comprobante_url` ya existe), **dashboard financiero**, **notificaciones** (email/WhatsApp — sí tienen API real), **motor de reajuste** (IPC/UF), portales propietario/arrendatario, documentos, tickets.
+1. **Reinstalar la PWA** en el celular para tomar el nombre/ícono "RZK Prop" (una PWA instalada no se renombra sola). iOS: Safari → Compartir → Agregar a inicio; Android: Chrome ⋮ → Instalar.
+2. Opcional: renombrar el registro `empresas.nombre` de "Ruzosky Corredora" a "RZK Prop" (no se muestra en la UI, pero por prolijidad — UPDATE simple).
+3. Próximos módulos sugeridos: **adjuntar comprobante de pago** (Supabase Storage; `comprobante_url` ya existe), **dashboard financiero**, **notificaciones** (email/WhatsApp — sí tienen API real), **motor de reajuste** (IPC/UF), portales propietario/arrendatario, documentos, tickets.
 4. Integración deudas de servicios (Enel/Aguas Andinas): no hay API pública; evaluar agregador (Fintoc/Floid/Servipag) como research aparte.
 
 **Flujo de trabajo:** construir → `next build` verde → commit local → **push a GitHub** (Eduardo autoriza; el push lo ejecuta el asistente cuando lo pide) → Vercel redespliega. Eduardo suele relayar respuestas de ChatGPT (co-diseñador) y pedir "respuesta para ChatGPT".
@@ -187,6 +186,7 @@ Reglas de negocio confirmadas para cuando se construya:
 - Documentos, tickets de mantención. Portal de propietario/arrendatario (políticas RLS específicas). Onboarding de segunda empresa (validar multitenancy).
 
 ## Últimos Cambios
+- 2026-06-30 — **Rebranding a "RZK Prop"** en todo lo visible (UI, metadata, manifest/PWA, docs, seed), preservando tablas/migraciones y URLs reales. QA de Liquidaciones aprobado. Limpieza de datos de prueba (cargos/pagos/liquidaciones/auditoría borrados, corretaje reseteado; catastro conservado).
 - 2026-06-29 — **Liquidaciones — ajustes finales** (migraciones `0012`–`0014`): ajustes manuales (ingreso/descuento + observación, `referencia_tipo='manual'`) en la vista previa con recálculo en vivo; **congelamiento** (la liquidación guarda subtotales/total/líneas y nunca recalcula tras crearse); **corretaje** controlado por `contratos.corretaje_liquidado` (se cobra una sola vez, se marca al liquidar, se revierte al anular); **bloqueo de edición** (marcar pagada y anular solo desde `pendiente`); **numeración correlativa** `LIQ-AAAA-000001` única por empresa, visible en listado/detalle/PDF. **Requiere aplicar `0012`, `0013`, `0014`.**
 - 2026-06-29 — **Módulo Liquidaciones a propietarios** (Fase 1A, migración `0011`): cálculo automático por propietario+período (ingresos = pagos efectivos ponderados por % de participación; descuentos = comisión administración mensual + corretaje en mes de inicio), asistente con vista previa, listado con filtros, detalle con detalle de líneas, registro de pago, anulación, PDF vía impresión, y **sistema de auditoría** (`auditoria` + helper). RLS solo-admin. **Requiere aplicar `0011` en Supabase.** Reglas de negocio del cálculo documentadas; ajustes manuales/mantenciones quedan como estructura preparada (no UI aún).
 - 2026-06-29 — Borrador automático extendido a formularios de propiedad y contrato. **`numero_contrato` autogenerado** (correlativo por empresa) y oculto del formulario, igual patrón que `codigo_interno`. En detalle de propiedad, el botón "Asignar propietario" se muestra solo si no hay propietarios asignados.
