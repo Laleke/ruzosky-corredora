@@ -1,4 +1,4 @@
-# Ruzosky Corredora
+# RZK Prop
 
 Plataforma SaaS de administración inmobiliaria (Chile). PWA construida con Next.js + Supabase.
 

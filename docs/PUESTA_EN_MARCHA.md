@@ -78,7 +78,7 @@ El bootstrap **referencia un usuario de Auth que debe existir antes**.
    - Marca **Auto Confirm User** (si no, el login fallará por email sin confirmar).
 2. SQL Editor → pega y ejecuta `supabase/bootstrap_admin.sql`.
    - Si tu email es distinto, edita la variable `v_email` arriba del script.
-   - Debe devolver una fila con tu admin y la empresa "Ruzosky Corredora".
+   - Debe devolver una fila con tu admin y la empresa "RZK Prop".
    - Si imprime *"No existe usuario auth..."*, es que el paso 1 no se hizo o el email no coincide.
 
 ---
@@ -141,7 +141,7 @@ Debe devolver `[]` (las políticas son `to authenticated`; el rol `anon` no tien
 **Test C — aislamiento multitenant (opcional, la prueba de fuego):**
 1. Crea una **segunda empresa** y un **segundo usuario** (otro email) en Auth.
 2. Inserta su `profile` apuntando a la segunda empresa (SQL Editor, como en el bootstrap).
-3. Inicia sesión con ese usuario → **no debe ver** ningún propietario/propiedad/contrato de Ruzosky.
+3. Inicia sesión con ese usuario → **no debe ver** ningún propietario/propiedad/contrato de RZK Prop.
    Esto confirma el aislamiento por `empresa_id` vía RLS.
 
 ---

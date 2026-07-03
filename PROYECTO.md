@@ -1,9 +1,9 @@
 # PROYECTO
 
 ## Resumen del Proyecto
-**Ruzosky Corredora** — Plataforma SaaS de administración inmobiliaria para Chile. Centraliza propiedades, contratos de arriendo, propietarios, arrendatarios, pagos, finanzas, tickets de mantención y documentos. Reemplaza procesos manuales (Excel, WhatsApp, correo) por un sistema digital único.
+**RZK Prop** — Plataforma SaaS de administración inmobiliaria para Chile. Centraliza propiedades, contratos de arriendo, propietarios, arrendatarios, pagos, finanzas, tickets de mantención y documentos. Reemplaza procesos manuales (Excel, WhatsApp, correo) por un sistema digital único.
 
-El producto es una **PWA** (no app nativa): funciona como web e instalable en Android e iPhone. Multitenant desde el diseño, pero opera inicialmente con una sola empresa (Ruzosky Corredora).
+El producto es una **PWA** (no app nativa): funciona como web e instalable en Android e iPhone. Multitenant desde el diseño, pero opera inicialmente con una sola empresa (RZK Prop).
 
 ## Estado Actual
 **Fase: MVP operativo completo (en código; falta correr migraciones en Supabase real).**
@@ -13,7 +13,7 @@ Pendiente: aplicar las 7 migraciones en un proyecto Supabase real + bootstrap ad
 
 ## Punto de Continuación (handoff — actualizar al cerrar cada sesión)
 
-**Última sesión: 2026-06-29.** App **en producción** (Vercel) y desplegándose con cada push. Nombre de la app: **Ruzosky Prop**. Repo `github.com/Laleke/ruzosky-corredora`.
+**Última sesión: 2026-06-29.** App **en producción** (Vercel) y desplegándose con cada push. Nombre de la app: **RZK Prop**. Repo `github.com/Laleke/ruzosky-corredora`.
 
 **Estado actual:**
 - MVP completo + módulo **Liquidaciones a propietarios** terminado (Fase 1A + ajustes finales). Build de producción verde. Desplegado.
@@ -25,7 +25,7 @@ Pendiente: aplicar las 7 migraciones en un proyecto Supabase real + bootstrap ad
 1. Formularios de personas: región/comuna selectables dependientes, teléfono con `+`, Nombres/Apellidos, calle+número, banco desplegable. Borrador automático en todos los forms de creación.
 2. `codigo_interno` (propiedad) y `numero_contrato` autogenerados y ocultos.
 3. Módulo **Liquidaciones** completo (migraciones 0011–0014). Doc `docs/QA_LIQUIDACIONES.md`.
-4. Rename a "Ruzosky Prop". Fix: contrato vuelve al listado al guardar.
+4. Rename a "RZK Prop". Fix: contrato vuelve al listado al guardar.
 
 **Pendiente / próximo:**
 1. Eduardo: aplicar migraciones `0009`–`0014` en Supabase si falta alguna (ver error de orden: 0011 antes que 0012). Validar Liquidaciones con `docs/QA_LIQUIDACIONES.md`.

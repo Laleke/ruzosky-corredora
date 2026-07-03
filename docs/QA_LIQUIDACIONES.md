@@ -1,6 +1,6 @@
 # QA y resumen — Módulo Liquidaciones a Propietarios
 
-Ruzosky Prop · Fase 1A + ajustes finales · 2026-06-29
+RZK Prop · Fase 1A + ajustes finales · 2026-06-29
 
 ---
 
@@ -43,27 +43,27 @@ Permite a la corredora calcular automáticamente cuánto transferir a cada propi
 > Requisito previo: migraciones `0009`–`0014` aplicadas en Supabase. Tener un propietario con propiedad asociada, contrato vigente y **pagos registrados** en Cobros para el período a probar.
 
 ### Generación
-- [ ] Liquidaciones → Nueva → seleccionar propietario + período con pagos → la vista previa muestra ingresos por cargo pagado (ponderados por % participación) y descuentos (admin/corretaje).
-- [ ] Período sin movimientos → mensaje "No hay movimientos…" y no permite generar.
-- [ ] Confirmar → redirige al detalle con número `LIQ-AAAA-000001`.
+- [x] Liquidaciones → Nueva → seleccionar propietario + período con pagos → la vista previa muestra ingresos por cargo pagado (ponderados por % participación) y descuentos (admin/corretaje).
+- [x] Período sin movimientos → mensaje "No hay movimientos…" y no permite generar.
+- [x] Confirmar → redirige al detalle con número `LIQ-AAAA-000001`.
 
 ### Ajustes manuales
-- [ ] "+ Agregar ajuste" agrega fila (tipo, concepto, monto, observación).
-- [ ] El total a liquidar se recalcula en vivo al cambiar montos/tipos.
-- [ ] Tras confirmar, el ajuste aparece en el detalle marcado "(ajuste)" con su observación.
-- [ ] Permite múltiples ajustes; los inválidos (sin concepto o monto ≤ 0) se ignoran.
+- [x] "+ Agregar ajuste" agrega fila (tipo, concepto, monto, observación).
+- [x] El total a liquidar se recalcula en vivo al cambiar montos/tipos.
+- [x] Tras confirmar, el ajuste aparece en el detalle marcado "(ajuste)" con su observación.
+- [x] Permite múltiples ajustes; los inválidos (sin concepto o monto ≤ 0) se ignoran.
 
 ### Congelamiento
-- [ ] Generar una liquidación; luego registrar un pago nuevo o editar un contrato → la liquidación ya creada **no cambia** sus montos.
+- [x] Generar una liquidación; luego registrar un pago nuevo o editar un contrato → la liquidación ya creada **no cambia** sus montos.
 
 ### Corretaje único
-- [ ] Contrato con comisión de corretaje → aparece como descuento en la primera liquidación que lo incluye.
-- [ ] Generar la liquidación → el corretaje **no reaparece** en una liquidación posterior del mismo contrato.
-- [ ] Anular esa liquidación → el corretaje **vuelve a estar disponible** para liquidar.
+- [x] Contrato con comisión de corretaje → aparece como descuento en la primera liquidación que lo incluye. 
+- [x] Generar la liquidación → el corretaje **no reaparece** en una liquidación posterior del mismo contrato.
+- [] Anular esa liquidación → el corretaje **vuelve a estar disponible** para liquidar.
 
 ### Bloqueo de edición
-- [ ] Liquidación `pendiente`: muestra "Registrar pago" y "Anular".
-- [ ] Marcar pagada (fecha + observación) → pasa a `pagada`, muestra el pago, **oculta** acciones de edición.
+- [x] Liquidación `pendiente`: muestra "Registrar pago" y "Anular".
+- [x] Marcar pagada (fecha + observación) → pasa a `pagada`, muestra el pago, **oculta** acciones de edición.
 - [ ] Liquidación `pagada`/`anulada`: solo lectura (sin marcar pagada ni anular).
 
 ### Numeración correlativa

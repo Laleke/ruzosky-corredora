@@ -7,7 +7,7 @@
 --
 -- ORDEN:
 --   1. Dashboard > Authentication > Users > "Create user"
---        email: admin@ruzosky.cl   (password la define Eduardo en la UI)
+--        email: admin@rzkprop.cl   (password la define Eduardo en la UI)
 --   2. Ejecutar este script en el SQL Editor (corre como service_role,
 --      por eso bypassa RLS — único punto donde está permitido).
 --
@@ -16,9 +16,9 @@
 
 do $$
 declare
-  v_email       text := 'admin@ruzosky.cl';
-  v_nombre      text := 'Administrador Ruzosky';
-  v_empresa     text := 'Ruzosky Corredora';
+  v_email       text := 'admin@rzkprop.cl';
+  v_nombre      text := 'Administrador RZK Prop';
+  v_empresa     text := 'RZK Prop';
   v_user_id     uuid;
   v_empresa_id  uuid;
 begin
