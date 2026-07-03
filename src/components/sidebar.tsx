@@ -13,6 +13,7 @@ import {
   Wallet,
   FolderArchive,
   TrendingDown,
+  BarChart3,
   LogOut,
   Menu,
   X,
@@ -27,6 +28,7 @@ const NAV = [
   { href: "/cobros", label: "Cobros y pagos", icon: Receipt },
   { href: "/liquidaciones", label: "Liquidaciones", icon: Wallet },
   { href: "/gastos", label: "Gastos", icon: TrendingDown },
+  { href: "/reportes", label: "Reportes", icon: BarChart3 },
   { href: "/documentos", label: "Documentos", icon: FolderArchive },
 ];
 
