@@ -4,14 +4,18 @@ import { useActionState } from "react";
 import Link from "next/link";
 import { ui } from "@/components/ui";
 import { MoneyInput } from "@/components/money-input";
+import { SelectorPropiedadContrato } from "@/components/selector-propiedad-contrato";
 import { crearCargo, type CobroFormState } from "./actions";
+import type { ContextoPropiedad } from "@/features/documentos/queries";
 
 const inputCls = ui.input;
 
 export function CargoForm({
-  contratos,
+  propiedades,
+  contexto,
 }: {
-  contratos: { id: string; label: string }[];
+  propiedades: { id: string; label: string }[];
+  contexto: ContextoPropiedad;
 }) {
   const [state, formAction, pending] = useActionState(crearCargo, {
     error: null,
@@ -19,19 +23,14 @@ export function CargoForm({
 
   return (
     <form action={formAction} className="flex max-w-2xl flex-col gap-4">
-      <label className="flex flex-col gap-1 text-sm">
-        <span className="font-medium">
-          Contrato <span className="text-red-600">*</span>
-        </span>
-        <select name="contrato_id" required className={inputCls} defaultValue="">
-          <option value="">Selecciona…</option>
-          {contratos.map((c) => (
-            <option key={c.id} value={c.id}>
-              {c.label}
-            </option>
-          ))}
-        </select>
-      </label>
+      {/* Propiedad → contrato vigente automático → arrendatario (info). */}
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <SelectorPropiedadContrato
+          propiedades={propiedades}
+          contexto={contexto}
+          requiereContrato
+        />
+      </div>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <label className="flex flex-col gap-1 text-sm">
