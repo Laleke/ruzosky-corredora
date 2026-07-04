@@ -204,7 +204,86 @@ Reglas de negocio confirmadas para cuando se construya:
 ### Largo plazo
 - Documentos, tickets de mantención. Portal de propietario/arrendatario (políticas RLS específicas). Onboarding de segunda empresa (validar multitenancy).
 
+## Roadmap de Hardening y Preparación para Producción
+> Roadmap **oficial** derivado de las Investigaciones 1–5 (tributaria, seguridad/permisos/producción). Todas las tareas nacen en estado **⬜ Pendiente**; se ejecutarán sprint por sprint tras aprobación. Estados posibles: ⬜ Pendiente · 🔄 En curso · ✅ Hecho.
+> Flags: **Migr** (migración) · **FE** (frontend) · **BE** (backend/Server Actions) · **RLS** · **Man** (prueba manual) · **Auto** (prueba automática). ✓ = requerido · – = no.
+
+**Notas transversales:**
+- No existe infraestructura de tests (Jest/Vitest y ESLint sin configurar). El framework se monta en **T16 (Sprint 2)**; hasta entonces el gate real es `tsc` + `next build` + prueba manual. Donde figura **Auto ✓** en Sprints 4–5 se asume T16 ya hecho.
+- Migración de pulido **`0017_hardening`** = **T6** (RLS/índices). La identidad fiscal (**T9**) sale del hardening → migración propia posterior (p. ej. `0018_empresa_fiscal`).
+- Dependencia raíz: **T1** (aplicar 0015/0016) → **T1b** (validación runtime) desbloquea T6, T11, T14.
+- *(Ajuste 2026-07-03: T1 dividida en T1/T1b; T5 y T11 movidas a Sprint 1; T16 adelantada a Sprint 2; T9 reubicada al final del Sprint 3 como mejora independiente; nueva T22 de QA E2E como gate de producción.)*
+
+### Sprint 1 — Crítico (pre-producción con datos reales)
+| ID | Tarea | Prio | Estado | Deps | Migr | FE | BE | RLS | Man | Auto | Horas |
+|----|-------|------|--------|------|:----:|:--:|:--:|:---:|:---:|:----:|------:|
+| T1 | **Aplicar migraciones 0015 + 0016** en Supabase (SQL Editor). | Crítica | ✅ Hecho (2026-07-03) | — | ✓ aplicar | – | – | – | ✓ | – | 1–2 |
+| T1b | **Validación runtime completa:** aislamiento entre tenants (archivo/gasto de empresa B inaccesible), bucket `public=false`, y QA 1–10 del flujo Gastos↔Liquidaciones. | Crítica | ⬜ Pendiente | T1 | – | – | – | ✓ verif. | ✓ | – | 3–5 |
+| T2 | **Auditoría en operaciones financieras y contratos** (H1): `pago_registrado`/`pago_eliminado`, `cargo_creado`, contratos (creado/estado/terminado/vinculación) y catastro. | Crítica | ⬜ Pendiente | — | – | – | ✓ | – | ✓ | – | 4–6 |
+| T3 | **Backups + prueba de restauración** (H3): PITR (upgrade) o `pg_dump` programado; restaurar en entorno de prueba. | Crítica | ⬜ Pendiente | — | – | – | – | – | ✓ | – | 3–5 |
+| T5 | **Gate de rol en `DashboardLayout`** (H5, parte rápida): exigir `rol==='admin'` o redirigir. Elimina comportamiento extraño para futuros roles. | Alta | ⬜ Pendiente | — | – | ✓ | – | – | ✓ | – | 1 |
+| T11 | **Regenerar `database.types.ts`** con `supabase gen types` (los tipos deben reflejar el esquema real antes de seguir desarrollando). | Alta | ⬜ Pendiente | T1 | – | – | ✓ | – | – | – | 1–2 |
+
+*Riesgo si no se hace:* T1 → módulos Documentos/Gastos caídos. T1b → fuga entre empresas no detectada. T2 → sin traza de movimientos de dinero/contratos. T3 → pérdida irreversible de datos. T5 → roles no-admin sin bloqueo limpio. T11 → tipos divergentes del esquema. *Secuencia:* T1 → T1b → (T2 se valida dentro de T1b). **Total ~13–21 h.**
+
+### Sprint 2 — Hardening
+| ID | Tarea | Prio | Estado | Deps | Migr | FE | BE | RLS | Man | Auto | Horas |
+|----|-------|------|--------|------|:----:|:--:|:--:|:---:|:---:|:----:|------:|
+| T4 | **Logging server-side + fallos de auditoría** (H6+H7): capturar errores de Server Actions y loguear cuando `registrarAuditoria` falla. | Alta | ⬜ Pendiente | — | – | – | ✓ | – | ✓ | – | 3–4 |
+| T6 | **Pulido de BD** (H8+H11): normalizar políticas antiguas a `to authenticated` + verificar índices en FKs de filtrado. *(migración `0017_hardening`)* | Media | ⬜ Pendiente | T1b | ✓ | – | – | ✓ | ✓ | – | 2–3 |
+| T7 | **Revisión CSRF signout / rate-limit** (H9): confirmar protecciones de Supabase; opcional token anti-CSRF en `/auth/signout`. | Baja | ⬜ Pendiente | — | – | ✓ | ✓ | – | ✓ | – | 1–2 |
+| T16 | **Infraestructura de tests** (Vitest/Jest) + ESLint + pruebas de reglas críticas (claim de gastos, cálculo de liquidación, RLS). *(adelantada desde Sprint 4 para reducir regresiones)* | Media | ⬜ Pendiente | — | – | – | ✓ | – | – | ✓ | 8–12 |
+
+*Riesgo si no se hace:* T4 → operar a ciegas + huecos de auditoría. T6 → fragilidad/degradación. T7 → logout forzado (molestia). T16 → regresiones no detectadas al crecer. *Puede esperar meses:* T7. *Dependencia clave:* **T16 antes de T14/T15 (Sprint 4).** **Total ~14–21 h.**
+
+### Sprint 3 — Preparación para producción
+| ID | Tarea | Prio | Estado | Deps | Migr | FE | BE | RLS | Man | Auto | Horas |
+|----|-------|------|--------|------|:----:|:--:|:--:|:---:|:---:|:----:|------:|
+| T8 | **Monitoreo y alertas** (extiende H7): Sentry / alertas Vercel-Supabase (5xx, fallos de auth). | Media | ⬜ Pendiente | T4 | – | – | ✓ | – | ✓ | – | 3–4 |
+| T10 | **Documentar convención "la fuente fiscal será el DTE"** en PROYECTO.md (no meter IVA en `gastos.monto`). Solo doc. | Media | ⬜ Pendiente | — | – | – | – | – | – | – | 0.5 |
+| T12 | **Operativas menores:** reinstalar PWA ("RZK Prop"), renombrar `empresas.nombre`. | Baja | ⬜ Pendiente | — | – | – | – | – | ✓ | – | 0.5–1 |
+| T13 | **Runbook de despliegue/rollback + health check** documentado. | Media | ⬜ Pendiente | — | – | – | – | – | ✓ | – | 2–3 |
+| T22 | **QA funcional end-to-end (gate de producción):** flujo completo de negocio — crear propietario → propiedad → contrato → registrar cobro → registrar gasto → generar liquidación → anular → regenerar → subir documentos → verificar reportes. **Debe pasar antes de declarar el sistema listo para producción.** | Crítica | ⬜ Pendiente | T1b, T2, T5 | – | – | – | – | ✓ | – (automatizable tras T16) | 4–6 |
+| T9 | **Identidad fiscal en `empresas`** (Inv4, mejora independiente post-hardening): RUT, giro, dirección tributaria (nullable); aparecen en PDFs. *(migración propia, p. ej. `0018_empresa_fiscal`)* | Media | ⬜ Pendiente | — | ✓ | ✓ | ✓ | – | ✓ | – | 2–3 |
+
+*Riesgo si no se hace:* T8 → detección tardía de incidentes. T13 → despliegues sin reversa. **T22 → declarar producción sin validar el flujo completo (riesgo Alto).** T9 → sin base fiscal ni RUT en PDFs. *Nota:* T9 no es hardening; puede diferirse tras el go-live sin afectar la operación. *Puede esperar:* T12. **Total ~12–17.5 h.**
+
+### Sprint 4 — Mejoras arquitectónicas (diferible meses)
+| ID | Tarea | Prio | Estado | Deps | Migr | FE | BE | RLS | Man | Auto | Horas |
+|----|-------|------|--------|------|:----:|:--:|:--:|:---:|:---:|:----:|------:|
+| T14 | **Transaccionalidad vía RPC** (H4): funciones Postgres (`SECURITY INVOKER`) para creación de liquidación y sync `contrato↔propiedad`. | Media | ⬜ Pendiente | T1b, T16 | ✓ | – | ✓ | ✓ | ✓ | ✓ | 8–12 |
+| T15 | **Auditoría por trigger DB-side** para eventos críticos (garantía independiente de la app). | Media | ⬜ Pendiente | T2, T16 | ✓ | – | ✓ | ✓ | ✓ | ✓ | 5–8 |
+
+*Riesgo si no se hace:* T14 → estado parcial ante fallo (bajo con concurrencia de admin). T15 → auditoría dependiente de la app. *Requiere:* T16 ya hecho (Sprint 2). *Puede esperar meses.* **Total ~13–20 h.**
+
+### Sprint 5 — Fase 2 (funcionalidades futuras, diferible muchos meses)
+| ID | Tarea | Prio | Estado | Deps | Migr | FE | BE | RLS | Man | Auto | Horas |
+|----|-------|------|--------|------|:----:|:--:|:--:|:---:|:---:|:----:|------:|
+| T17 | **Gastos Fase 2** — entidad hija de obligaciones (responsabilidad compartida %/monto + cuotas con estado/vencimiento/asociación independiente). | Baja | ⬜ Pendiente | T14 | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | 20–30 |
+| T18 | **Entidad Documentos Tributarios (DTE)** — tabla estructurada (dirección, folio, neto/IVA/exento, autorreferencia NC/ND) enlazada a documentos/gastos/pagos/liquidaciones. | Baja | ⬜ Pendiente | T9, T17 | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | 20–30 |
+| T19 | **Reportes tributarios** (IVA débito/crédito, retenciones, insumos F29/RCV). | Baja | ⬜ Pendiente | T18 | – | ✓ | ✓ | – | ✓ | ✓ | 10–15 |
+| T20 | **Portal propietario/arrendatario + RLS por rol** (completa H5). | Baja | ⬜ Pendiente | T2, T5 | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | 30–50 |
+| T21 | **Integración SII** (certificado, CAF, XML, firma/timbre, certificación, envío) o vía PSTE; aislada en Edge Function. | Baja | ⬜ Pendiente | T18 | ✓ | – | ✓ | – | ✓ | ✓ | 40–80 |
+
+*Riesgo si no se hace:* ninguno operativo hoy (single-tenant, uso interno) — son crecimiento, no estabilidad. *Dependencias para evitar retrabajo:* **T17 antes de T18** (modelar juntas: DTE↔gasto cabecera, cuotas↔liquidaciones); **T18 antes de T19/T21.** Si se terceriza facturación (PSTE), T21 colapsa a "almacenar el DTE resultante" (~10 h). *Puede esperar meses o más.* **Total ~120–205 h.**
+
+### Resumen y reglas de ejecución
+| Sprint | Foco | Prioridad | Esfuerzo | ¿Bloquea producción? |
+|--------|------|-----------|---------:|----------------------|
+| 1 | Aplicar migraciones + validación, auditoría de pagos, backups, gate de rol, tipos | Crítica | ~13–21 h | **Sí** (antes de datos reales) |
+| 2 | Logging, pulido BD, infra de tests | Alta/Media | ~14–21 h | Recomendado antes de escalar |
+| 3 | Monitoreo, runbook, **QA E2E (gate)**, identidad fiscal | Media/Crítica | ~12–17.5 h | Recomendado (T22 obligatoria) |
+| 4 | Transaccionalidad RPC, triggers DB-side | Media | ~13–20 h | No (diferible meses) |
+| 5 | Gastos F2, DTE, reportes tributarios, portal, SII | Baja | ~120–205 h | No (según crecimiento) |
+
+- **Camino crítico mínimo para producción de un tenant:** Sprint 1 completo + T4 (logging) + **T22 (gate QA E2E)** → ~20–31 h.
+- **Agrupaciones:** `0017_hardening` = T6 (solo); T9 en migración propia posterior; T1→T1b→T2 en la misma sesión de QA; T16 antes de T14/T15; T17+T18 modeladas juntas.
+- **Siguiente paso al aprobar:** ejecutar **T1** (aplicar 0015/0016) → **T1b** (validación), que desbloquea T6, T11 y T14 y es el gate duro pendiente.
+
 ## Últimos Cambios
+- 2026-07-03 — **Sprint 1 · T1 completada (✅):** migraciones `0015_documentos.sql` y `0016_gastos.sql` aplicadas en Supabase por Eduardo. Verificación de esquema con 22 checks (enums, tablas, índices, unique, triggers, RLS, políticas, bucket privado, FKs) → **todo OK**. Sin intervención manual pendiente. Siguiente: **T1b** (validación runtime: aislamiento entre tenants + QA 1–10 Gastos↔Liquidaciones). Aún **no** se ejecutó QA funcional ni se regeneró `database.types.ts` (T11).
+- 2026-07-03 — **Roadmap de Hardening reorganizado (aprobado con ajustes).** T1 dividida en T1 (aplicar 0015/0016) + T1b (validación runtime); T5 (gate de rol) y T11 (regenerar tipos) movidas a Sprint 1; T16 (infra de tests) adelantada a Sprint 2; T9 (identidad fiscal) reubicada al final del Sprint 3 como mejora independiente post-hardening; **nueva T22** (QA funcional end-to-end como gate de producción). Sin cambios de arquitectura ni alcance. Todas las tareas siguen en ⬜ Pendiente. Sin cambios de código.
+- 2026-07-03 — **Roadmap oficial de Hardening y Preparación para Producción** agregado (T1–T21, 5 sprints), derivado de las Investigaciones 1–5; todas las tareas en estado ⬜ Pendiente. Pendiente de aprobación para iniciar ejecución sprint por sprint. Sin cambios de código.
 - 2026-07-03 — **Ciclo Gastos↔Liquidaciones cerrado (descuento automático).** Al generar una liquidación, `calcularLiquidacion` incorpora los gastos pendientes descontables del propietario (condiciones: `propiedad` del dueño, `estado=pendiente`, `descontar_de_liquidacion=true`, `responsable_pago=propietario`, `liquidacion_id IS NULL`, `fecha` ≤ mes del período; además `propietario_id` null o = el liquidado, para copropiedad). Orden del cálculo: ingresos → comisiones/descuentos → **gastos** → total. Persistencia: **reclamo atómico** (`UPDATE gastos SET liquidacion_id, estado='pagado' WHERE liquidacion_id IS NULL …` con `returning`) que impide doble asociación bajo concurrencia; el total se **recalcula con los gastos efectivamente reclamados**. Cada gasto queda como detalle (`referencia_tipo='gasto'`). **Anulación**: libera los gastos (`liquidacion_id=null`, `estado='pendiente'`) para re-liquidar. Auditoría de asociación (`gasto_asociado_liquidacion`) y liberación (`gasto_liberado_anulacion`). UI: sección "Gastos descontados" en vista previa y detalle. **Reportes sin cambios** (leen la tabla `gastos`, no los detalles; `pendiente`/`pagado` cuentan igual). Sin migración. Build verde, `tsc` limpio.
 - 2026-07-03 — **Módulo Gastos + Reportes Financieros.**
   - **Gastos** (migración `0016_gastos.sql`, **requiere aplicarla en Supabase**): enums `categoria_gasto`/`estado_gasto`/`responsable_gasto` y tabla `gastos`. `propiedad_id` obligatorio; `contrato_id`/`propietario_id`/`arrendatario_id`/`liquidacion_id`/`documento_id` opcionales. Campos: categoría, descripción, monto, fecha, estado (pendiente/pagado/anulado), `responsable_pago` (propietario/arrendatario/corredora), `descontar_de_liquidacion`, observaciones, `creado_por`/email, timestamps. RLS solo-admin por `empresa_id`. **Fuente oficial de gastos.** Regla: solo gastos con responsable propietario (o `descontar_de_liquidacion`) afectan la rentabilidad del dueño; los del arrendatario/corredora no. Modelo preparado para descuento automático futuro en liquidación (`descontar_de_liquidacion` + `liquidacion_id`; índice parcial de pendientes por descontar). UI: listado con filtros + total vigente, form crear/editar, detalle con acciones (pagar/anular/reactivar/eliminar). Guardas: no editar/eliminar un gasto ya ligado a liquidación. Auditoría en todas las operaciones.
