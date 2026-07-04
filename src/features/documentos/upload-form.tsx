@@ -12,15 +12,26 @@ import type { OpcionesRelacion } from "./types";
 export function UploadForm({
   opciones,
   empresaId,
+  contratosVigentesPorPropiedad,
 }: {
   opciones: OpcionesRelacion;
   empresaId: string;
+  contratosVigentesPorPropiedad?: Record<string, string[]>;
 }) {
   const router = useRouter();
   const [archivo, setArchivo] = useState<File | null>(null);
   const [nombre, setNombre] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
+  const [propiedadSel, setPropiedadSel] = useState("");
+  const [contratoSel, setContratoSel] = useState("");
+
+  function onPropiedadChange(id: string) {
+    setPropiedadSel(id);
+    // Autoselección: si la propiedad tiene un único contrato vigente, se elige solo.
+    const vigentes = contratosVigentesPorPropiedad?.[id] ?? [];
+    setContratoSel(vigentes.length === 1 ? vigentes[0] : "");
+  }
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -130,7 +141,12 @@ export function UploadForm({
 
         <div className="flex flex-col gap-1.5">
           <label className={ui.label}>Propiedad</label>
-          <select name="propiedad_id" defaultValue="" className={ui.input}>
+          <select
+            name="propiedad_id"
+            value={propiedadSel}
+            onChange={(e) => onPropiedadChange(e.target.value)}
+            className={ui.input}
+          >
             <option value="">—</option>
             {opciones.propiedades.map((o) => (
               <option key={o.id} value={o.id}>
@@ -142,7 +158,12 @@ export function UploadForm({
 
         <div className="flex flex-col gap-1.5">
           <label className={ui.label}>Contrato</label>
-          <select name="contrato_id" defaultValue="" className={ui.input}>
+          <select
+            name="contrato_id"
+            value={contratoSel}
+            onChange={(e) => setContratoSel(e.target.value)}
+            className={ui.input}
+          >
             <option value="">—</option>
             {opciones.contratos.map((o) => (
               <option key={o.id} value={o.id}>
