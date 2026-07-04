@@ -156,6 +156,7 @@ export default async function DocumentosPage({
                 <tr>
                   <th className={ui.th}>Nombre</th>
                   <th className={ui.th}>Categoría</th>
+                  <th className={ui.th}>Propiedad</th>
                   <th className={ui.th}>Fecha</th>
                   <th className={ui.th}>Tamaño</th>
                   <th className={ui.th}>Usuario</th>
@@ -185,6 +186,9 @@ export default async function DocumentosPage({
                       <span className={badge(CATEGORIA_TONE[d.categoria])}>
                         {CATEGORIA_LABEL[d.categoria]}
                       </span>
+                    </td>
+                    <td className={`${ui.td} text-muted`}>
+                      {d.propiedad_label ?? "—"}
                     </td>
                     <td className={`${ui.td} text-muted`}>
                       {d.fecha_documento ?? d.created_at.slice(0, 10)}
