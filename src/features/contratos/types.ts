@@ -8,6 +8,8 @@ export type ContratoInsert =
 export type ContratoConPropiedad = Contrato & {
   propiedad_direccion: string;
   propiedad_codigo: string | null;
+  /** Etiqueta descriptiva unificada (código · calle número · unidad). */
+  propiedad_label: string;
 };
 
 /** Arrendatario vinculado a un contrato. */

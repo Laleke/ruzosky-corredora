@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { etiquetaPropiedad } from "@/lib/propiedad";
 import type { Gasto, GastoListado, FiltrosGastos } from "./types";
 
 type PersonaEmbed = {
@@ -19,13 +20,18 @@ function limpiarBusqueda(q: string): string {
 }
 
 const SELECT_RELACIONES = `*,
-  propiedades(codigo_interno, direccion),
+  propiedades(codigo_interno, direccion, numero, departamento),
   propietarios(tipo_persona, nombre, apellido, razon_social),
   arrendatarios(tipo_persona, nombre, apellido, razon_social),
   contratos(numero_contrato)`;
 
 type Row = Gasto & {
-  propiedades: { codigo_interno: string | null; direccion: string | null } | null;
+  propiedades: {
+    codigo_interno: string | null;
+    direccion: string | null;
+    numero: string | null;
+    departamento: string | null;
+  } | null;
   propietarios: PersonaEmbed;
   arrendatarios: PersonaEmbed;
   contratos: { numero_contrato: string | null } | null;
@@ -35,7 +41,7 @@ function mapear(d: Row): GastoListado {
   const prop = d.propiedades;
   return {
     ...d,
-    propiedad_label: prop ? prop.codigo_interno ?? prop.direccion ?? null : null,
+    propiedad_label: prop ? etiquetaPropiedad(prop) : null,
     propietario_nombre: nombrePersona(d.propietarios),
     arrendatario_nombre: nombrePersona(d.arrendatarios),
     contrato_numero: d.contratos?.numero_contrato ?? null,

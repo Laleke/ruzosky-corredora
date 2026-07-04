@@ -12,6 +12,7 @@ import {
 } from "@/features/contratos/queries";
 import { listPropiedades } from "@/features/propiedades/queries";
 import { listArrendatarios } from "@/features/arrendatarios/queries";
+import { etiquetaPropiedad } from "@/lib/propiedad";
 import { ui } from "@/components/ui";
 
 function nombreArrendatario(a: {
@@ -40,12 +41,7 @@ export default async function DetalleContratoPage({
 
   const opcionesPropiedades = propiedades
     .filter((p) => p.activo || p.id === contrato.propiedad_id)
-    .map((p) => ({
-      id: p.id,
-      label: `${p.codigo_interno ? `${p.codigo_interno} · ` : ""}${
-        p.direccion ?? "(sin dirección)"
-      }${p.numero ? ` ${p.numero}` : ""}`,
-    }));
+    .map((p) => ({ id: p.id, label: etiquetaPropiedad(p) }));
 
   const yaVinculados = new Set(vinculados.map((v) => v.arrendatario_id));
   const opcionesArrendatarios = arrendatarios

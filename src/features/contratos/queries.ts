@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { etiquetaPropiedad } from "@/lib/propiedad";
 import type {
   Contrato,
   ContratoConPropiedad,
@@ -9,19 +10,25 @@ export async function listContratos(): Promise<ContratoConPropiedad[]> {
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("contratos")
-    .select("*, propiedades(codigo_interno, direccion)")
+    .select("*, propiedades(codigo_interno, direccion, numero, departamento)")
     .order("created_at", { ascending: false });
 
   if (error) throw new Error(error.message);
 
   type Row = Contrato & {
-    propiedades: { codigo_interno: string | null; direccion: string } | null;
+    propiedades: {
+      codigo_interno: string | null;
+      direccion: string | null;
+      numero: string | null;
+      departamento: string | null;
+    } | null;
   };
 
   return ((data ?? []) as unknown as Row[]).map((c) => ({
     ...c,
     propiedad_direccion: c.propiedades?.direccion ?? "—",
     propiedad_codigo: c.propiedades?.codigo_interno ?? null,
+    propiedad_label: etiquetaPropiedad(c.propiedades),
   }));
 }
 

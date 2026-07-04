@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { etiquetaPropiedad } from "@/lib/propiedad";
 import { CATEGORIA_GASTO_LABEL } from "@/features/gastos/constants";
 import type {
   FiltrosReporte,
@@ -103,7 +104,7 @@ export async function getReporteFinanciero(
       ),
     supabase
       .from("propiedades")
-      .select("id, estado, codigo_interno, direccion")
+      .select("id, estado, codigo_interno, direccion, numero, departamento")
       .eq("activo", true),
     supabase
       .from("propietarios_propiedades")
@@ -330,6 +331,8 @@ export async function getReporteFinanciero(
     estado: string;
     codigo_interno: string | null;
     direccion: string | null;
+    numero: string | null;
+    departamento: string | null;
   }[];
   const propiedadesFiltradas = propiedades.filter((p) => enPropiedad(p.id));
   const propiedadesActivas = propiedadesFiltradas.length;
@@ -408,7 +411,7 @@ export async function getReporteFinanciero(
 
   // ---- Distribuciones ----
   const propiedadLabel = new Map(
-    propiedades.map((p) => [p.id, p.codigo_interno ?? p.direccion ?? "—"])
+    propiedades.map((p) => [p.id, etiquetaPropiedad(p)])
   );
   const gastosPorCategoria = [...gastosPorCategoriaMap.entries()]
     .map(([cat, valor]) => ({
@@ -471,7 +474,7 @@ export async function getOpcionesReporte(): Promise<{
   const [propiedadesRes, propietariosRes] = await Promise.all([
     supabase
       .from("propiedades")
-      .select("id, codigo_interno, direccion")
+      .select("id, codigo_interno, direccion, numero, departamento")
       .eq("activo", true)
       .order("codigo_interno"),
     supabase
@@ -487,7 +490,7 @@ export async function getOpcionesReporte(): Promise<{
   return {
     propiedades: (propiedadesRes.data ?? []).map((p) => ({
       id: p.id,
-      label: p.codigo_interno ?? p.direccion ?? "—",
+      label: etiquetaPropiedad(p),
     })),
     propietarios: (propietariosRes.data ?? []).map((p) => ({
       id: p.id,

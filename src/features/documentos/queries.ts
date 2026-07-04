@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { etiquetaPropiedad, etiquetaContrato } from "@/lib/propiedad";
 import type { Database } from "@/types/database.types";
 import type {
   Documento,
@@ -36,7 +37,7 @@ export async function listDocumentos(
       `*,
        propietarios(tipo_persona, nombre, apellido, razon_social),
        arrendatarios(tipo_persona, nombre, apellido, razon_social),
-       propiedades(codigo_interno, direccion),
+       propiedades(codigo_interno, direccion, numero, departamento),
        contratos(numero_contrato),
        documento_versiones(id, version, nombre_archivo, tamano_bytes, mime_type)`
     )
@@ -62,7 +63,12 @@ export async function listDocumentos(
   type Row = Documento & {
     propietarios: PersonaEmbed;
     arrendatarios: PersonaEmbed;
-    propiedades: { codigo_interno: string | null; direccion: string | null } | null;
+    propiedades: {
+      codigo_interno: string | null;
+      direccion: string | null;
+      numero: string | null;
+      departamento: string | null;
+    } | null;
     contratos: { numero_contrato: string | null } | null;
     documento_versiones: {
       id: string;
@@ -82,9 +88,7 @@ export async function listDocumentos(
       ...d,
       propietario_nombre: nombrePersona(d.propietarios),
       arrendatario_nombre: nombrePersona(d.arrendatarios),
-      propiedad_label: prop
-        ? prop.codigo_interno ?? prop.direccion ?? null
-        : null,
+      propiedad_label: prop ? etiquetaPropiedad(prop) : null,
       contrato_numero: d.contratos?.numero_contrato ?? null,
       version_actual_id: actual?.id ?? null,
       version_nombre_archivo: actual?.nombre_archivo ?? null,
@@ -112,7 +116,12 @@ export async function getDocumento(id: string): Promise<DocumentoListado | null>
   type Row = Documento & {
     propietarios: PersonaEmbed;
     arrendatarios: PersonaEmbed;
-    propiedades: { codigo_interno: string | null; direccion: string | null } | null;
+    propiedades: {
+      codigo_interno: string | null;
+      direccion: string | null;
+      numero: string | null;
+      departamento: string | null;
+    } | null;
     contratos: { numero_contrato: string | null } | null;
   };
   const d = data as unknown as Row;
@@ -121,7 +130,7 @@ export async function getDocumento(id: string): Promise<DocumentoListado | null>
     ...d,
     propietario_nombre: nombrePersona(d.propietarios),
     arrendatario_nombre: nombrePersona(d.arrendatarios),
-    propiedad_label: prop ? prop.codigo_interno ?? prop.direccion ?? null : null,
+    propiedad_label: prop ? etiquetaPropiedad(prop) : null,
     contrato_numero: d.contratos?.numero_contrato ?? null,
     version_actual_id: null,
     version_nombre_archivo: null,
@@ -168,12 +177,14 @@ export async function getOpcionesRelacion(): Promise<OpcionesRelacion> {
       .order("nombre"),
     supabase
       .from("propiedades")
-      .select("id, codigo_interno, direccion")
+      .select("id, codigo_interno, direccion, numero, departamento")
       .eq("activo", true)
       .order("codigo_interno"),
     supabase
       .from("contratos")
-      .select("id, numero_contrato, propiedades(codigo_interno, direccion)")
+      .select(
+        "id, numero_contrato, propiedades(codigo_interno, direccion, numero, departamento)"
+      )
       .eq("activo", true)
       .order("numero_contrato"),
   ]);
@@ -181,7 +192,12 @@ export async function getOpcionesRelacion(): Promise<OpcionesRelacion> {
   type ContratoOpc = {
     id: string;
     numero_contrato: string | null;
-    propiedades: { codigo_interno: string | null; direccion: string | null } | null;
+    propiedades: {
+      codigo_interno: string | null;
+      direccion: string | null;
+      numero: string | null;
+      departamento: string | null;
+    } | null;
   };
 
   return {
@@ -189,19 +205,33 @@ export async function getOpcionesRelacion(): Promise<OpcionesRelacion> {
     arrendatarios: (arr.data ?? []).map(persona),
     propiedades: (propiedades.data ?? []).map((p) => ({
       id: p.id,
-      // Muestra código + dirección (no solo el código, que parece un ID).
-      label: [p.codigo_interno, p.direccion].filter(Boolean).join(" · ") || "—",
+      label: etiquetaPropiedad(p),
     })),
-    contratos: ((contratos.data ?? []) as unknown as ContratoOpc[]).map((c) => {
-      const prop = c.propiedades
-        ? [c.propiedades.codigo_interno, c.propiedades.direccion]
-            .filter(Boolean)
-            .join(" · ")
-        : "";
-      const numero = c.numero_contrato ?? "Contrato";
-      return { id: c.id, label: prop ? `${numero} · ${prop}` : numero };
-    }),
+    contratos: ((contratos.data ?? []) as unknown as ContratoOpc[]).map((c) => ({
+      id: c.id,
+      label: etiquetaContrato(c.numero_contrato, c.propiedades),
+    })),
   };
+}
+
+/**
+ * Mapa propiedad_id → ids de contratos vigentes (vigente/renovado).
+ * Permite autoseleccionar el contrato cuando la propiedad tiene uno solo.
+ */
+export async function getContratosVigentesPorPropiedad(): Promise<
+  Record<string, string[]>
+> {
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("contratos")
+    .select("id, propiedad_id")
+    .eq("activo", true)
+    .in("estado", ["vigente", "renovado"]);
+  const mapa: Record<string, string[]> = {};
+  for (const c of data ?? []) {
+    (mapa[c.propiedad_id] ??= []).push(c.id);
+  }
+  return mapa;
 }
 
 /** Devuelve una signed URL (60s) para ver/descargar una versión. */

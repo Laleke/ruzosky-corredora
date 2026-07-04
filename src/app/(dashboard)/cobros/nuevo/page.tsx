@@ -7,9 +7,7 @@ export default async function NuevoCargoPage() {
     .filter((c) => c.activo)
     .map((c) => ({
       id: c.id,
-      label: `${c.numero_contrato ? `${c.numero_contrato} · ` : ""}${
-        c.propiedad_direccion
-      }`,
+      label: `${c.numero_contrato ?? "Contrato"} · ${c.propiedad_label}`,
     }));
 
   return (
