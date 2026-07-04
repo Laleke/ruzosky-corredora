@@ -173,22 +173,32 @@ export async function getOpcionesRelacion(): Promise<OpcionesRelacion> {
       .order("codigo_interno"),
     supabase
       .from("contratos")
-      .select("id, numero_contrato")
+      .select("id, numero_contrato, propiedades(codigo_interno, direccion)")
       .eq("activo", true)
       .order("numero_contrato"),
   ]);
+
+  type ContratoOpc = {
+    id: string;
+    numero_contrato: string | null;
+    propiedades: { codigo_interno: string | null; direccion: string | null } | null;
+  };
 
   return {
     propietarios: (props.data ?? []).map(persona),
     arrendatarios: (arr.data ?? []).map(persona),
     propiedades: (propiedades.data ?? []).map((p) => ({
       id: p.id,
-      label: p.codigo_interno ?? p.direccion ?? "—",
+      // Muestra código + dirección (no solo el código, que parece un ID).
+      label: [p.codigo_interno, p.direccion].filter(Boolean).join(" · ") || "—",
     })),
-    contratos: (contratos.data ?? []).map((c) => ({
-      id: c.id,
-      label: c.numero_contrato ?? "—",
-    })),
+    contratos: ((contratos.data ?? []) as unknown as ContratoOpc[]).map((c) => {
+      const prop = c.propiedades
+        ? c.propiedades.codigo_interno ?? c.propiedades.direccion
+        : null;
+      const numero = c.numero_contrato ?? "Contrato";
+      return { id: c.id, label: prop ? `${numero} · ${prop}` : numero };
+    }),
   };
 }
 
