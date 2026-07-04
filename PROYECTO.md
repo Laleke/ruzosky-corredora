@@ -291,6 +291,7 @@ Reglas de negocio confirmadas para cuando se construya:
 | R2. Sin liquidaciones negativas → $0 + saldo del propietario con arrastre | Regla de negocio | ✓ | BD + backend |
 | R3. Gastos (solo propietario/compartido) vs Cobros al Arrendatario; compartido genera cobro automático | Regla de negocio | ✓ | BD + backend + frontend |
 | R4. Comprobante opcional al marcar gasto pagado | Regla de negocio | – (reusa `gastos.documento_id`) | frontend + lógica |
+| R5. Gastos del propietario en cuotas (movimientos programados genéricos) | Regla de negocio | ✓ | BD + backend + frontend |
 | M1. Editar participación de copropietarios | Mejora funcional | – | backend + frontend |
 | M2. Mostrar nombre de propiedad en vez del ID | Mejora UX | – | frontend |
 | M3. Contratos con etiqueta descriptiva (no solo número) | Mejora UX | – | frontend |
@@ -302,15 +303,29 @@ Reglas de negocio confirmadas para cuando se construya:
 ### Reglas de negocio aprobadas (oficiales)
 **R1 · Liquidaciones cerradas.** Una liquidación emitida NO se modifica ni recalcula automáticamente; **no existe reliquidación**. Un ingreso o gasto de un período ya liquidado queda marcado como **"pendiente de liquidar"**; la **siguiente** liquidación incorpora todos los movimientos pendientes hasta la fecha de corte. Debe haber trazabilidad de qué movimientos están liquidados y cuáles pendientes.
 
-**R2 · Sin liquidaciones negativas.** Si el cálculo final < 0: el monto a transferir es **$0**, la diferencia queda como **saldo pendiente del propietario**, se descuenta automáticamente de futuras liquidaciones hasta extinguirse, con trazabilidad completa del saldo.
+**R2 · Sin liquidaciones negativas.** Si el cálculo final < 0: el monto a transferir es **$0** y la diferencia queda como **saldo pendiente**, que se descuenta automáticamente de futuras liquidaciones hasta extinguirse, con trazabilidad completa. **El saldo es por (Propietario × Propiedad), NUNCA global.** Cada propiedad mantiene su propio historial y saldo; jamás se mezclan (ej.: Juan Pérez puede tener −$120.000 en Depto A y +$300.000 en Local Comercial, independientes).
 
 **R3 · Gastos vs Cobros al Arrendatario.** Los **Gastos** representan solo lo que afecta al **propietario**. Los **Cobros al Arrendatario** representan cualquier monto que el arrendatario debe pagar.
 - Gasto 100% propietario → solo Gasto; afecta liquidación; no genera cobro.
-- Gasto **compartido** (ej. 70/30) → **un único gasto**; el sistema descuenta la parte del propietario en la liquidación **y** genera automáticamente un **Cobro al Arrendatario** por su porcentaje.
+- Gasto **compartido** (solo **porcentaje**: 100/0, 80/20, 70/30, 50/50 — **sin montos fijos**) → **un único gasto**; el sistema descuenta la parte del propietario en la liquidación **y genera automáticamente un Cobro al Arrendatario** por su porcentaje. Sincronización del cobro: (a) se crea automáticamente al crear el gasto; (b) queda **vinculado** al gasto (`cargos.gasto_id`); (c) si el gasto cambia, el cobro **se actualiza**; (d) si el gasto se elimina y el cobro **no tiene pagos**, el cobro se elimina automáticamente; (e) si el cobro **ya tiene pagos**, se **impide** eliminar el gasto y se pide revertir el cobro primero.
 - Gasto que sería 100% arrendatario → **no** se registra como Gasto; va directo como **Cobro al Arrendatario**.
-- Se **elimina** el responsable "Arrendatario" (y "Corredora") en Gastos; se mantiene solo **Propietario** y **Compartido**. Objetivo: eliminar duplicidad entre módulos.
+- En Gastos se muestran solo **Propietario** y **Compartido**. **No se eliminan valores del enum** (`arrendatario`/`corredora` se conservan para compatibilidad histórica); simplemente **no se ofrecen en la UI**. Objetivo: eliminar duplicidad entre módulos.
 
 **R4 · Comprobante.** Al marcar un gasto como pagado se solicita comprobante; **no es obligatorio**; se permite continuar sin adjuntarlo; se registra si existe o no.
+
+**R5 · Gastos del propietario en cuotas.** Al crear un gasto: opción **Pago único** o **Pago en cuotas**. Si es en cuotas: indicar N° de cuotas, dividir el monto automáticamente, y generar **movimientos programados** vinculados al gasto original (ej. reparación $600.000 en 6 → 6 cuotas de $100.000). Cada liquidación descuenta **solo la cuota del período**; las cuotas futuras **NO** se transforman de inmediato en saldo pendiente. Si esa cuota provoca liquidación negativa, solo esa cuota genera saldo (R2). Trazabilidad completa gasto↔cuotas. **Diseño genérico**: el modelo de movimientos programados debe poder reutilizarse para seguros, mantenciones y pagos periódicos sin rediseñar.
+
+### Plan de implementación QA1 (Fases A–H, aprobado 2026-07-03)
+- **Fase A — Mejoras UX** (M1–M7, sin migración salvo ninguna): Anulado en rojo, nombre de propiedad vs ID, contratos descriptivos, separador de miles, filtrar arrendatarios por propiedad, "Referencia"→"Observación", editar participación de copropietarios.
+- **Fase B — R4** comprobante opcional al pagar (reusa `documento_id`).
+- **Fase C — R3** gastos compartidos + cobro automático sincronizado (migración: `+compartido` en UI, `porcentaje_propietario`, `cargos.gasto_id`).
+- **Fase D — T16** infraestructura de tests (protege el motor).
+- **Fase E — R1** liquidaciones cerradas + pendiente de liquidar (migración: `pagos.liquidacion_id` + backfill).
+- **Fase F — R2** saldo por Propietario × Propiedad (migración: ledger de saldos).
+- **Fase G — R5** gastos en cuotas / movimientos programados genéricos (migración).
+- **QA completa del motor** tras F/G.
+- **Fase H — UI de trazabilidad** (movimientos pendientes, cuotas y saldos) al final.
+- *Dependencias:* C(R3)→E(R1)→F(R2)→G(R5) tocan `calcularLiquidacion` en ese orden; D (tests) antes de E/F/G.
 
 ## Últimos Cambios
 - 2026-07-03 — **Sprint 1 · T1b aprobada con observaciones (✅).** QA funcional del ciclo Gastos↔Liquidaciones exitosa; validó el funcionamiento del módulo. Observaciones trasladadas a **`## Backlog QA 1`** (4 reglas de negocio oficiales R1–R4 + 7 mejoras M1–M7, clasificadas). Pendiente: análisis de impacto y plan de implementación (aprobación previa antes de programar).
