@@ -132,37 +132,71 @@ export default async function DetallePropiedadPage({
         </div>
       )}
 
-      <div className={`${ui.card} p-5`}>
-        <div className="mb-4 flex items-center justify-between">
-          <h2 className="text-sm font-semibold text-ink">Propietarios asociados</h2>
-          {asignados.length === 0 && (
-            <Link
-              href={`/propiedades/${id}/editar`}
-              className={`${ui.btnSecondary} px-3 py-1.5 text-xs`}
-            >
-              Asignar propietario
-            </Link>
-          )}
-        </div>
-        {asignados.length === 0 ? (
-          <p className="text-sm text-muted">Sin propietarios asociados.</p>
-        ) : (
-          <ul className="divide-y divide-line">
-            {asignados.map((a) => (
-              <li key={a.vinculo_id} className="flex items-center justify-between py-2 text-sm">
-                <span className="text-ink">
-                  {a.nombre} <span className="text-muted">· {a.rut}</span>
-                </span>
-                <EditarParticipacion
-                  vinculoId={a.vinculo_id}
-                  propiedadId={id}
-                  valor={a.porcentaje_participacion}
-                />
-              </li>
-            ))}
-          </ul>
-        )}
-      </div>
+      {(() => {
+        const suma = asignados.reduce(
+          (acc, a) => acc + Number(a.porcentaje_participacion),
+          0
+        );
+        const completo = suma === 100;
+        const falta = Math.round((100 - suma) * 100) / 100;
+        return (
+          <div className={`${ui.card} p-5`}>
+            <div className="mb-4 flex items-center justify-between">
+              <h2 className="text-sm font-semibold text-ink">
+                Propietarios asociados
+              </h2>
+              {suma < 100 && (
+                <Link
+                  href={`/propiedades/${id}/editar`}
+                  className={`${ui.btnSecondary} px-3 py-1.5 text-xs`}
+                >
+                  Agregar copropietario
+                </Link>
+              )}
+            </div>
+
+            {asignados.length > 0 && (
+              <ul className="mb-3 divide-y divide-line">
+                {asignados.map((a) => (
+                  <li
+                    key={a.vinculo_id}
+                    className="flex items-center justify-between py-2 text-sm"
+                  >
+                    <span className="text-ink">
+                      {a.nombre} <span className="text-muted">· {a.rut}</span>
+                    </span>
+                    <EditarParticipacion
+                      vinculoId={a.vinculo_id}
+                      propiedadId={id}
+                      valor={a.porcentaje_participacion}
+                    />
+                  </li>
+                ))}
+              </ul>
+            )}
+
+            {/* La participación total debe sumar exactamente 100%. */}
+            {completo ? (
+              <p className="flex items-center gap-2 text-sm text-green-700">
+                <span className={badge("success")}>100%</span> Participación
+                completa.
+              </p>
+            ) : (
+              <div className="rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-800">
+                {asignados.length === 0 ? (
+                  <>Sin propietarios asociados. Falta asignar el 100%.</>
+                ) : (
+                  <>
+                    Participación total: <strong>{suma}%</strong>. Falta asignar{" "}
+                    <strong>{falta}%</strong> — agrega uno o más copropietarios
+                    hasta completar el 100%.
+                  </>
+                )}
+              </div>
+            )}
+          </div>
+        );
+      })()}
     </div>
   );
 }
