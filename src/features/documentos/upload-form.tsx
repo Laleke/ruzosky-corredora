@@ -8,30 +8,23 @@ import { CATEGORIAS, MAX_TAMANO_BYTES, formatearTamano } from "./constants";
 import { subirArchivo, limpiarArchivo } from "./storage-client";
 import { registrarDocumento } from "./actions";
 import type { OpcionesRelacion } from "./types";
+import type { ContextoPropiedad } from "./queries";
+import { SelectorPropiedadContrato } from "@/components/selector-propiedad-contrato";
 
 export function UploadForm({
   opciones,
   empresaId,
-  contratosVigentesPorPropiedad,
+  contexto,
 }: {
   opciones: OpcionesRelacion;
   empresaId: string;
-  contratosVigentesPorPropiedad?: Record<string, string[]>;
+  contexto: ContextoPropiedad;
 }) {
   const router = useRouter();
   const [archivo, setArchivo] = useState<File | null>(null);
   const [nombre, setNombre] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
-  const [propiedadSel, setPropiedadSel] = useState("");
-  const [contratoSel, setContratoSel] = useState("");
-
-  function onPropiedadChange(id: string) {
-    setPropiedadSel(id);
-    // Autoselección: si la propiedad tiene un único contrato vigente, se elige solo.
-    const vigentes = contratosVigentesPorPropiedad?.[id] ?? [];
-    setContratoSel(vigentes.length === 1 ? vigentes[0] : "");
-  }
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -139,57 +132,16 @@ export function UploadForm({
           <input type="date" name="fecha_documento" className={ui.input} />
         </div>
 
-        <div className="flex flex-col gap-1.5">
-          <label className={ui.label}>Propiedad</label>
-          <select
-            name="propiedad_id"
-            value={propiedadSel}
-            onChange={(e) => onPropiedadChange(e.target.value)}
-            className={ui.input}
-          >
-            <option value="">—</option>
-            {opciones.propiedades.map((o) => (
-              <option key={o.id} value={o.id}>
-                {o.label}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        <div className="flex flex-col gap-1.5">
-          <label className={ui.label}>Contrato</label>
-          <select
-            name="contrato_id"
-            value={contratoSel}
-            onChange={(e) => setContratoSel(e.target.value)}
-            className={ui.input}
-          >
-            <option value="">—</option>
-            {opciones.contratos.map((o) => (
-              <option key={o.id} value={o.id}>
-                {o.label}
-              </option>
-            ))}
-          </select>
-        </div>
+        <SelectorPropiedadContrato
+          propiedades={opciones.propiedades}
+          contexto={contexto}
+        />
 
         <div className="flex flex-col gap-1.5">
           <label className={ui.label}>Propietario</label>
           <select name="propietario_id" defaultValue="" className={ui.input}>
             <option value="">—</option>
             {opciones.propietarios.map((o) => (
-              <option key={o.id} value={o.id}>
-                {o.label}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        <div className="flex flex-col gap-1.5">
-          <label className={ui.label}>Arrendatario</label>
-          <select name="arrendatario_id" defaultValue="" className={ui.input}>
-            <option value="">—</option>
-            {opciones.arrendatarios.map((o) => (
               <option key={o.id} value={o.id}>
                 {o.label}
               </option>

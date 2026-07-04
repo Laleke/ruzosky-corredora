@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import {
   getOpcionesRelacion,
-  getContratosVigentesPorPropiedad,
+  getContextoVigentePorPropiedad,
 } from "@/features/documentos/queries";
 import { UploadForm } from "@/features/documentos/upload-form";
 import { getCurrentProfile } from "@/lib/auth";
@@ -15,9 +15,9 @@ export default async function NuevoDocumentoPage() {
   if (!profile) redirect("/login");
   if (profile.rol !== "admin") redirect("/documentos");
 
-  const [opciones, contratosVigentesPorPropiedad] = await Promise.all([
+  const [opciones, contexto] = await Promise.all([
     getOpcionesRelacion(),
-    getContratosVigentesPorPropiedad(),
+    getContextoVigentePorPropiedad(),
   ]);
 
   return (
@@ -33,7 +33,7 @@ export default async function NuevoDocumentoPage() {
         <UploadForm
           opciones={opciones}
           empresaId={profile.empresa_id}
-          contratosVigentesPorPropiedad={contratosVigentesPorPropiedad}
+          contexto={contexto}
         />
       </div>
     </div>
