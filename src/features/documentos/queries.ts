@@ -290,6 +290,52 @@ export async function getContratosVigentesPorPropiedad(): Promise<
   return mapa;
 }
 
+export type ContextoContrato = {
+  contratoId: string;
+  contratoLabel: string;
+  arrendatarioId: string | null;
+  arrendatario: string | null;
+};
+export type ContextoPropiedad = Record<string, ContextoContrato[]>;
+
+/**
+ * Contexto por propiedad: sus contratos vigentes, cada uno con su arrendatario
+ * principal. Base del flujo Propiedad → Contrato (auto) → Arrendatario (auto).
+ */
+export async function getContextoVigentePorPropiedad(): Promise<ContextoPropiedad> {
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("contratos")
+    .select(
+      "id, propiedad_id, numero_contrato, contratos_arrendatarios(arrendatarios(id, tipo_persona, nombre, apellido, razon_social))"
+    )
+    .eq("activo", true)
+    .in("estado", ["vigente", "renovado"]);
+
+  type Row = {
+    id: string;
+    propiedad_id: string;
+    numero_contrato: string | null;
+    contratos_arrendatarios: {
+      arrendatarios:
+        | (PersonaEmbed & { id: string })
+        | null;
+    }[];
+  };
+
+  const mapa: ContextoPropiedad = {};
+  for (const c of (data ?? []) as unknown as Row[]) {
+    const primero = c.contratos_arrendatarios?.[0]?.arrendatarios ?? null;
+    (mapa[c.propiedad_id] ??= []).push({
+      contratoId: c.id,
+      contratoLabel: c.numero_contrato ?? "Contrato",
+      arrendatarioId: primero?.id ?? null,
+      arrendatario: nombrePersona(primero),
+    });
+  }
+  return mapa;
+}
+
 /** Devuelve una signed URL (60s) para ver/descargar una versión. */
 export async function getSignedUrl(
   storagePath: string,
