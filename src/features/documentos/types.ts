@@ -31,7 +31,6 @@ export type FiltrosDocumentos = {
   q?: string;
   categoria?: CategoriaDocumento;
   propiedadId?: string;
-  contratoId?: string;
   propietarioId?: string;
   arrendatarioId?: string;
   desde?: string;

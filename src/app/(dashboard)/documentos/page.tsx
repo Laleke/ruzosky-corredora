@@ -20,7 +20,6 @@ type SP = {
   q?: string;
   categoria?: string;
   propiedad?: string;
-  contrato?: string;
   propietario?: string;
   arrendatario?: string;
   desde?: string;
@@ -38,7 +37,6 @@ export default async function DocumentosPage({
     q: sp.q,
     categoria: sp.categoria as CategoriaDocumento | undefined,
     propiedadId: sp.propiedad,
-    contratoId: sp.contrato,
     propietarioId: sp.propietario,
     arrendatarioId: sp.arrendatario,
     desde: sp.desde,
@@ -87,17 +85,6 @@ export default async function DocumentosPage({
           <select name="propiedad" defaultValue={sp.propiedad ?? ""} className={ui.input}>
             <option value="">Todas</option>
             {opciones.propiedades.map((o) => (
-              <option key={o.id} value={o.id}>
-                {o.label}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label className="flex flex-col gap-1 text-sm">
-          <span className="font-medium">Contrato</span>
-          <select name="contrato" defaultValue={sp.contrato ?? ""} className={ui.input}>
-            <option value="">Todos</option>
-            {opciones.contratos.map((o) => (
               <option key={o.id} value={o.id}>
                 {o.label}
               </option>

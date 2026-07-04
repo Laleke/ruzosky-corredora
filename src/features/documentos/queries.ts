@@ -1,6 +1,53 @@
+import type { SupabaseClient } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/server";
 import { etiquetaPropiedad, etiquetaContrato } from "@/lib/propiedad";
+import { fechaEfectivaDocumento, dentroDeRango } from "./filtros";
 import type { Database } from "@/types/database.types";
+
+type DB = SupabaseClient<Database>;
+
+/**
+ * Traduce los filtros por propietario/arrendatario al conjunto de propiedades
+ * relacionadas. Devuelve:
+ *  - null  → no hay filtro por propietario/arrendatario (no acotar por propiedad),
+ *  - []    → el criterio no tiene propiedades (resultado vacío),
+ *  - [ids] → propiedades que cumplen el/los criterios (intersección).
+ */
+async function resolverPropiedadScope(
+  supabase: DB,
+  filtros: FiltrosDocumentos
+): Promise<string[] | null> {
+  const conjuntos: string[][] = [];
+
+  if (filtros.propietarioId) {
+    const { data } = await supabase
+      .from("propietarios_propiedades")
+      .select("propiedad_id")
+      .eq("propietario_id", filtros.propietarioId);
+    conjuntos.push((data ?? []).map((r) => r.propiedad_id));
+  }
+
+  if (filtros.arrendatarioId) {
+    const { data: ca } = await supabase
+      .from("contratos_arrendatarios")
+      .select("contrato_id")
+      .eq("arrendatario_id", filtros.arrendatarioId);
+    const contratoIds = (ca ?? []).map((r) => r.contrato_id);
+    let props: string[] = [];
+    if (contratoIds.length) {
+      const { data: cs } = await supabase
+        .from("contratos")
+        .select("propiedad_id")
+        .in("id", contratoIds);
+      props = [...new Set((cs ?? []).map((r) => r.propiedad_id))];
+    }
+    conjuntos.push(props);
+  }
+
+  if (conjuntos.length === 0) return null;
+  // Intersección de todos los criterios aplicados.
+  return conjuntos.reduce((acc, set) => acc.filter((id) => set.includes(id)));
+}
 import type {
   Documento,
   DocumentoVersion,
@@ -31,6 +78,12 @@ export async function listDocumentos(
   filtros: FiltrosDocumentos = {}
 ): Promise<DocumentoListado[]> {
   const supabase = await createClient();
+
+  // Propietario y arrendatario NO se filtran por el FK directo del documento
+  // (casi siempre null): se resuelven al conjunto de propiedades relacionadas.
+  const scope = await resolverPropiedadScope(supabase, filtros);
+  if (scope && scope.length === 0) return []; // criterio sin propiedades → vacío
+
   let q = supabase
     .from("documentos")
     .select(
@@ -45,12 +98,7 @@ export async function listDocumentos(
 
   if (filtros.categoria) q = q.eq("categoria", filtros.categoria);
   if (filtros.propiedadId) q = q.eq("propiedad_id", filtros.propiedadId);
-  if (filtros.contratoId) q = q.eq("contrato_id", filtros.contratoId);
-  if (filtros.propietarioId) q = q.eq("propietario_id", filtros.propietarioId);
-  if (filtros.arrendatarioId)
-    q = q.eq("arrendatario_id", filtros.arrendatarioId);
-  if (filtros.desde) q = q.gte("fecha_documento", filtros.desde);
-  if (filtros.hasta) q = q.lte("fecha_documento", filtros.hasta);
+  if (scope) q = q.in("propiedad_id", scope);
 
   const busqueda = filtros.q ? limpiarBusqueda(filtros.q) : "";
   if (busqueda) {
@@ -79,7 +127,15 @@ export async function listDocumentos(
     }[];
   };
 
-  return ((data ?? []) as unknown as Row[]).map((d) => {
+  // Filtro por fecha en memoria sobre la fecha efectiva (documento o subida),
+  // para no excluir documentos sin `fecha_documento` que sí caen en el rango.
+  const filas = ((data ?? []) as unknown as Row[]).filter((d) =>
+    filtros.desde || filtros.hasta
+      ? dentroDeRango(fechaEfectivaDocumento(d), filtros.desde, filtros.hasta)
+      : true
+  );
+
+  return filas.map((d) => {
     const actual =
       d.documento_versiones?.find((v) => v.version === d.version_actual) ??
       null;
