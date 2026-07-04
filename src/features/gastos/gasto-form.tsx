@@ -2,6 +2,7 @@
 
 import { useActionState, useState } from "react";
 import { ui } from "@/components/ui";
+import { MoneyInput } from "@/components/money-input";
 import {
   CATEGORIAS_GASTO,
   RESPONSABLES_GASTO,
@@ -9,7 +10,7 @@ import {
 } from "./constants";
 import type { GastoFormState } from "./actions";
 import type { Gasto } from "./types";
-import type { OpcionesRelacion } from "@/features/documentos/types";
+import type { OpcionesRelacion, Opcion } from "@/features/documentos/types";
 
 type Action = (
   prev: GastoFormState,
@@ -20,15 +21,25 @@ export function GastoForm({
   action,
   opciones,
   gasto,
+  arrendatariosPorPropiedad,
 }: {
   action: Action;
   opciones: OpcionesRelacion;
   gasto?: Gasto;
+  arrendatariosPorPropiedad?: Record<string, Opcion[]>;
 }) {
   const [state, formAction, pending] = useActionState(action, { error: null });
   const [responsable, setResponsable] = useState(
     gasto?.responsable_pago ?? "propietario"
   );
+  const [propiedadSel, setPropiedadSel] = useState(gasto?.propiedad_id ?? "");
+
+  // Filtra arrendatarios según la propiedad elegida (si hay vínculos); si no,
+  // ofrece todos.
+  const arrendatariosFiltrados =
+    propiedadSel && arrendatariosPorPropiedad?.[propiedadSel]?.length
+      ? arrendatariosPorPropiedad[propiedadSel]
+      : opciones.arrendatarios;
 
   return (
     <form action={formAction} className="flex max-w-2xl flex-col gap-5">
@@ -60,11 +71,8 @@ export function GastoForm({
 
         <div className="flex flex-col gap-1.5">
           <label className={ui.label}>Monto (CLP) *</label>
-          <input
-            type="number"
+          <MoneyInput
             name="monto"
-            step="1"
-            min="1"
             defaultValue={gasto?.monto ?? ""}
             placeholder="0"
             className={ui.input}
@@ -100,7 +108,8 @@ export function GastoForm({
           <label className={ui.label}>Propiedad *</label>
           <select
             name="propiedad_id"
-            defaultValue={gasto?.propiedad_id ?? ""}
+            value={propiedadSel}
+            onChange={(e) => setPropiedadSel(e.target.value)}
             className={ui.input}
           >
             <option value="">Selecciona…</option>
@@ -170,7 +179,7 @@ export function GastoForm({
             className={ui.input}
           >
             <option value="">—</option>
-            {opciones.arrendatarios.map((o) => (
+            {arrendatariosFiltrados.map((o) => (
               <option key={o.id} value={o.id}>
                 {o.label}
               </option>

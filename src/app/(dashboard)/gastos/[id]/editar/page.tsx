@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
-import { getGasto } from "@/features/gastos/queries";
+import { getGasto, getArrendatariosPorPropiedad } from "@/features/gastos/queries";
 import { getOpcionesRelacion } from "@/features/documentos/queries";
 import { GastoForm } from "@/features/gastos/gasto-form";
 import { actualizarGasto } from "@/features/gastos/actions";
@@ -19,9 +19,10 @@ export default async function EditarGastoPage({
   if (!profile) redirect("/login");
   if (profile.rol !== "admin") redirect("/gastos");
 
-  const [gasto, opciones] = await Promise.all([
+  const [gasto, opciones, arrendatariosPorPropiedad] = await Promise.all([
     getGasto(id),
     getOpcionesRelacion(),
+    getArrendatariosPorPropiedad(),
   ]);
   if (!gasto) notFound();
   if (gasto.liquidacion_id) redirect(`/gastos/${id}`);
@@ -35,7 +36,12 @@ export default async function EditarGastoPage({
       </Link>
       <PageHeader titulo="Editar gasto" />
       <div className={`${ui.card} p-6`}>
-        <GastoForm action={action} opciones={opciones} gasto={gasto} />
+        <GastoForm
+          action={action}
+          opciones={opciones}
+          gasto={gasto}
+          arrendatariosPorPropiedad={arrendatariosPorPropiedad}
+        />
       </div>
     </div>
   );

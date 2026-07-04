@@ -68,6 +68,44 @@ export async function listGastos(
   return ((data ?? []) as unknown as Row[]).map(mapear);
 }
 
+/**
+ * Mapa propiedad_id → arrendatarios vinculados (vía contratos activos).
+ * Permite filtrar el selector de arrendatario según la propiedad elegida.
+ */
+export async function getArrendatariosPorPropiedad(): Promise<
+  Record<string, { id: string; label: string }[]>
+> {
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("contratos")
+    .select(
+      "propiedad_id, contratos_arrendatarios(arrendatarios(id, tipo_persona, nombre, apellido, razon_social))"
+    )
+    .eq("activo", true);
+
+  type Row = {
+    propiedad_id: string;
+    contratos_arrendatarios: {
+      arrendatarios: PersonaEmbed & { id: string } | null;
+    }[];
+  };
+
+  const mapa: Record<string, { id: string; label: string }[]> = {};
+  const vistos: Record<string, Set<string>> = {};
+  for (const c of (data ?? []) as unknown as Row[]) {
+    for (const ca of c.contratos_arrendatarios ?? []) {
+      const a = ca.arrendatarios;
+      if (!a) continue;
+      mapa[c.propiedad_id] ??= [];
+      vistos[c.propiedad_id] ??= new Set();
+      if (vistos[c.propiedad_id].has(a.id)) continue;
+      vistos[c.propiedad_id].add(a.id);
+      mapa[c.propiedad_id].push({ id: a.id, label: nombrePersona(a) ?? "—" });
+    }
+  }
+  return mapa;
+}
+
 export async function getGasto(id: string): Promise<GastoListado | null> {
   const supabase = await createClient();
   const { data } = await supabase
