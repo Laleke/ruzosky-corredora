@@ -194,8 +194,10 @@ export async function getOpcionesRelacion(): Promise<OpcionesRelacion> {
     })),
     contratos: ((contratos.data ?? []) as unknown as ContratoOpc[]).map((c) => {
       const prop = c.propiedades
-        ? c.propiedades.codigo_interno ?? c.propiedades.direccion
-        : null;
+        ? [c.propiedades.codigo_interno, c.propiedades.direccion]
+            .filter(Boolean)
+            .join(" · ")
+        : "";
       const numero = c.numero_contrato ?? "Contrato";
       return { id: c.id, label: prop ? `${numero} · ${prop}` : numero };
     }),
