@@ -139,21 +139,11 @@ export function GastoForm({
           </select>
         </div>
 
-        <div className="flex flex-col gap-1.5">
-          <label className={ui.label}>Contrato</label>
-          <select
-            name="contrato_id"
-            defaultValue={gasto?.contrato_id ?? ""}
-            className={ui.input}
-          >
-            <option value="">—</option>
-            {opciones.contratos.map((o) => (
-              <option key={o.id} value={o.id}>
-                {o.label}
-              </option>
-            ))}
-          </select>
-        </div>
+        {/* El gasto pertenece a la Propiedad, no al contrato. Se conserva el
+            contrato_id existente (trazabilidad histórica) sin exponerlo en el form.
+            Para gastos compartidos (Fase C) el contrato se derivará del vigente
+            de la propiedad automáticamente. */}
+        <input type="hidden" name="contrato_id" value={gasto?.contrato_id ?? ""} />
 
         <div className="flex flex-col gap-1.5">
           <label className={ui.label}>Propietario</label>

@@ -67,7 +67,6 @@ export default async function GastoDetallePage({
           <Dato label="Categoría" valor={CATEGORIA_GASTO_LABEL[gasto.categoria]} />
           <Dato label="Responsable" valor={RESPONSABLE_GASTO_LABEL[gasto.responsable_pago]} />
           <Dato label="Propiedad" valor={gasto.propiedad_label} />
-          <Dato label="Contrato" valor={gasto.contrato_numero} />
           <Dato label="Propietario" valor={gasto.propietario_nombre} />
           <Dato label="Arrendatario" valor={gasto.arrendatario_nombre} />
           <Dato
