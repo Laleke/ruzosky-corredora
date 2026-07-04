@@ -207,6 +207,74 @@ export async function cambiarEstadoGasto(
   return { error: null };
 }
 
+/**
+ * Marca un gasto como pagado, opcionalmente vinculando un comprobante (un
+ * `documento` ya subido). El comprobante NO es obligatorio; se registra si
+ * existe (documento_id != null).
+ */
+export async function marcarGastoPagado(
+  id: string,
+  documentoId: string | null
+): Promise<AccionResultado> {
+  const profile = await getCurrentProfile();
+  if (!profile || profile.rol !== "admin") return { error: "No autorizado." };
+
+  const supabase = await createClient();
+  const { data: actual } = await supabase
+    .from("gastos")
+    .select("liquidacion_id")
+    .eq("id", id)
+    .single();
+  if (!actual) return { error: "Gasto no encontrado." };
+  if (actual.liquidacion_id)
+    return { error: "El gasto está ligado a una liquidación; no se puede modificar." };
+
+  const patch: { estado: "pagado"; documento_id?: string } = { estado: "pagado" };
+  if (documentoId) patch.documento_id = documentoId;
+
+  const { error } = await supabase.from("gastos").update(patch).eq("id", id);
+  if (error) return { error: "No se pudo marcar como pagado." };
+
+  await registrarAuditoria(supabase, profile, "gasto_pagado", "gasto", id, {
+    comprobante: Boolean(documentoId),
+  });
+
+  revalidatePath("/gastos");
+  revalidatePath(`/gastos/${id}`);
+  return { error: null };
+}
+
+/** Signed URL (60s) del comprobante de un gasto, si lo tiene. */
+export async function getComprobanteUrlGasto(
+  id: string
+): Promise<{ url: string | null; error: string | null }> {
+  const profile = await getCurrentProfile();
+  if (!profile || profile.rol !== "admin")
+    return { url: null, error: "No autorizado." };
+
+  const supabase = await createClient();
+  const { data: gasto } = await supabase
+    .from("gastos")
+    .select("documento_id")
+    .eq("id", id)
+    .single();
+  if (!gasto?.documento_id) return { url: null, error: "Sin comprobante." };
+
+  const { data: ver } = await supabase
+    .from("documento_versiones")
+    .select("storage_path, nombre_archivo")
+    .eq("documento_id", gasto.documento_id)
+    .order("version", { ascending: false })
+    .limit(1)
+    .single();
+  if (!ver) return { url: null, error: "Comprobante no encontrado." };
+
+  const { data } = await supabase.storage
+    .from("documentos")
+    .createSignedUrl(ver.storage_path, 60, { download: ver.nombre_archivo });
+  return { url: data?.signedUrl ?? null, error: data?.signedUrl ? null : "No se pudo abrir." };
+}
+
 export async function eliminarGasto(id: string): Promise<AccionResultado> {
   const profile = await getCurrentProfile();
   if (!profile || profile.rol !== "admin") return { error: "No autorizado." };

@@ -1,20 +1,149 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { CheckCircle2, Ban, Trash2, RotateCcw } from "lucide-react";
+import { CheckCircle2, Ban, Trash2, RotateCcw, Paperclip, Eye } from "lucide-react";
 import { ui } from "@/components/ui";
-import { cambiarEstadoGasto, eliminarGasto } from "./actions";
+import { MAX_TAMANO_BYTES } from "@/features/documentos/constants";
+import { subirArchivo, limpiarArchivo } from "@/features/documentos/storage-client";
+import { registrarDocumento } from "@/features/documentos/actions";
+import {
+  cambiarEstadoGasto,
+  eliminarGasto,
+  marcarGastoPagado,
+  getComprobanteUrlGasto,
+} from "./actions";
 import type { EstadoGasto } from "@/types/database.types";
+
+/** Marcar pagado con comprobante opcional (R4). */
+export function MarcarPagadoBtn({
+  id,
+  empresaId,
+  propiedadId,
+  descripcion,
+}: {
+  id: string;
+  empresaId: string;
+  propiedadId: string;
+  descripcion: string;
+}) {
+  const router = useRouter();
+  const inputRef = useRef<HTMLInputElement>(null);
+  const [abierto, setAbierto] = useState(false);
+  const [file, setFile] = useState<File | null>(null);
+  const [pending, setPending] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function confirmar() {
+    setError(null);
+    setPending(true);
+    let documentoId: string | null = null;
+
+    if (file) {
+      if (file.size > MAX_TAMANO_BYTES) {
+        setPending(false);
+        setError("El comprobante supera el tamaño máximo (25 MB).");
+        return;
+      }
+      const { archivo, error: e1 } = await subirArchivo(file, empresaId);
+      if (!archivo) {
+        setPending(false);
+        setError(e1 ?? "No se pudo subir el comprobante.");
+        return;
+      }
+      const res = await registrarDocumento({
+        nombre: `Comprobante: ${descripcion}`.slice(0, 200),
+        categoria: "comprobante_pago",
+        propiedad_id: propiedadId,
+        archivo,
+      });
+      if (res.error || !res.id) {
+        await limpiarArchivo(archivo.storage_path);
+        setPending(false);
+        setError(res.error ?? "No se pudo registrar el comprobante.");
+        return;
+      }
+      documentoId = res.id;
+    }
+
+    const r = await marcarGastoPagado(id, documentoId);
+    setPending(false);
+    if (r.error) setError(r.error);
+    else router.refresh();
+  }
+
+  if (!abierto) {
+    return (
+      <button onClick={() => setAbierto(true)} className={ui.btnSecondary}>
+        <CheckCircle2 size={16} /> Marcar pagado
+      </button>
+    );
+  }
+
+  return (
+    <div className="flex flex-col gap-2 rounded-lg border border-line p-3">
+      <label className="flex cursor-pointer items-center gap-2 text-sm text-ink">
+        <Paperclip size={15} className="text-muted" />
+        {file ? file.name : "Adjuntar comprobante (opcional)"}
+        <input
+          ref={inputRef}
+          type="file"
+          className="hidden"
+          onChange={(e) => setFile(e.target.files?.[0] ?? null)}
+        />
+      </label>
+      <div className="flex gap-2">
+        <button onClick={confirmar} disabled={pending} className={ui.btnPrimary}>
+          {pending ? "Guardando…" : "Confirmar pago"}
+        </button>
+        <button
+          onClick={() => {
+            setAbierto(false);
+            setFile(null);
+            setError(null);
+          }}
+          disabled={pending}
+          className={ui.btnGhost}
+        >
+          Cancelar
+        </button>
+      </div>
+      {error && <p className="text-xs text-red-700">{error}</p>}
+    </div>
+  );
+}
+
+/** Ver el comprobante adjunto (signed URL). */
+export function VerComprobanteBtn({ id }: { id: string }) {
+  const [cargando, setCargando] = useState(false);
+  async function ver() {
+    setCargando(true);
+    const { url, error } = await getComprobanteUrlGasto(id);
+    setCargando(false);
+    if (url) window.open(url, "_blank", "noopener");
+    else alert(error ?? "No se pudo abrir el comprobante.");
+  }
+  return (
+    <button onClick={ver} disabled={cargando} className={ui.linkAction}>
+      <Eye size={15} className="inline" /> {cargando ? "Abriendo…" : "Ver comprobante"}
+    </button>
+  );
+}
 
 export function GastoAcciones({
   id,
   estado,
   ligadoALiquidacion,
+  empresaId,
+  propiedadId,
+  descripcion,
 }: {
   id: string;
   estado: EstadoGasto;
   ligadoALiquidacion: boolean;
+  empresaId: string;
+  propiedadId: string;
+  descripcion: string;
 }) {
   const router = useRouter();
   const [pending, setPending] = useState(false);
@@ -49,15 +178,14 @@ export function GastoAcciones({
   }
 
   return (
-    <div className="flex flex-wrap gap-2">
+    <div className="flex flex-wrap items-start gap-2">
       {estado === "pendiente" && (
-        <button
-          onClick={() => cambiar("pagado")}
-          disabled={pending}
-          className={ui.btnSecondary}
-        >
-          <CheckCircle2 size={16} /> Marcar pagado
-        </button>
+        <MarcarPagadoBtn
+          id={id}
+          empresaId={empresaId}
+          propiedadId={propiedadId}
+          descripcion={descripcion}
+        />
       )}
       {estado === "pagado" && (
         <button

@@ -8,7 +8,7 @@ import {
   RESPONSABLE_GASTO_LABEL,
   clp,
 } from "@/features/gastos/constants";
-import { GastoAcciones } from "@/features/gastos/acciones";
+import { GastoAcciones, VerComprobanteBtn } from "@/features/gastos/acciones";
 import { getCurrentProfile } from "@/lib/auth";
 import { ui, badge } from "@/components/ui";
 
@@ -75,6 +75,20 @@ export default async function GastoDetallePage({
             valor={gasto.descontar_de_liquidacion ? "Sí" : "No"}
           />
           <Dato label="Registrado por" valor={gasto.creado_por_email} />
+          <div>
+            <dt className="text-xs uppercase tracking-wide text-muted">
+              Comprobante
+            </dt>
+            <dd className="mt-0.5 text-sm text-ink">
+              {gasto.documento_id ? (
+                <span className="flex items-center gap-2">
+                  Adjuntado <VerComprobanteBtn id={id} />
+                </span>
+              ) : (
+                <span className="text-muted">Sin comprobante</span>
+              )}
+            </dd>
+          </div>
         </dl>
         {gasto.observaciones && (
           <div className="mt-4 border-t border-line pt-4">
@@ -88,7 +102,14 @@ export default async function GastoDetallePage({
         )}
       </div>
 
-      <GastoAcciones id={id} estado={gasto.estado} ligadoALiquidacion={ligado} />
+      <GastoAcciones
+        id={id}
+        estado={gasto.estado}
+        ligadoALiquidacion={ligado}
+        empresaId={profile.empresa_id}
+        propiedadId={gasto.propiedad_id}
+        descripcion={gasto.descripcion}
+      />
     </div>
   );
 }
