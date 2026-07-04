@@ -317,7 +317,7 @@ Reglas de negocio confirmadas para cuando se construya:
 
 ### Plan de implementación QA1 (Fases A–H, aprobado 2026-07-03)
 - **Fase A — Mejoras UX ✅ (2026-07-03, sin migración):** M6 Anulado en rojo · M2 propiedad con código+dirección · M3 contratos descriptivos · M4 separador de miles (`MoneyInput`) · M5 filtro de arrendatarios por propiedad · M7 label "Observación" · M1 editar participación de copropietarios. Build verde, `tsc` limpio. Commits locales `dbe2ea5`…`c390b00` (sin push).
-- **Fase B — R4** comprobante opcional al pagar (reusa `documento_id`).
+- **Fase B — R4 ✅ (2026-07-03):** comprobante opcional al marcar gasto pagado (sube a Storage + registra `documento` categoría `comprobante_pago`, vincula `gastos.documento_id`; detalle indica si existe y permite verlo con signed URL). Sin migración. Build verde.
 - **Fase C — R3** gastos compartidos + cobro automático sincronizado (migración: `+compartido` en UI, `porcentaje_propietario`, `cargos.gasto_id`).
 - **Fase D — T16** infraestructura de tests (protege el motor).
 - **Fase E — R1** liquidaciones cerradas + pendiente de liquidar (migración: `pagos.liquidacion_id` + backfill).
@@ -328,6 +328,7 @@ Reglas de negocio confirmadas para cuando se construya:
 - *Dependencias:* C(R3)→E(R1)→F(R2)→G(R5) tocan `calcularLiquidacion` en ese orden; D (tests) antes de E/F/G.
 
 ## Últimos Cambios
+- 2026-07-03 — **QA1 · Fase B (R4 comprobante opcional) completada (✅).** Al marcar un gasto como pagado se puede adjuntar comprobante (no obligatorio): se sube a Storage y se registra como `documento` (categoría `comprobante_pago`) vinculado por `gastos.documento_id`; el detalle indica si existe y permite verlo (signed URL). Reusa el módulo Documentos; sin migración. Build verde, `tsc` limpio. Siguiente: Fase C (R3, gastos compartidos + cobro automático).
 - 2026-07-03 — **QA1 · Fase A (Mejoras UX) completada (✅).** M1–M7: Anulado en rojo; propiedad muestra código+dirección; contratos con etiqueta descriptiva; separador de miles en montos (`MoneyInput` reutilizable, envía número crudo); filtro de arrendatarios por propiedad en el form de gastos; label "Referencia"→"Observación" (sin tocar la columna); edición inline de participación de copropietarios (valida ≤100%). Sin migración. Build verde, `tsc` limpio. 5 commits locales, sin push. Siguiente: Fase B (R4, comprobante opcional al pagar).
 - 2026-07-03 — **Sprint 1 · T1b aprobada con observaciones (✅).** QA funcional del ciclo Gastos↔Liquidaciones exitosa; validó el funcionamiento del módulo. Observaciones trasladadas a **`## Backlog QA 1`** (4 reglas de negocio oficiales R1–R4 + 7 mejoras M1–M7, clasificadas). Pendiente: análisis de impacto y plan de implementación (aprobación previa antes de programar).
 - 2026-07-03 — **Sprint 1 · T1 completada (✅):** migraciones `0015_documentos.sql` y `0016_gastos.sql` aplicadas en Supabase por Eduardo. Verificación de esquema con 22 checks (enums, tablas, índices, unique, triggers, RLS, políticas, bucket privado, FKs) → **todo OK**. Sin intervención manual pendiente. Siguiente: **T1b** (validación runtime: aislamiento entre tenants + QA 1–10 Gastos↔Liquidaciones). Aún **no** se ejecutó QA funcional ni se regeneró `database.types.ts` (T11).
