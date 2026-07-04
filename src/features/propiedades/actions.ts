@@ -281,6 +281,48 @@ export async function asignarPropietario(
   return { error: null };
 }
 
+export async function actualizarParticipacion(
+  vinculoId: string,
+  propiedadId: string,
+  porcentaje: number
+): Promise<{ error: string | null }> {
+  const profile = await getCurrentProfile();
+  if (!profile || profile.rol !== "admin") return { error: "No autorizado." };
+
+  if (!Number.isFinite(porcentaje) || porcentaje <= 0 || porcentaje > 100) {
+    return { error: "El porcentaje debe estar entre 0 y 100." };
+  }
+
+  const supabase = await createClient();
+
+  // La suma de las OTRAS participaciones + la nueva no puede superar 100%.
+  const { data: otras } = await supabase
+    .from("propietarios_propiedades")
+    .select("porcentaje_participacion")
+    .eq("propiedad_id", propiedadId)
+    .neq("id", vinculoId);
+
+  const suma = (otras ?? []).reduce(
+    (acc, r) => acc + Number(r.porcentaje_participacion),
+    0
+  );
+  if (suma + porcentaje > 100) {
+    return {
+      error: `La suma de participaciones superaría 100% (otras: ${suma}%).`,
+    };
+  }
+
+  const { error } = await supabase
+    .from("propietarios_propiedades")
+    .update({ porcentaje_participacion: porcentaje })
+    .eq("id", vinculoId);
+
+  if (error) return { error: "No se pudo actualizar la participación." };
+
+  revalidatePath(`/propiedades/${propiedadId}`);
+  return { error: null };
+}
+
 export async function quitarPropietario(vinculoId: string, propiedadId: string) {
   const profile = await getCurrentProfile();
   if (!profile || profile.rol !== "admin") return;

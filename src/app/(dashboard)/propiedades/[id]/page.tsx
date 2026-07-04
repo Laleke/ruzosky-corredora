@@ -5,6 +5,7 @@ import {
   getPropiedad,
   getPropietariosAsignados,
 } from "@/features/propiedades/queries";
+import { EditarParticipacion } from "@/features/propiedades/editar-participacion";
 import { ui, badge } from "@/components/ui";
 
 const TIPO_LABEL: Record<string, string> = {
@@ -152,7 +153,11 @@ export default async function DetallePropiedadPage({
                 <span className="text-ink">
                   {a.nombre} <span className="text-muted">· {a.rut}</span>
                 </span>
-                <span className="font-medium text-ink">{a.porcentaje_participacion}%</span>
+                <EditarParticipacion
+                  vinculoId={a.vinculo_id}
+                  propiedadId={id}
+                  valor={a.porcentaje_participacion}
+                />
               </li>
             ))}
           </ul>
