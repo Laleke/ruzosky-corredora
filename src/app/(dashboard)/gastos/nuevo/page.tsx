@@ -2,7 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import { getOpcionesRelacion } from "@/features/documentos/queries";
-import { getArrendatariosPorPropiedad } from "@/features/gastos/queries";
+import { getContextoVigentePorPropiedad } from "@/features/documentos/queries";
 import { GastoForm } from "@/features/gastos/gasto-form";
 import { crearGasto } from "@/features/gastos/actions";
 import { getCurrentProfile } from "@/lib/auth";
@@ -14,9 +14,9 @@ export default async function NuevoGastoPage() {
   if (!profile) redirect("/login");
   if (profile.rol !== "admin") redirect("/gastos");
 
-  const [opciones, arrendatariosPorPropiedad] = await Promise.all([
+  const [opciones, contexto] = await Promise.all([
     getOpcionesRelacion(),
-    getArrendatariosPorPropiedad(),
+    getContextoVigentePorPropiedad(),
   ]);
 
   return (
@@ -29,11 +29,7 @@ export default async function NuevoGastoPage() {
         descripcion="Imputa el gasto a una propiedad y define quién lo asume."
       />
       <div className={`${ui.card} p-6`}>
-        <GastoForm
-          action={crearGasto}
-          opciones={opciones}
-          arrendatariosPorPropiedad={arrendatariosPorPropiedad}
-        />
+        <GastoForm action={crearGasto} opciones={opciones} contexto={contexto} />
       </div>
     </div>
   );

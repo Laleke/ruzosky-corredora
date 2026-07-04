@@ -1,8 +1,11 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
-import { getGasto, getArrendatariosPorPropiedad } from "@/features/gastos/queries";
-import { getOpcionesRelacion } from "@/features/documentos/queries";
+import { getGasto } from "@/features/gastos/queries";
+import {
+  getOpcionesRelacion,
+  getContextoVigentePorPropiedad,
+} from "@/features/documentos/queries";
 import { GastoForm } from "@/features/gastos/gasto-form";
 import { actualizarGasto } from "@/features/gastos/actions";
 import { getCurrentProfile } from "@/lib/auth";
@@ -19,10 +22,10 @@ export default async function EditarGastoPage({
   if (!profile) redirect("/login");
   if (profile.rol !== "admin") redirect("/gastos");
 
-  const [gasto, opciones, arrendatariosPorPropiedad] = await Promise.all([
+  const [gasto, opciones, contexto] = await Promise.all([
     getGasto(id),
     getOpcionesRelacion(),
-    getArrendatariosPorPropiedad(),
+    getContextoVigentePorPropiedad(),
   ]);
   if (!gasto) notFound();
   if (gasto.liquidacion_id) redirect(`/gastos/${id}`);
@@ -40,7 +43,7 @@ export default async function EditarGastoPage({
           action={action}
           opciones={opciones}
           gasto={gasto}
-          arrendatariosPorPropiedad={arrendatariosPorPropiedad}
+          contexto={contexto}
         />
       </div>
     </div>

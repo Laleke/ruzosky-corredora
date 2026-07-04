@@ -3,6 +3,7 @@
 import { useActionState, useState } from "react";
 import { ui } from "@/components/ui";
 import { MoneyInput } from "@/components/money-input";
+import { SelectorPropiedadContrato } from "@/components/selector-propiedad-contrato";
 import {
   CATEGORIAS_GASTO,
   RESPONSABLES_GASTO,
@@ -10,7 +11,8 @@ import {
 } from "./constants";
 import type { GastoFormState } from "./actions";
 import type { Gasto } from "./types";
-import type { OpcionesRelacion, Opcion } from "@/features/documentos/types";
+import type { OpcionesRelacion } from "@/features/documentos/types";
+import type { ContextoPropiedad } from "@/features/documentos/queries";
 
 type Action = (
   prev: GastoFormState,
@@ -21,25 +23,17 @@ export function GastoForm({
   action,
   opciones,
   gasto,
-  arrendatariosPorPropiedad,
+  contexto,
 }: {
   action: Action;
   opciones: OpcionesRelacion;
   gasto?: Gasto;
-  arrendatariosPorPropiedad?: Record<string, Opcion[]>;
+  contexto: ContextoPropiedad;
 }) {
   const [state, formAction, pending] = useActionState(action, { error: null });
   const [responsable, setResponsable] = useState(
     gasto?.responsable_pago ?? "propietario"
   );
-  const [propiedadSel, setPropiedadSel] = useState(gasto?.propiedad_id ?? "");
-
-  // Filtra arrendatarios según la propiedad elegida (si hay vínculos); si no,
-  // ofrece todos.
-  const arrendatariosFiltrados =
-    propiedadSel && arrendatariosPorPropiedad?.[propiedadSel]?.length
-      ? arrendatariosPorPropiedad[propiedadSel]
-      : opciones.arrendatarios;
 
   return (
     <form action={formAction} className="flex max-w-2xl flex-col gap-5">
@@ -104,22 +98,12 @@ export function GastoForm({
           </select>
         </div>
 
-        <div className="flex flex-col gap-1.5">
-          <label className={ui.label}>Propiedad *</label>
-          <select
-            name="propiedad_id"
-            value={propiedadSel}
-            onChange={(e) => setPropiedadSel(e.target.value)}
-            className={ui.input}
-          >
-            <option value="">Selecciona…</option>
-            {opciones.propiedades.map((o) => (
-              <option key={o.id} value={o.id}>
-                {o.label}
-              </option>
-            ))}
-          </select>
-        </div>
+        <SelectorPropiedadContrato
+          propiedades={opciones.propiedades}
+          contexto={contexto}
+          propiedadDefault={gasto?.propiedad_id ?? ""}
+          contratoDefault={gasto?.contrato_id ?? ""}
+        />
 
         <div className="flex flex-col gap-1.5">
           <label className={ui.label}>Responsable del pago *</label>
@@ -139,12 +123,6 @@ export function GastoForm({
           </select>
         </div>
 
-        {/* El gasto pertenece a la Propiedad, no al contrato. Se conserva el
-            contrato_id existente (trazabilidad histórica) sin exponerlo en el form.
-            Para gastos compartidos (Fase C) el contrato se derivará del vigente
-            de la propiedad automáticamente. */}
-        <input type="hidden" name="contrato_id" value={gasto?.contrato_id ?? ""} />
-
         <div className="flex flex-col gap-1.5">
           <label className={ui.label}>Propietario</label>
           <select
@@ -154,22 +132,6 @@ export function GastoForm({
           >
             <option value="">—</option>
             {opciones.propietarios.map((o) => (
-              <option key={o.id} value={o.id}>
-                {o.label}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        <div className="flex flex-col gap-1.5">
-          <label className={ui.label}>Arrendatario</label>
-          <select
-            name="arrendatario_id"
-            defaultValue={gasto?.arrendatario_id ?? ""}
-            className={ui.input}
-          >
-            <option value="">—</option>
-            {arrendatariosFiltrados.map((o) => (
               <option key={o.id} value={o.id}>
                 {o.label}
               </option>
