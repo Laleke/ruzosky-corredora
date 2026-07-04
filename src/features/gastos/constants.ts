@@ -32,7 +32,7 @@ export const ESTADOS_GASTO: {
 }[] = [
   { value: "pendiente", label: "Pendiente", tone: "warning" },
   { value: "pagado", label: "Pagado", tone: "success" },
-  { value: "anulado", label: "Anulado", tone: "neutral" },
+  { value: "anulado", label: "Anulado", tone: "danger" },
 ];
 
 export const ESTADO_GASTO: Record<EstadoGasto, { label: string; tone: Tone }> =

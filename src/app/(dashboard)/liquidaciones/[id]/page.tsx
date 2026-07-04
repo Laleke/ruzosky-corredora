@@ -16,7 +16,7 @@ import { ui, badge } from "@/components/ui";
 const ESTADO: Record<string, { label: string; tone: Parameters<typeof badge>[0] }> = {
   pendiente: { label: "Pendiente", tone: "warning" },
   pagada: { label: "Pagada", tone: "success" },
-  anulada: { label: "Anulada", tone: "neutral" },
+  anulada: { label: "Anulada", tone: "danger" },
 };
 
 function clp(n: number): string {
