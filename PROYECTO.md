@@ -218,7 +218,7 @@ Reglas de negocio confirmadas para cuando se construya:
 | ID | Tarea | Prio | Estado | Deps | Migr | FE | BE | RLS | Man | Auto | Horas |
 |----|-------|------|--------|------|:----:|:--:|:--:|:---:|:---:|:----:|------:|
 | T1 | **Aplicar migraciones 0015 + 0016** en Supabase (SQL Editor). | Crítica | ✅ Hecho (2026-07-03) | — | ✓ aplicar | – | – | – | ✓ | – | 1–2 |
-| T1b | **Validación runtime completa:** aislamiento entre tenants (archivo/gasto de empresa B inaccesible), bucket `public=false`, y QA 1–10 del flujo Gastos↔Liquidaciones. | Crítica | 🔄 En curso | T1 | – | – | – | ✓ verif. | ✓ | – | 3–5 |
+| T1b | **Validación runtime completa:** aislamiento entre tenants (archivo/gasto de empresa B inaccesible), bucket `public=false`, y QA 1–10 del flujo Gastos↔Liquidaciones. | Crítica | ✅ Aprobada c/obs. (2026-07-03) | T1 | – | – | – | ✓ verif. | ✓ | – | 3–5 |
 | T2 | **Auditoría en operaciones financieras y contratos** (H1): `pago_registrado`/`pago_eliminado`, `cargo_creado`, contratos (creado/estado/terminado/vinculación) y catastro. | Crítica | ⬜ Pendiente | — | – | – | ✓ | – | ✓ | – | 4–6 |
 | T3 | **Backups + prueba de restauración** (H3): PITR (upgrade) o `pg_dump` programado; restaurar en entorno de prueba. | Crítica | ⬜ Pendiente | — | – | – | – | – | ✓ | – | 3–5 |
 | T5 | **Gate de rol en `DashboardLayout`** (H5, parte rápida): exigir `rol==='admin'` o redirigir. Elimina comportamiento extraño para futuros roles. | Alta | ⬜ Pendiente | — | – | ✓ | – | – | ✓ | – | 1 |
@@ -280,7 +280,40 @@ Reglas de negocio confirmadas para cuando se construya:
 - **Agrupaciones:** `0017_hardening` = T6 (solo); T9 en migración propia posterior; T1→T1b→T2 en la misma sesión de QA; T16 antes de T14/T15; T17+T18 modeladas juntas.
 - **Siguiente paso al aprobar:** ejecutar **T1** (aplicar 0015/0016) → **T1b** (validación), que desbloquea T6, T11 y T14 y es el gate duro pendiente.
 
+## Backlog QA 1
+> Observaciones surgidas en la QA funcional de T1b (aprobada). Las **reglas de negocio** de esta sección son **oficiales y definitivas** — se usan como base de diseño, no se proponen alternativas. Pendientes de planificar/implementar (aún NO desarrolladas).
+
+**Clasificación de los ítems:**
+
+| Ítem | Tipo | Migración | Capa |
+|------|------|:---------:|------|
+| R1. Liquidaciones cerradas + "pendiente de liquidar" + arrastre a la siguiente | Regla de negocio | ✓ | BD + backend (motor de liquidación) |
+| R2. Sin liquidaciones negativas → $0 + saldo del propietario con arrastre | Regla de negocio | ✓ | BD + backend |
+| R3. Gastos (solo propietario/compartido) vs Cobros al Arrendatario; compartido genera cobro automático | Regla de negocio | ✓ | BD + backend + frontend |
+| R4. Comprobante opcional al marcar gasto pagado | Regla de negocio | – (reusa `gastos.documento_id`) | frontend + lógica |
+| M1. Editar participación de copropietarios | Mejora funcional | – | backend + frontend |
+| M2. Mostrar nombre de propiedad en vez del ID | Mejora UX | – | frontend |
+| M3. Contratos con etiqueta descriptiva (no solo número) | Mejora UX | – | frontend |
+| M4. Separador de miles al escribir montos | Mejora UX | – | frontend |
+| M5. Filtrar arrendatarios según la propiedad seleccionada | Mejora UX/funcional | – | frontend + query |
+| M6. Estado "Anulado" en rojo | Mejora UX | – | frontend |
+| M7. Renombrar label "Referencia" → "Observación" (pagos) | Mejora UX | – | frontend (solo label) |
+
+### Reglas de negocio aprobadas (oficiales)
+**R1 · Liquidaciones cerradas.** Una liquidación emitida NO se modifica ni recalcula automáticamente; **no existe reliquidación**. Un ingreso o gasto de un período ya liquidado queda marcado como **"pendiente de liquidar"**; la **siguiente** liquidación incorpora todos los movimientos pendientes hasta la fecha de corte. Debe haber trazabilidad de qué movimientos están liquidados y cuáles pendientes.
+
+**R2 · Sin liquidaciones negativas.** Si el cálculo final < 0: el monto a transferir es **$0**, la diferencia queda como **saldo pendiente del propietario**, se descuenta automáticamente de futuras liquidaciones hasta extinguirse, con trazabilidad completa del saldo.
+
+**R3 · Gastos vs Cobros al Arrendatario.** Los **Gastos** representan solo lo que afecta al **propietario**. Los **Cobros al Arrendatario** representan cualquier monto que el arrendatario debe pagar.
+- Gasto 100% propietario → solo Gasto; afecta liquidación; no genera cobro.
+- Gasto **compartido** (ej. 70/30) → **un único gasto**; el sistema descuenta la parte del propietario en la liquidación **y** genera automáticamente un **Cobro al Arrendatario** por su porcentaje.
+- Gasto que sería 100% arrendatario → **no** se registra como Gasto; va directo como **Cobro al Arrendatario**.
+- Se **elimina** el responsable "Arrendatario" (y "Corredora") en Gastos; se mantiene solo **Propietario** y **Compartido**. Objetivo: eliminar duplicidad entre módulos.
+
+**R4 · Comprobante.** Al marcar un gasto como pagado se solicita comprobante; **no es obligatorio**; se permite continuar sin adjuntarlo; se registra si existe o no.
+
 ## Últimos Cambios
+- 2026-07-03 — **Sprint 1 · T1b aprobada con observaciones (✅).** QA funcional del ciclo Gastos↔Liquidaciones exitosa; validó el funcionamiento del módulo. Observaciones trasladadas a **`## Backlog QA 1`** (4 reglas de negocio oficiales R1–R4 + 7 mejoras M1–M7, clasificadas). Pendiente: análisis de impacto y plan de implementación (aprobación previa antes de programar).
 - 2026-07-03 — **Sprint 1 · T1 completada (✅):** migraciones `0015_documentos.sql` y `0016_gastos.sql` aplicadas en Supabase por Eduardo. Verificación de esquema con 22 checks (enums, tablas, índices, unique, triggers, RLS, políticas, bucket privado, FKs) → **todo OK**. Sin intervención manual pendiente. Siguiente: **T1b** (validación runtime: aislamiento entre tenants + QA 1–10 Gastos↔Liquidaciones). Aún **no** se ejecutó QA funcional ni se regeneró `database.types.ts` (T11).
 - 2026-07-03 — **Roadmap de Hardening reorganizado (aprobado con ajustes).** T1 dividida en T1 (aplicar 0015/0016) + T1b (validación runtime); T5 (gate de rol) y T11 (regenerar tipos) movidas a Sprint 1; T16 (infra de tests) adelantada a Sprint 2; T9 (identidad fiscal) reubicada al final del Sprint 3 como mejora independiente post-hardening; **nueva T22** (QA funcional end-to-end como gate de producción). Sin cambios de arquitectura ni alcance. Todas las tareas siguen en ⬜ Pendiente. Sin cambios de código.
 - 2026-07-03 — **Roadmap oficial de Hardening y Preparación para Producción** agregado (T1–T21, 5 sprints), derivado de las Investigaciones 1–5; todas las tareas en estado ⬜ Pendiente. Pendiente de aprobación para iniciar ejecución sprint por sprint. Sin cambios de código.
