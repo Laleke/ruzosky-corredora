@@ -218,7 +218,7 @@ Reglas de negocio confirmadas para cuando se construya:
 | ID | Tarea | Prio | Estado | Deps | Migr | FE | BE | RLS | Man | Auto | Horas |
 |----|-------|------|--------|------|:----:|:--:|:--:|:---:|:---:|:----:|------:|
 | T1 | **Aplicar migraciones 0015 + 0016** en Supabase (SQL Editor). | Crítica | ✅ Hecho (2026-07-03) | — | ✓ aplicar | – | – | – | ✓ | – | 1–2 |
-| T1b | **Validación runtime completa:** aislamiento entre tenants (archivo/gasto de empresa B inaccesible), bucket `public=false`, y QA 1–10 del flujo Gastos↔Liquidaciones. | Crítica | ⬜ Pendiente | T1 | – | – | – | ✓ verif. | ✓ | – | 3–5 |
+| T1b | **Validación runtime completa:** aislamiento entre tenants (archivo/gasto de empresa B inaccesible), bucket `public=false`, y QA 1–10 del flujo Gastos↔Liquidaciones. | Crítica | 🔄 En curso | T1 | – | – | – | ✓ verif. | ✓ | – | 3–5 |
 | T2 | **Auditoría en operaciones financieras y contratos** (H1): `pago_registrado`/`pago_eliminado`, `cargo_creado`, contratos (creado/estado/terminado/vinculación) y catastro. | Crítica | ⬜ Pendiente | — | – | – | ✓ | – | ✓ | – | 4–6 |
 | T3 | **Backups + prueba de restauración** (H3): PITR (upgrade) o `pg_dump` programado; restaurar en entorno de prueba. | Crítica | ⬜ Pendiente | — | – | – | – | – | ✓ | – | 3–5 |
 | T5 | **Gate de rol en `DashboardLayout`** (H5, parte rápida): exigir `rol==='admin'` o redirigir. Elimina comportamiento extraño para futuros roles. | Alta | ⬜ Pendiente | — | – | ✓ | – | – | ✓ | – | 1 |
