@@ -3,6 +3,7 @@
 import { useActionState } from "react";
 import Link from "next/link";
 import { ui } from "@/components/ui";
+import { MoneyInput } from "@/components/money-input";
 import { crearCargo, type CobroFormState } from "./actions";
 
 const inputCls = ui.input;
@@ -56,14 +57,7 @@ export function CargoForm({
           <span className="font-medium">
             Monto <span className="text-red-600">*</span>
           </span>
-          <input
-            name="monto"
-            type="number"
-            step="any"
-            min="0"
-            required
-            className={inputCls}
-          />
+          <MoneyInput name="monto" placeholder="0" className={inputCls} />
         </label>
         <label className="flex flex-col gap-1 text-sm">
           <span className="font-medium">Fecha de vencimiento</span>

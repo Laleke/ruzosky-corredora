@@ -2,6 +2,7 @@
 
 import { useActionState } from "react";
 import { ui } from "@/components/ui";
+import { MoneyInput } from "@/components/money-input";
 import type { CobroFormState } from "./actions";
 
 type Action = (
@@ -28,14 +29,7 @@ export function RegistrarPago({
     <form action={formAction} className="flex flex-wrap items-end gap-3">
       <label className="flex flex-col gap-1 text-sm">
         <span className="font-medium">Monto</span>
-        <input
-          name="monto_pagado"
-          type="number"
-          step="any"
-          min="0"
-          required
-          className={`w-36 ${ui.input}`}
-        />
+        <MoneyInput name="monto_pagado" className={`w-36 ${ui.input}`} />
       </label>
       <label className="flex flex-col gap-1 text-sm">
         <span className="font-medium">Fecha</span>
@@ -52,7 +46,7 @@ export function RegistrarPago({
         </select>
       </label>
       <label className="flex flex-col gap-1 text-sm">
-        <span className="font-medium">Referencia</span>
+        <span className="font-medium">Observación</span>
         <input name="referencia" type="text" className={inputCls} />
       </label>
       <button type="submit" disabled={pending} className={ui.btnPrimary}>
