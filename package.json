@@ -7,6 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
+    "test": "vitest run",
     "types:gen": "supabase gen types typescript --linked > src/types/database.types.ts"
   },
   "dependencies": {
@@ -28,6 +29,7 @@
     "serwist": "^9.0.11",
     "sharp": "^0.35.2",
     "tailwindcss": "^4.0.0",
-    "typescript": "^5.7.2"
+    "typescript": "^5.7.2",
+    "vitest": "^4.1.9"
   }
 }
