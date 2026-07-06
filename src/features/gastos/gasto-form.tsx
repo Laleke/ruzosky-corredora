@@ -1,14 +1,10 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useActionState } from "react";
 import { ui } from "@/components/ui";
 import { MoneyInput } from "@/components/money-input";
 import { SelectorPropiedadContrato } from "@/components/selector-propiedad-contrato";
-import {
-  CATEGORIAS_GASTO,
-  RESPONSABLES_GASTO,
-  ESTADOS_GASTO,
-} from "./constants";
+import { CATEGORIAS_GASTO, ESTADOS_GASTO } from "./constants";
 import type { GastoFormState } from "./actions";
 import type { Gasto } from "./types";
 import type { OpcionesRelacion } from "@/features/documentos/types";
@@ -19,6 +15,9 @@ type Action = (
   fd: FormData
 ) => Promise<GastoFormState>;
 
+// Un gasto SIEMPRE corresponde al propietario: el usuario solo elige Propiedad
+// + datos del gasto. Propietario/contrato/arrendatario/responsable se derivan
+// o quedan implícitos (ver reglas de simplificación en PROYECTO.md).
 export function GastoForm({
   action,
   opciones,
@@ -31,9 +30,6 @@ export function GastoForm({
   contexto: ContextoPropiedad;
 }) {
   const [state, formAction, pending] = useActionState(action, { error: null });
-  const [responsable, setResponsable] = useState(
-    gasto?.responsable_pago ?? "propietario"
-  );
 
   return (
     <form action={formAction} className="flex max-w-2xl flex-col gap-5">
@@ -103,41 +99,8 @@ export function GastoForm({
           contexto={contexto}
           propiedadDefault={gasto?.propiedad_id ?? ""}
           contratoDefault={gasto?.contrato_id ?? ""}
+          mostrarArrendatario={false}
         />
-
-        <div className="flex flex-col gap-1.5">
-          <label className={ui.label}>Responsable del pago *</label>
-          <select
-            name="responsable_pago"
-            value={responsable}
-            onChange={(e) =>
-              setResponsable(e.target.value as typeof responsable)
-            }
-            className={ui.input}
-          >
-            {RESPONSABLES_GASTO.map((r) => (
-              <option key={r.value} value={r.value}>
-                {r.label}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        <div className="flex flex-col gap-1.5">
-          <label className={ui.label}>Propietario</label>
-          <select
-            name="propietario_id"
-            defaultValue={gasto?.propietario_id ?? ""}
-            className={ui.input}
-          >
-            <option value="">—</option>
-            {opciones.propietarios.map((o) => (
-              <option key={o.id} value={o.id}>
-                {o.label}
-              </option>
-            ))}
-          </select>
-        </div>
 
         <div className="flex flex-col gap-1.5 sm:col-span-2">
           <label className={ui.label}>Observaciones</label>
@@ -151,19 +114,12 @@ export function GastoForm({
         </div>
       </div>
 
-      {/* Descuento de liquidación: solo aplica a gastos del propietario. */}
-      <label
-        className={`flex items-start gap-3 rounded-lg border border-line p-4 ${
-          responsable === "propietario"
-            ? ""
-            : "cursor-not-allowed opacity-50"
-        }`}
-      >
+      {/* El gasto es del propietario: puede descontarse de su liquidación. */}
+      <label className="flex items-start gap-3 rounded-lg border border-line p-4">
         <input
           type="checkbox"
           name="descontar_de_liquidacion"
           defaultChecked={gasto?.descontar_de_liquidacion ?? false}
-          disabled={responsable !== "propietario"}
           className="mt-0.5 h-4 w-4 accent-burgundy"
         />
         <span className="text-sm">
@@ -171,9 +127,8 @@ export function GastoForm({
             Descontar de la liquidación del propietario
           </span>
           <span className="mt-0.5 block text-xs text-muted">
-            Solo para gastos que asume el propietario. Se restará de una
-            liquidación futura (afecta su rentabilidad). Los gastos del
-            arrendatario o de la corredora no afectan al propietario.
+            Se restará de una liquidación futura del propietario (afecta su
+            rentabilidad).
           </span>
         </span>
       </label>

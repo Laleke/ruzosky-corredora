@@ -25,11 +25,6 @@ const CATEGORIAS: CategoriaGasto[] = [
   "administracion",
   "otro",
 ];
-const RESPONSABLES: ResponsableGasto[] = [
-  "propietario",
-  "arrendatario",
-  "corredora",
-];
 
 function limpiar(v: FormDataEntryValue | null): string | null {
   const s = String(v ?? "").trim();
@@ -60,11 +55,8 @@ function parseGasto(fd: FormData): { data?: Parsed; error?: string } {
   const categoria = String(fd.get("categoria") ?? "") as CategoriaGasto;
   if (!CATEGORIAS.includes(categoria)) return { error: "Categoría inválida." };
 
-  const responsable_pago = String(
-    fd.get("responsable_pago") ?? ""
-  ) as ResponsableGasto;
-  if (!RESPONSABLES.includes(responsable_pago))
-    return { error: "Responsable de pago inválido." };
+  // Un gasto SIEMPRE corresponde al propietario (regla oficial); no se pide en la UI.
+  const responsable_pago: ResponsableGasto = "propietario";
 
   const descripcion = limpiar(fd.get("descripcion"));
   if (!descripcion) return { error: "La descripción es obligatoria." };
@@ -80,11 +72,8 @@ function parseGasto(fd: FormData): { data?: Parsed; error?: string } {
   const estado: EstadoGasto =
     estadoRaw === "pagado" || estadoRaw === "anulado" ? estadoRaw : "pendiente";
 
-  // Regla: solo un gasto del propietario puede descontarse de su liquidación.
-  // Los gastos del arrendatario/corredora nunca afectan la rentabilidad del dueño.
-  const descontar_de_liquidacion =
-    responsable_pago === "propietario" &&
-    fd.get("descontar_de_liquidacion") != null;
+  // El gasto es del propietario: la casilla decide si se descuenta de su liquidación.
+  const descontar_de_liquidacion = fd.get("descontar_de_liquidacion") != null;
 
   return {
     data: {
