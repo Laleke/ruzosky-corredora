@@ -137,18 +137,6 @@ export function UploadForm({
           contexto={contexto}
         />
 
-        <div className="flex flex-col gap-1.5">
-          <label className={ui.label}>Propietario</label>
-          <select name="propietario_id" defaultValue="" className={ui.input}>
-            <option value="">—</option>
-            {opciones.propietarios.map((o) => (
-              <option key={o.id} value={o.id}>
-                {o.label}
-              </option>
-            ))}
-          </select>
-        </div>
-
         <div className="flex flex-col gap-1.5 sm:col-span-2">
           <label className={ui.label}>Observaciones</label>
           <textarea
