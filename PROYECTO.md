@@ -327,7 +327,36 @@ Reglas de negocio confirmadas para cuando se construya:
 - **Fase H — UI de trazabilidad** (movimientos pendientes, cuotas y saldos) al final.
 - *Dependencias:* C(R3)→E(R1)→F(R2)→G(R5) tocan `calcularLiquidacion` en ese orden; D (tests) antes de E/F/G.
 
+## Simplificación de flujo — reglas oficiales (QA aprobada 2026-07-03)
+> Reglas de negocio **oficiales y definitivas**. La app se centra en la **Propiedad**.
+
+- **Flujo único:** Propiedad → Propietario (auto) → Contrato vigente (auto) → Arrendatario (auto). El usuario solo interviene si hay **>1 contrato vigente** para la propiedad.
+- **Eliminar selectores manuales** de Propietario, Contrato, Arrendatario y **Responsable** cuando el dato se derive de la Propiedad. Sin decisiones duplicadas. Se conservan IDs/relaciones internas (compat histórica), pero **ocultos** en la UI.
+- **Se elimina el concepto "Responsable" de la interfaz.**
+  - **Gastos**: siempre del **propietario**. El usuario solo elige **Propiedad + datos del gasto**; nada de responsable/propietario/arrendatario/contrato.
+  - **Cobros**: siempre del **arrendatario**. El usuario solo elige **Propiedad + datos del cobro**; el sistema deriva contrato vigente + arrendatario.
+- **Gastos compartidos (futuro):** esta simplificación no lo bloquea; cuando llegue, se agrega el split por **porcentaje** propietario/arrendatario (no un selector de "Responsable"). Hasta entonces, formularios lo más simples posible.
+- Regla general: si un dato se deduce de la Propiedad → eliminar el selector; mostrar lo derivado **solo lectura** cuando aporte contexto; solo pedir intervención si hay más de una alternativa válida.
+
+### Inventario de selectores manuales (punto 6)
+| Pantalla / archivo | Selector | Veredicto |
+|---|---|---|
+| Gastos — form (`gasto-form.tsx`) | **Responsable** (`responsable_pago`) | **Eliminar ya** (gasto siempre propietario; setear `propietario` en backend) |
+| Gastos — form | **Propietario** (`propietario_id`) | **Eliminar ya** (derivar de la propiedad; hidden) |
+| Gastos — form | Arrendatario (info del `SelectorPropiedadContrato`) | **Ocultar en Gastos** (irrelevante hasta compartidos; usar variante propiedad-only) |
+| Documentos — form (`upload-form.tsx`) | **Propietario** (`propietario_id`) | **Eliminar ya** (derivar de la propiedad; hidden) |
+| Cobros — form (`cargo-form.tsx`) | Propiedad→contrato(auto)→arrendatario(info) | **OK** (ya alineado) |
+| Propiedades — `asignar-propietario.tsx` | Propietario (+% copropiedad) | **Mantener** (fuente de la relación propiedad↔propietario; no derivable) |
+| Contratos — `asignar-arrendatario.tsx` | Arrendatario | **Mantener** (fuente de la relación contrato↔arrendatario) |
+| Contratos — form nuevo/editar | Propiedad | **Mantener** (un contrato se crea sobre una propiedad) |
+| Liquidaciones — `nueva` | Propietario | **Mantener por ahora**; **cambia** con R2 (saldo por propietario×propiedad) — la liquidación es por propietario |
+| Filtros de listado (reportes/documentos/liquidaciones) | Propietario/Arrendatario | **Mantener** (son búsqueda, no alta; ya corregidos en QA3) |
+
+**Eliminar inmediatamente (próximo sprint):** Responsable y Propietario en form de Gastos; Propietario en form de Documentos; Gastos usa selector propiedad-only (sin mostrar arrendatario).
+**Cambian con módulos futuros:** Gastos (split % al implementar compartidos); Liquidaciones (flujo/saldo con R2).
+
 ## Últimos Cambios
+- 2026-07-03 — **QA de simplificación de flujo APROBADA ✅.** Reglas oficiales registradas (app centrada en Propiedad; flujo Propiedad→Propietario→Contrato→Arrendatario automático; se elimina "Responsable" de la UI; Gastos=propietario, Cobros=arrendatario) + **inventario de selectores manuales** (ver sección "Simplificación de flujo"). Pendiente de aprobación: sprint para eliminar Responsable/Propietario en form de Gastos y Propietario en form de Documentos. Sin cambios de código aún.
 - 2026-07-03 — **QA3 (simplificación de flujo + fix de filtros).** (1) Flujo unificado **Propiedad → Contrato (auto) → Arrendatario (info)**: componente `SelectorPropiedadContrato` en Gastos, Documentos y Cobros — el usuario solo elige propiedad; el contrato vigente se autoselecciona (único) o se pide (varios); el arrendatario es **solo lectura** derivado del contrato. Se elimina la selección manual de arrendatario. (2) Eliminado el **filtro por Contrato** en Documentos. (3) **Fix de filtros de Documentos** (bug: devolvían vacío): Propietario/Arrendatario ahora filtran por las **propiedades relacionadas** (vía `propietarios_propiedades` y `contratos_arrendatarios`), no por el FK directo (casi siempre null); fecha filtra sobre la **fecha efectiva** (documento o subida) en memoria. (4) Documentos: contrato nunca seleccionable/principal; se asocia el vigente en segundo plano. **Tests**: se incorpora **Vitest** (`npm test`) con pruebas de filtrado de fecha y etiquetas (12 pruebas verdes). Sin migración; `contrato_id` se conserva. Build verde, `tsc` limpio.
 - 2026-07-03 — **QA2 (ajustes UX/consistencia) implementada.** (1) Etiqueta única de propiedad **Código · Calle Número · Depto/Unidad** (`src/lib/propiedad.ts`) aplicada a selectores y listados de gastos, documentos, contratos, cobros y reportes. (2) Selector de contrato con formato descriptivo (N° · propiedad) + **autoselección** del único contrato vigente en el form de documentos. (3) **Eliminado el selector de contrato en Gastos** — el gasto pertenece a la **Propiedad**; se conserva `contrato_id` (hidden, sin migración) para trazabilidad; detalle prioriza la propiedad. Regla Fase C: el cobro de gasto compartido derivará el contrato vigente de la propiedad (único→auto; ninguno→bloquear con motivo; varios→pedir selección). (4) Validación de copropietarios **≠100%** con aviso ("falta X%") + acción "Agregar copropietario"; 100% muestra badge verde. (5) Columna **Propiedad** en la tabla de Documentos. Sin migración. Build verde, `tsc` limpio.
 - 2026-07-03 — **QA1 · Fase B (R4 comprobante opcional) completada (✅).** Al marcar un gasto como pagado se puede adjuntar comprobante (no obligatorio): se sube a Storage y se registra como `documento` (categoría `comprobante_pago`) vinculado por `gastos.documento_id`; el detalle indica si existe y permite verlo (signed URL). Reusa el módulo Documentos; sin migración. Build verde, `tsc` limpio. Siguiente: Fase C (R3, gastos compartidos + cobro automático).
