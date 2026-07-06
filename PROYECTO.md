@@ -30,7 +30,14 @@ Ciclo operable: propiedad → (propietario/contrato/arrendatario auto) → cargo
 5. **Backlog QA 1–4** (mejoras UX + reglas de negocio): etiqueta única de propiedad, contratos descriptivos, separador de miles, editar participación de copropietarios, comprobante opcional al pagar, **fix de filtros de Documentos**, y la **simplificación de flujo** (Propiedad → Propietario/Contrato/Arrendatario automáticos; se elimina "Responsable" de la UI; Gastos=propietario, Cobros=arrendatario). Ver sección "Simplificación de flujo" + `## Backlog QA 1`.
 
 **Pendiente / próximo (en orden):**
-0. **QA del usuario del último push** (formularios simplificados de Gastos/Documentos, Q1–Q7). Pendiente de confirmar.
+0. **QA PENDIENTE — formularios simplificados (ejecutar en la app, ya desplegado).** Recargar con Ctrl+Shift+R. Matriz a validar (marcar OK/FALLA):
+   - **Q1** Gastos → Registrar gasto: el form muestra **solo** Propiedad, Descripción, Categoría, Monto, Fecha, Estado, casilla "descontar de liquidación", Observaciones. **No** aparecen Responsable, Propietario ni Arrendatario.
+   - **Q2** Crear gasto (solo Propiedad + datos): se guarda OK; queda como del propietario.
+   - **Q3** Casilla "descontar de liquidación": siempre habilitada.
+   - **Q4** Editar un gasto que tenía contrato: se conserva el vínculo histórico.
+   - **Q5** Generar liquidación del propietario: el gasto descontable se descuenta (ciclo Gastos↔Liquidaciones intacto).
+   - **Q6** Documentos → Subir: **no** aparece selector de Propietario; flujo Propiedad → contrato auto → arrendatario info.
+   - **Q7** Cobros → Nuevo cargo: Propiedad → contrato vigente automático → arrendatario info; si no hay contrato vigente, avisa y no deja crear.
 1. **Roadmap de Hardening — Sprint 1 aún incompleto**: faltan **T2** (auditoría en pagos/cargos/contratos/catastro), **T3** (backups + prueba de restauración), **T5** (gate de rol en `DashboardLayout`), **T11** (regenerar `database.types.ts` con `supabase gen types`). *(T1/T1b hechos.)*
 2. **Fase C — R3 gastos compartidos** (Backlog QA): dividir un gasto propietario/arrendatario por **porcentaje** (ya sin "Responsable"); el gasto compartido genera un **Cobro al Arrendatario** vinculado. **Requiere migración** (`+compartido` en uso, `porcentaje_propietario`, `cargos.gasto_id`). Ver reglas R3/R5 en `## Backlog QA 1`.
 3. **Reglas R1/R2/R5 pendientes** (Backlog QA, motor de liquidación): R1 liquidaciones cerradas + "pendiente de liquidar" + arrastre; R2 sin negativas + saldo por **propietario×propiedad**; R5 gastos en cuotas / movimientos programados. Requieren migración y tocan `calcularLiquidacion`; hacer **T16 (tests)** antes.
