@@ -6,40 +6,44 @@
 El producto es una **PWA** (no app nativa): funciona como web e instalable en Android e iPhone. Multitenant desde el diseño, pero opera inicialmente con una sola empresa (RZK Prop).
 
 ## Estado Actual
-**Fase: en PRODUCCIÓN (Vercel), validado y con datos de prueba limpiados.**
-App **RZK Prop** operativa: auth, dashboard con KPIs, y módulos **Propietarios, Propiedades (+copropiedad N:M), Arrendatarios, Contratos (+sincronización de estado), Cobros (cargos+pagos) y Liquidaciones a propietarios** (todos funcionando). 14 migraciones (`0001`–`0014`) aplicadas en Supabase. Build de producción verde.
-QA de Liquidaciones **aprobado**. Se limpiaron los datos de prueba: se borraron `cargos`, `pagos`, `liquidaciones` (+detalles) y `auditoria`, y se reseteó `contratos.corretaje_liquidado`; el **catastro se conservó** (propietarios, propiedades, arrendatarios, contratos).
-Ciclo operable: propietario → propiedad → copropietarios → arrendatario → contrato → cargos del mes → pagos → deuda → liquidación al propietario.
+**Fase: en PRODUCCIÓN (Vercel), desplegándose con cada push.**
+App **RZK Prop** operativa: auth, dashboard con KPIs, y módulos **Propietarios, Propiedades (+copropiedad N:M), Arrendatarios, Contratos, Cobros (cargos+pagos), Liquidaciones (con descuento automático de gastos), Documentos (Storage privado + versiones), Gastos (fuente oficial) y Reportes Financieros**. **16 migraciones (`0001`–`0016`) aplicadas y verificadas en Supabase.** Build de producción verde, `tsc` limpio, **Vitest** con 12 pruebas.
+**Filosofía vigente: app centrada en la Propiedad** — el usuario solo elige Propiedad + datos; propietario/contrato/arrendatario se derivan automáticamente (ver "Simplificación de flujo"). En curso: **roadmap oficial de Hardening** (Sprint 1: T1/T1b hechos; faltan T2/T3/T5/T11) y **Backlog QA** (reglas R1–R5 de negocio para el motor de liquidaciones y gastos compartidos).
+Ciclo operable: propiedad → (propietario/contrato/arrendatario auto) → cargos/cobros → pagos → gastos → liquidación al propietario (con gastos descontados) → reportes.
 
 ## Punto de Continuación (handoff — actualizar al cerrar cada sesión)
 
-**Última sesión: 2026-06-30.** App **en producción** (Vercel), desplegándose con cada push. Nombre de la app: **RZK Prop** (rebranding completo hecho). Repo `github.com/Laleke/ruzosky-corredora` (nombre de repo/URL sin cambiar, son direcciones reales).
+**Última sesión: 2026-07-06.** App **en producción** (Vercel), redeploy con cada push. Repo `github.com/Laleke/ruzosky-corredora`. Login real: `admin@ruzosky.cl`. Rama `main` **empujada hasta `8e314c7`** (todo lo de esta sesión ya está en producción).
 
-**Estado actual:**
-- MVP completo + módulo **Liquidaciones a propietarios** terminado (Fase 1A + ajustes finales). Build de producción verde. Desplegado.
-- **14 migraciones** (`0001`–`0014`). Eduardo las aplica manualmente en el SQL Editor de Supabase, **en orden estricto**.
-- Auth, dashboard con KPIs, y módulos: Propietarios, Propiedades (+copropiedad N:M), Arrendatarios, Contratos (+sincronización de estado), Cobros (cargos+pagos), Liquidaciones (cálculo auto + ajustes manuales + corretaje único + numeración + auditoría + PDF).
-- Rediseño UI grafito+burdeo, sidebar responsivo, borrador automático en formularios, catálogo Chile (regiones/comunas/bancos), íconos PWA.
+**Estado del producto:**
+- MVP + **Liquidaciones** + **Centro Documental** + **Gastos** + **Reportes Financieros**, todos desplegados y validados por QA.
+- **Ciclo Gastos↔Liquidaciones cerrado**: al generar una liquidación se descuentan automáticamente los gastos pendientes del propietario (reclamo atómico + recálculo; se liberan al anular).
+- **16 migraciones** (`0001`–`0016`), **todas aplicadas en Supabase**. `0015_documentos.sql` y `0016_gastos.sql` aplicadas y **verificadas** (T1: 22 checks OK).
+- Módulos: Propietarios, Propiedades (+copropiedad N:M), Arrendatarios, Contratos, Cobros, Liquidaciones, **Documentos** (Storage privado + signed URLs + versiones), **Gastos** (fuente oficial), **Reportes** (KPIs + gráficos SVG propios + export CSV/Excel/PDF).
+- **Vitest** montado (`npm test`, 12 pruebas verdes) para lógica pura (filtros, etiquetas).
 
-**Lo último de esta sesión (2026-06-30):**
-1. **Rebranding completo a "RZK Prop"** en todo lo visible (login, sidebar, navbar, metadata, manifest/PWA, monograma "RZK", docs, seed). Sin tocar tablas, migraciones ni las URLs reales (Vercel/GitHub siguen con `ruzosky-corredora`). El email de login real sigue siendo `admin@ruzosky.cl`.
-2. **QA de Liquidaciones aprobado.**
-3. **Limpieza de datos de prueba** ejecutada por Eduardo en SQL Editor: borrados `cargos`, `pagos`, `liquidaciones` (+detalles) y `auditoria`; reseteado `corretaje_liquidado`. Catastro conservado. (Sesión previa: formularios de personas, códigos/números autogenerados, módulo Liquidaciones 0011–0014.)
+**Lo que se hizo en esta sesión (2026-07-03 → 07-06):**
+1. **Centro Documental** (0015), **Gastos** (0016), **Reportes Financieros**.
+2. **Cierre Gastos↔Liquidaciones** (descuento automático, reversible, auditado).
+3. **Investigaciones 4 y 5** (documentos tributarios/DTE; seguridad/producción) → **roadmap oficial de Hardening (T1–T22, sprints 1–5)** en este `PROYECTO.md`.
+4. **Ejecución iniciada del roadmap**: **T1 ✅** (migraciones aplicadas+verificadas), **T1b ✅** (QA funcional aprobada con observaciones).
+5. **Backlog QA 1–4** (mejoras UX + reglas de negocio): etiqueta única de propiedad, contratos descriptivos, separador de miles, editar participación de copropietarios, comprobante opcional al pagar, **fix de filtros de Documentos**, y la **simplificación de flujo** (Propiedad → Propietario/Contrato/Arrendatario automáticos; se elimina "Responsable" de la UI; Gastos=propietario, Cobros=arrendatario). Ver sección "Simplificación de flujo" + `## Backlog QA 1`.
 
-**Pendiente / próximo (2026-07-03):**
-0a. **Aplicar `supabase/migrations/0015_documentos.sql`** (Centro Documental: tablas, enum, bucket `documentos` + políticas RLS de Storage). Validar: subir → ver → descargar → nueva versión → eliminar.
-0b. **Aplicar `supabase/migrations/0016_gastos.sql`** (módulo Gastos). Sin esto, Gastos y el reporte de gastos/rentabilidad fallan en runtime. Validar: crear gasto → ver en listado y en `/reportes`.
-0c. ~~Integración pendiente Gastos↔Liquidaciones~~ **RESUELTO 2026-07-03**: descuento automático implementado (ver Últimos Cambios). **Validar en runtime** tras aplicar 0016: generar liquidación con gastos descontables → verificar descuento, asociación y bloqueo de re-descuento; anular → verificar liberación.
+**Pendiente / próximo (en orden):**
+0. **QA del usuario del último push** (formularios simplificados de Gastos/Documentos, Q1–Q7). Pendiente de confirmar.
+1. **Roadmap de Hardening — Sprint 1 aún incompleto**: faltan **T2** (auditoría en pagos/cargos/contratos/catastro), **T3** (backups + prueba de restauración), **T5** (gate de rol en `DashboardLayout`), **T11** (regenerar `database.types.ts` con `supabase gen types`). *(T1/T1b hechos.)*
+2. **Fase C — R3 gastos compartidos** (Backlog QA): dividir un gasto propietario/arrendatario por **porcentaje** (ya sin "Responsable"); el gasto compartido genera un **Cobro al Arrendatario** vinculado. **Requiere migración** (`+compartido` en uso, `porcentaje_propietario`, `cargos.gasto_id`). Ver reglas R3/R5 en `## Backlog QA 1`.
+3. **Reglas R1/R2/R5 pendientes** (Backlog QA, motor de liquidación): R1 liquidaciones cerradas + "pendiente de liquidar" + arrastre; R2 sin negativas + saldo por **propietario×propiedad**; R5 gastos en cuotas / movimientos programados. Requieren migración y tocan `calcularLiquidacion`; hacer **T16 (tests)** antes.
+4. **Aislamiento cross-tenant** (seguridad H2/T1b): validado por inspección de RLS, **falta prueba funcional con 2ª empresa** (se hará al onboardear 2º tenant / T20).
+5. Menores: reinstalar PWA para tomar ícono/nombre; renombrar `empresas.nombre`.
 
-**Pendiente / próximo:**
-1. **Reinstalar la PWA** en el celular para tomar el nombre/ícono "RZK Prop" (una PWA instalada no se renombra sola). iOS: Safari → Compartir → Agregar a inicio; Android: Chrome ⋮ → Instalar.
-2. Opcional: renombrar el registro `empresas.nombre` de "Ruzosky Corredora" a "RZK Prop" (no se muestra en la UI, pero por prolijidad — UPDATE simple).
-3. Próximos módulos sugeridos: **adjuntar comprobante de pago** (Supabase Storage; `comprobante_url` ya existe), **dashboard financiero**, **notificaciones** (email/WhatsApp — sí tienen API real), **motor de reajuste** (IPC/UF), portales propietario/arrendatario, documentos, tickets.
-4. Integración deudas de servicios (Enel/Aguas Andinas): no hay API pública; evaluar agregador (Fintoc/Floid/Servipag) como research aparte.
+**Documentos de contexto:**
+- `PROYECTO.md` (este archivo) — memoria viva del proyecto. Contiene el **roadmap oficial de Hardening** (T1–T22) y el **Backlog QA 1** con reglas de negocio oficiales.
+- `../RZK.md` (en la carpeta `Ruzosky/`, fuera del proyecto) — **playbook transversal OPT-IN**; solo se usa si se solicita explícitamente. Base para futuras apps RZK (metodología, stack, PWA, publicación).
 
-**Flujo de trabajo:** construir → `next build` verde → commit local → **push a GitHub** (Eduardo autoriza; el push lo ejecuta el asistente cuando lo pide) → Vercel redespliega. Eduardo suele relayar respuestas de ChatGPT (co-diseñador) y pedir "respuesta para ChatGPT".
+**Flujo de trabajo:** construir → `next build` verde + `tsc` limpio + `npm test` verde → commits locales pequeños por entregable → **push solo con autorización explícita** de Eduardo (un guardián bloquea el push automático; Eduardo dice "push"/"autorizo"). Migraciones: Eduardo las aplica en el SQL Editor y confirma. Eduardo suele relayar/pedir "respuesta para ChatGPT" (co-diseñador).
 
-**Reglas activas:** español chileno; scopes personales (no org empresarial) en GitHub/Supabase/Vercel; identidad git local = Laleke (no email casinoexpress); `@supabase/ssr` alineado con `supabase-js`; toda tabla nueva con `empresa_id` + RLS solo-admin.
+**Reglas activas:** español chileno; scopes personales (no org empresarial) en GitHub/Supabase/Vercel; identidad git local = Laleke; `@supabase/ssr` alineado con `supabase-js`; toda tabla nueva con `empresa_id` + RLS solo-admin; **app centrada en la Propiedad** (todo lo derivable se deriva, no se pide al usuario).
 
 ## Arquitectura
 Serverless, modular, multitenant. Frontend en Vercel; backend, BD, auth y storage en Supabase.
