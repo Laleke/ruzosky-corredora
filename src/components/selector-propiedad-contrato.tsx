@@ -18,6 +18,7 @@ export function SelectorPropiedadContrato({
   propiedadDefault = "",
   contratoDefault = "",
   requiereContrato = false,
+  mostrarArrendatario = true,
 }: {
   propiedades: Opcion[];
   contexto: ContextoPropiedad;
@@ -25,6 +26,8 @@ export function SelectorPropiedadContrato({
   contratoDefault?: string;
   /** Si true, avisa cuando la propiedad no tiene contrato vigente (ej. Cobros). */
   requiereContrato?: boolean;
+  /** Muestra el arrendatario derivado (info). En Gastos se oculta (irrelevante). */
+  mostrarArrendatario?: boolean;
 }) {
   const [prop, setProp] = useState(propiedadDefault);
   const [contratoSel, setContratoSel] = useState(() => {
@@ -80,17 +83,19 @@ export function SelectorPropiedadContrato({
       )}
 
       {/* Arrendatario: solo lectura, derivado del contrato. */}
-      <div className="flex flex-col gap-1.5">
-        <label className={ui.label}>Arrendatario</label>
-        <div className="rounded-lg border border-line bg-stone-50 px-3 py-2 text-sm text-ink">
-          {arr?.arrendatario ??
-            (prop
-              ? contratos.length === 0
-                ? "Sin contrato vigente"
-                : "—"
-              : "Selecciona una propiedad")}
+      {mostrarArrendatario && (
+        <div className="flex flex-col gap-1.5">
+          <label className={ui.label}>Arrendatario</label>
+          <div className="rounded-lg border border-line bg-stone-50 px-3 py-2 text-sm text-ink">
+            {arr?.arrendatario ??
+              (prop
+                ? contratos.length === 0
+                  ? "Sin contrato vigente"
+                  : "—"
+                : "Selecciona una propiedad")}
+          </div>
         </div>
-      </div>
+      )}
 
       {requiereContrato && prop && contratos.length === 0 && (
         <p className="rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-800 sm:col-span-2">
@@ -101,7 +106,11 @@ export function SelectorPropiedadContrato({
 
       <input type="hidden" name="propiedad_id" value={prop} />
       <input type="hidden" name="contrato_id" value={contratoSel} />
-      <input type="hidden" name="arrendatario_id" value={arr?.arrendatarioId ?? ""} />
+      <input
+        type="hidden"
+        name="arrendatario_id"
+        value={mostrarArrendatario ? arr?.arrendatarioId ?? "" : ""}
+      />
     </>
   );
 }
