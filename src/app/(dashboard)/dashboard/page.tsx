@@ -6,10 +6,16 @@ import {
   Wallet,
   AlertTriangle,
   ArrowRight,
+  ListChecks,
 } from "lucide-react";
 import { getCurrentProfile } from "@/lib/auth";
-import { getDashboardStats } from "@/features/dashboard/queries";
+import { getDashboardStats, getTareasPendientes } from "@/features/dashboard/queries";
 import { ui } from "@/components/ui";
+
+/** Indicadores de futuro desarrollo: la data o la regla de negocio aún no existen. */
+const TAREAS_PROXIMAMENTE = [
+  "Documentos sin respaldo obligatorio (requiere definir qué documento es obligatorio por tipo de propiedad)",
+];
 
 function clp(n: number): string {
   return `$${Math.round(n).toLocaleString("es-CL")}`;
@@ -55,10 +61,12 @@ const ACCESOS = [
 ];
 
 export default async function DashboardPage() {
-  const [profile, stats] = await Promise.all([
+  const [profile, stats, tareas] = await Promise.all([
     getCurrentProfile(),
     getDashboardStats(),
+    getTareasPendientes(),
   ]);
+  const tareasConPendiente = tareas.filter((t) => t.cantidad > 0);
 
   return (
     <div className="flex flex-col gap-8">
@@ -95,6 +103,39 @@ export default async function DashboardPage() {
           sub="vencidos con saldo"
           alerta={stats.cargosMorosos > 0}
         />
+      </div>
+
+      <div className={`${ui.card} p-6`}>
+        <div className="mb-4 flex items-center gap-2 text-ink">
+          <ListChecks size={18} className="text-burgundy" />
+          <h2 className="font-semibold">Tareas pendientes</h2>
+        </div>
+        {tareasConPendiente.length === 0 ? (
+          <p className="text-sm text-muted">No hay tareas pendientes por ahora.</p>
+        ) : (
+          <ul className="flex flex-col divide-y divide-line">
+            {tareasConPendiente.map((t) => (
+              <li key={t.key} className="flex items-center justify-between gap-3 py-2.5">
+                <span className="flex items-center gap-2 text-sm text-ink">
+                  {t.alerta && <AlertTriangle size={15} className="text-amber-600" />}
+                  {t.label}
+                </span>
+                <Link
+                  href={t.href}
+                  className="flex items-center gap-1 text-sm font-medium text-burgundy hover:underline"
+                >
+                  {t.cantidad}
+                  <ArrowRight size={14} />
+                </Link>
+              </li>
+            ))}
+          </ul>
+        )}
+        {TAREAS_PROXIMAMENTE.length > 0 && (
+          <p className="mt-3 text-xs text-muted">
+            Próximamente: {TAREAS_PROXIMAMENTE.join("; ")}.
+          </p>
+        )}
       </div>
 
       <div className={`${ui.card} p-6`}>
