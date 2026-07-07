@@ -37,11 +37,30 @@ export default async function DetalleLiquidacionPage({
   if (!liq) notFound();
 
   const ingresos = detalles.filter((d) => d.tipo === "ingreso");
-  // Los gastos se muestran en su propia sección; se excluyen de "Descuentos".
-  const descuentos = detalles.filter(
+  // Descuentos = comisiones/ajustes manuales + gastos del propietario, en un solo bloque.
+  const comisionesYAjustes = detalles.filter(
     (d) => d.tipo === "descuento" && d.referencia_tipo !== "gasto"
   );
-  const subtotalGastos = gastos.reduce((a, g) => a + g.monto, 0);
+  type LineaDescuento = { key: string; label: string; sub: string | null; monto: number };
+  const descuentos: LineaDescuento[] = [
+    ...comisionesYAjustes.map((d) => ({
+      key: d.id,
+      label: d.concepto,
+      sub:
+        [d.referencia_tipo === "manual" ? "Ajuste manual" : null, d.observacion]
+          .filter(Boolean)
+          .join(" · ") || null,
+      monto: d.monto,
+    })),
+    ...gastos.map((g) => ({
+      key: g.gasto_id,
+      label: g.descripcion,
+      sub: `Gasto: ${
+        CATEGORIA_GASTO_LABEL[g.categoria as keyof typeof CATEGORIA_GASTO_LABEL] ?? g.categoria
+      } · ${g.fecha}`,
+      monto: g.monto,
+    })),
+  ];
   const est = ESTADO[liq.estado] ?? { label: liq.estado, tone: "neutral" as const };
 
   return (
@@ -113,15 +132,10 @@ export default async function DetalleLiquidacionPage({
               <tr><td className={`${ui.td} text-muted`}>Sin descuentos.</td></tr>
             ) : (
               descuentos.map((d) => (
-                <tr key={d.id}>
+                <tr key={d.key}>
                   <td className={ui.td}>
-                    {d.concepto}
-                    {d.referencia_tipo === "manual" && (
-                      <span className="ml-2 text-xs text-muted">(ajuste)</span>
-                    )}
-                    {d.observacion && (
-                      <span className="block text-xs text-muted">{d.observacion}</span>
-                    )}
+                    {d.label}
+                    {d.sub && <span className="block text-xs text-muted">{d.sub}</span>}
                   </td>
                   <td className={`${ui.td} text-right font-medium`}>{clp(d.monto)}</td>
                 </tr>
@@ -130,38 +144,6 @@ export default async function DetalleLiquidacionPage({
           </tbody>
         </table>
       </div>
-
-      {gastos.length > 0 && (
-        <div className={`${ui.card} overflow-hidden`}>
-          <div className="border-b border-line bg-stone-50/60 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-muted">
-            Gastos descontados
-          </div>
-          <table className="w-full">
-            <tbody className="divide-y divide-line">
-              {gastos.map((g) => (
-                <tr key={g.gasto_id}>
-                  <td className={ui.td}>
-                    {g.descripcion}
-                    <span className="block text-xs text-muted">
-                      {CATEGORIA_GASTO_LABEL[
-                        g.categoria as keyof typeof CATEGORIA_GASTO_LABEL
-                      ] ?? g.categoria}{" "}
-                      · {g.fecha}
-                    </span>
-                  </td>
-                  <td className={`${ui.td} text-right font-medium`}>{clp(g.monto)}</td>
-                </tr>
-              ))}
-              <tr className="bg-stone-50/40">
-                <td className={`${ui.td} font-medium`}>Subtotal gastos</td>
-                <td className={`${ui.td} text-right font-semibold`}>
-                  − {clp(subtotalGastos)}
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      )}
 
       <div className={`${ui.card} flex flex-col gap-2 p-5`}>
         <div className="flex justify-between text-sm">

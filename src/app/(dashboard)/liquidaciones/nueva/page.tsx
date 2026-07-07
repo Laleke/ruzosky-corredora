@@ -140,12 +140,29 @@ export default async function NuevaLiquidacionPage({
                 <table className="w-full">
                   <tbody className="divide-y divide-line">
                     {preview.descuentos.map((l, i) => (
-                      <tr key={i}>
+                      <tr key={`d-${i}`}>
                         <td className={ui.td}>{l.concepto}</td>
                         <td className={`${ui.td} text-right font-medium`}>{clp(l.monto)}</td>
                       </tr>
                     ))}
-                    {preview.descuentos.length === 0 && (
+                    {preview.gastos.map((g) => (
+                      <tr key={g.gasto_id}>
+                        <td className={ui.td}>
+                          {g.descripcion}
+                          <span className="block text-xs text-muted">
+                            Gasto:{" "}
+                            {CATEGORIA_GASTO_LABEL[
+                              g.categoria as keyof typeof CATEGORIA_GASTO_LABEL
+                            ] ?? g.categoria}{" "}
+                            · {g.fecha}
+                          </span>
+                        </td>
+                        <td className={`${ui.td} text-right font-medium`}>
+                          − {clp(g.monto)}
+                        </td>
+                      </tr>
+                    ))}
+                    {preview.descuentos.length === 0 && preview.gastos.length === 0 && (
                       <tr>
                         <td className={`${ui.td} text-muted`} colSpan={2}>Sin descuentos.</td>
                       </tr>
@@ -154,49 +171,15 @@ export default async function NuevaLiquidacionPage({
                 </table>
               </div>
 
-              {preview.gastos.length > 0 && (
-                <div className={`${ui.card} overflow-hidden`}>
-                  <div className="border-b border-line bg-stone-50/60 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-muted">
-                    Gastos descontados
-                  </div>
-                  <table className="w-full">
-                    <tbody className="divide-y divide-line">
-                      {preview.gastos.map((g) => (
-                        <tr key={g.gasto_id}>
-                          <td className={ui.td}>
-                            {g.descripcion}
-                            <span className="block text-xs text-muted">
-                              {CATEGORIA_GASTO_LABEL[
-                                g.categoria as keyof typeof CATEGORIA_GASTO_LABEL
-                              ] ?? g.categoria}{" "}
-                              · {g.fecha}
-                            </span>
-                          </td>
-                          <td className={`${ui.td} text-right font-medium`}>
-                            − {clp(g.monto)}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              )}
-
               <div className={`${ui.card} flex flex-col gap-2 p-5`}>
                 <div className="flex justify-between text-sm">
                   <span className="text-muted">Total ingresos</span>
                   <span>{clp(preview.subtotal_ingresos)}</span>
                 </div>
                 <div className="flex justify-between text-sm">
-                  <span className="text-muted">Comisiones y descuentos</span>
-                  <span>− {clp(preview.subtotal_descuentos)}</span>
+                  <span className="text-muted">Total descuentos</span>
+                  <span>− {clp(preview.subtotal_descuentos + preview.subtotal_gastos)}</span>
                 </div>
-                {preview.subtotal_gastos > 0 && (
-                  <div className="flex justify-between text-sm">
-                    <span className="text-muted">Gastos descontados</span>
-                    <span>− {clp(preview.subtotal_gastos)}</span>
-                  </div>
-                )}
                 <div className="mt-1 flex justify-between border-t border-line pt-2 text-base font-semibold text-ink">
                   <span>Total a liquidar</span>
                   <span>{clp(preview.total_liquidacion)}</span>
