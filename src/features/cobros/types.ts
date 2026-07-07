@@ -8,3 +8,12 @@ export type CargoConContexto = Cargo & {
   numero_contrato: string | null;
   propiedad_direccion: string;
 };
+
+export type FiltrosCargos = {
+  propiedadId?: string;
+  arrendatarioId?: string;
+  estado?: "pendiente" | "parcial" | "pagado" | "vencido";
+  periodo?: string;
+  venceDesde?: string;
+  venceHasta?: string;
+};

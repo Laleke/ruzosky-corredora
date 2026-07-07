@@ -1,8 +1,26 @@
 import Link from "next/link";
 import { listCargos } from "@/features/cobros/queries";
 import { GenerarArriendos } from "@/features/cobros/generar-arriendos";
+import { getOpcionesRelacion } from "@/features/documentos/queries";
 import { PageHeader } from "@/components/page-header";
 import { ui, badge } from "@/components/ui";
+import type { FiltrosCargos } from "@/features/cobros/types";
+
+type SP = {
+  propiedad?: string;
+  arrendatario?: string;
+  estado?: string;
+  periodo?: string;
+  venceDesde?: string;
+  venceHasta?: string;
+};
+
+const ESTADOS_CARGO = [
+  { value: "pendiente", label: "Pendiente" },
+  { value: "parcial", label: "Parcial" },
+  { value: "pagado", label: "Pagado" },
+  { value: "vencido", label: "Vencido" },
+];
 
 const TIPO_LABEL: Record<string, string> = {
   arriendo: "Arriendo",
@@ -34,8 +52,25 @@ function estadoMostrar(
   return { label: "Pendiente", tone: "neutral" };
 }
 
-export default async function CobrosPage() {
-  const cargos = await listCargos();
+export default async function CobrosPage({
+  searchParams,
+}: {
+  searchParams: Promise<SP>;
+}) {
+  const sp = await searchParams;
+  const filtros: FiltrosCargos = {
+    propiedadId: sp.propiedad,
+    arrendatarioId: sp.arrendatario,
+    estado: sp.estado as FiltrosCargos["estado"],
+    periodo: sp.periodo,
+    venceDesde: sp.venceDesde,
+    venceHasta: sp.venceHasta,
+  };
+
+  const [cargos, opciones] = await Promise.all([
+    listCargos(filtros),
+    getOpcionesRelacion(),
+  ]);
   const hoy = new Date().toISOString().slice(0, 10);
   const deudaTotal = cargos.reduce((acc, c) => acc + Number(c.saldo_pendiente), 0);
 
@@ -46,6 +81,75 @@ export default async function CobrosPage() {
         descripcion="Cargos generados, saldos y morosidad."
         accion={{ href: "/cobros/nuevo", label: "Nuevo cargo" }}
       />
+
+      <form
+        method="get"
+        className="mb-5 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4"
+      >
+        <label className="flex flex-col gap-1 text-sm">
+          <span className="font-medium">Propiedad</span>
+          <select name="propiedad" defaultValue={sp.propiedad ?? ""} className={ui.input}>
+            <option value="">Todas</option>
+            {opciones.propiedades.map((o) => (
+              <option key={o.id} value={o.id}>
+                {o.label}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className="flex flex-col gap-1 text-sm">
+          <span className="font-medium">Arrendatario</span>
+          <select name="arrendatario" defaultValue={sp.arrendatario ?? ""} className={ui.input}>
+            <option value="">Todos</option>
+            {opciones.arrendatarios.map((o) => (
+              <option key={o.id} value={o.id}>
+                {o.label}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className="flex flex-col gap-1 text-sm">
+          <span className="font-medium">Estado</span>
+          <select name="estado" defaultValue={sp.estado ?? ""} className={ui.input}>
+            <option value="">Todos</option>
+            {ESTADOS_CARGO.map((e) => (
+              <option key={e.value} value={e.value}>
+                {e.label}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className="flex flex-col gap-1 text-sm">
+          <span className="font-medium">Período</span>
+          <input type="month" name="periodo" defaultValue={sp.periodo ?? ""} className={ui.input} />
+        </label>
+        <label className="flex flex-col gap-1 text-sm">
+          <span className="font-medium">Vence desde</span>
+          <input
+            type="date"
+            name="venceDesde"
+            defaultValue={sp.venceDesde ?? ""}
+            className={ui.input}
+          />
+        </label>
+        <label className="flex flex-col gap-1 text-sm">
+          <span className="font-medium">Vence hasta</span>
+          <input
+            type="date"
+            name="venceHasta"
+            defaultValue={sp.venceHasta ?? ""}
+            className={ui.input}
+          />
+        </label>
+        <div className="flex items-end gap-2">
+          <button type="submit" className={ui.btnSecondary}>
+            Filtrar
+          </button>
+          <Link href="/cobros" className={ui.btnGhost}>
+            Limpiar
+          </Link>
+        </div>
+      </form>
 
       <div className="mb-6 grid grid-cols-1 gap-4 lg:grid-cols-3">
         <div className={`${ui.card} p-5 lg:col-span-2`}>
@@ -62,7 +166,9 @@ export default async function CobrosPage() {
 
       {cargos.length === 0 ? (
         <div className={`${ui.card} p-10 text-center text-sm text-muted`}>
-          Aún no hay cargos. Genera los del mes o crea uno.
+          {Object.values(sp).some(Boolean)
+            ? "No hay cargos con esos filtros."
+            : "Aún no hay cargos. Genera los del mes o crea uno."}
         </div>
       ) : (
         <div className={`${ui.card} overflow-hidden`}>
