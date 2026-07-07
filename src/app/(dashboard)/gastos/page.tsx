@@ -6,24 +6,17 @@ import {
   CATEGORIA_GASTO_LABEL,
   ESTADOS_GASTO,
   ESTADO_GASTO,
-  RESPONSABLES_GASTO,
-  RESPONSABLE_GASTO_LABEL,
   clp,
 } from "@/features/gastos/constants";
 import { PageHeader } from "@/components/page-header";
 import { ui, badge } from "@/components/ui";
-import type {
-  CategoriaGasto,
-  EstadoGasto,
-  ResponsableGasto,
-} from "@/types/database.types";
+import type { CategoriaGasto, EstadoGasto } from "@/types/database.types";
 import type { FiltrosGastos } from "@/features/gastos/types";
 
 type SP = {
   q?: string;
   categoria?: string;
   estado?: string;
-  responsable?: string;
   propiedad?: string;
   propietario?: string;
   desde?: string;
@@ -40,7 +33,6 @@ export default async function GastosPage({
     q: sp.q,
     categoria: sp.categoria as CategoriaGasto | undefined,
     estado: sp.estado as EstadoGasto | undefined,
-    responsable: sp.responsable as ResponsableGasto | undefined,
     propiedadId: sp.propiedad,
     propietarioId: sp.propietario,
     desde: sp.desde,
@@ -60,7 +52,7 @@ export default async function GastosPage({
     <div>
       <PageHeader
         titulo="Gastos"
-        descripcion="Gastos por propiedad. Fuente oficial de gastos para reportes y liquidaciones."
+        descripcion="Un gasto es un cargo asociado al propietario de la propiedad: podrá descontarse automáticamente en su liquidación según la configuración seleccionada."
         accion={{ href: "/gastos/nuevo", label: "Registrar gasto" }}
       />
 
@@ -95,17 +87,6 @@ export default async function GastosPage({
             {ESTADOS_GASTO.map((e) => (
               <option key={e.value} value={e.value}>
                 {e.label}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label className="flex flex-col gap-1 text-sm">
-          <span className="font-medium">Responsable</span>
-          <select name="responsable" defaultValue={sp.responsable ?? ""} className={ui.input}>
-            <option value="">Todos</option>
-            {RESPONSABLES_GASTO.map((r) => (
-              <option key={r.value} value={r.value}>
-                {r.label}
               </option>
             ))}
           </select>
@@ -158,7 +139,6 @@ export default async function GastosPage({
                     <th className={ui.th}>Descripción</th>
                     <th className={ui.th}>Categoría</th>
                     <th className={ui.th}>Propiedad</th>
-                    <th className={ui.th}>Responsable</th>
                     <th className={`${ui.th} text-right`}>Monto</th>
                     <th className={ui.th}>Estado</th>
                     <th className={ui.th}></th>
@@ -182,7 +162,6 @@ export default async function GastosPage({
                         </td>
                         <td className={ui.td}>{CATEGORIA_GASTO_LABEL[g.categoria]}</td>
                         <td className={`${ui.td} text-muted`}>{g.propiedad_label ?? "—"}</td>
-                        <td className={ui.td}>{RESPONSABLE_GASTO_LABEL[g.responsable_pago]}</td>
                         <td className={`${ui.td} text-right font-medium`}>{clp(g.monto)}</td>
                         <td className={ui.td}>
                           <span className={badge(est.tone)}>{est.label}</span>

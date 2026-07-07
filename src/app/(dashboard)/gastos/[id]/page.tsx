@@ -2,12 +2,7 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { ArrowLeft, Pencil } from "lucide-react";
 import { getGasto } from "@/features/gastos/queries";
-import {
-  CATEGORIA_GASTO_LABEL,
-  ESTADO_GASTO,
-  RESPONSABLE_GASTO_LABEL,
-  clp,
-} from "@/features/gastos/constants";
+import { CATEGORIA_GASTO_LABEL, ESTADO_GASTO, clp } from "@/features/gastos/constants";
 import { GastoAcciones, VerComprobanteBtn } from "@/features/gastos/acciones";
 import { getCurrentProfile } from "@/lib/auth";
 import { ui, badge } from "@/components/ui";
@@ -65,10 +60,7 @@ export default async function GastoDetallePage({
         <dl className="grid grid-cols-2 gap-x-6 gap-y-4 sm:grid-cols-3">
           <Dato label="Fecha" valor={gasto.fecha} />
           <Dato label="Categoría" valor={CATEGORIA_GASTO_LABEL[gasto.categoria]} />
-          <Dato label="Responsable" valor={RESPONSABLE_GASTO_LABEL[gasto.responsable_pago]} />
           <Dato label="Propiedad" valor={gasto.propiedad_label} />
-          <Dato label="Propietario" valor={gasto.propietario_nombre} />
-          <Dato label="Arrendatario" valor={gasto.arrendatario_nombre} />
           <Dato
             label="Descuenta de liquidación"
             valor={gasto.descontar_de_liquidacion ? "Sí" : "No"}

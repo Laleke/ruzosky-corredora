@@ -58,7 +58,6 @@ export function UploadForm({
     const res = await registrarDocumento({
       nombre: nombreFinal,
       categoria: String(fd.get("categoria") ?? ""),
-      propietario_id: String(fd.get("propietario_id") ?? "") || null,
       arrendatario_id: String(fd.get("arrendatario_id") ?? "") || null,
       propiedad_id: String(fd.get("propiedad_id") ?? "") || null,
       contrato_id: String(fd.get("contrato_id") ?? "") || null,

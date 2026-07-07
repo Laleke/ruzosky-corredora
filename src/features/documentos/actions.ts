@@ -52,6 +52,19 @@ function limpiar(v: string | null | undefined): string | null {
   return s || null;
 }
 
+/** Deriva el propietario desde la propiedad solo si tiene un único dueño (sin copropiedad). */
+async function derivarPropietarioUnico(
+  supabase: DB,
+  propiedadId: string
+): Promise<string | null> {
+  const { data } = await supabase
+    .from("propietarios_propiedades")
+    .select("propietario_id")
+    .eq("propiedad_id", propiedadId);
+  if (!data || data.length !== 1) return null;
+  return data[0].propietario_id;
+}
+
 function validarArchivo(a: ArchivoSubido): string | null {
   if (!a?.storage_path || !a?.nombre_archivo) return "Archivo inválido.";
   if (!Number.isFinite(a.tamano_bytes) || a.tamano_bytes <= 0)
@@ -77,15 +90,20 @@ export async function registrarDocumento(
 
   const supabase = await createClient();
 
+  const propiedadId = limpiar(input.propiedad_id);
+  const propietarioId =
+    limpiar(input.propietario_id) ??
+    (propiedadId ? await derivarPropietarioUnico(supabase, propiedadId) : null);
+
   const { data: doc, error } = await supabase
     .from("documentos")
     .insert({
       empresa_id: profile.empresa_id,
       nombre,
       categoria: input.categoria as CategoriaDocumento,
-      propietario_id: limpiar(input.propietario_id),
+      propietario_id: propietarioId,
       arrendatario_id: limpiar(input.arrendatario_id),
-      propiedad_id: limpiar(input.propiedad_id),
+      propiedad_id: propiedadId,
       contrato_id: limpiar(input.contrato_id),
       observaciones: limpiar(input.observaciones),
       fecha_documento: limpiar(input.fecha_documento),
