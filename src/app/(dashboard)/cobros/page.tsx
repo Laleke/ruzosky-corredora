@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { listCargos } from "@/features/cobros/queries";
+import { AlertTriangle } from "lucide-react";
+import { listCargos, listContratosSinArriendo } from "@/features/cobros/queries";
 import { GenerarArriendos } from "@/features/cobros/generar-arriendos";
 import { getOpcionesRelacion } from "@/features/documentos/queries";
 import { PageHeader } from "@/components/page-header";
@@ -67,9 +68,11 @@ export default async function CobrosPage({
     venceHasta: sp.venceHasta,
   };
 
-  const [cargos, opciones] = await Promise.all([
+  const periodoActual = new Date().toISOString().slice(0, 7);
+  const [cargos, opciones, sinArriendo] = await Promise.all([
     listCargos(filtros),
     getOpcionesRelacion(),
+    listContratosSinArriendo(`${periodoActual}-01`),
   ]);
   const hoy = new Date().toISOString().slice(0, 10);
   const deudaTotal = cargos.reduce((acc, c) => acc + Number(c.saldo_pendiente), 0);
@@ -151,10 +154,29 @@ export default async function CobrosPage({
         </div>
       </form>
 
+      {sinArriendo.length > 0 && (
+        <div className={`${ui.card} mb-5 border-amber-200 bg-amber-50 p-5`}>
+          <div className="mb-3 flex items-center gap-2 text-amber-800">
+            <AlertTriangle size={18} />
+            <h2 className="text-sm font-semibold">
+              {sinArriendo.length} contrato{sinArriendo.length === 1 ? "" : "s"} sin arriendo
+              generado · {periodoActual}
+            </h2>
+          </div>
+          <ul className="flex flex-col divide-y divide-amber-200/70 text-sm text-ink">
+            {sinArriendo.map((c) => (
+              <li key={c.contratoId} className="py-2">
+                {c.label}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
       <div className="mb-6 grid grid-cols-1 gap-4 lg:grid-cols-3">
         <div className={`${ui.card} p-5 lg:col-span-2`}>
           <h2 className="mb-3 text-sm font-semibold text-ink">Generación asistida</h2>
-          <GenerarArriendos />
+          <GenerarArriendos periodoDefault={periodoActual} />
         </div>
         <div className={`${ui.card} flex flex-col justify-center p-5`}>
           <span className="text-sm font-medium text-muted">Deuda pendiente total</span>

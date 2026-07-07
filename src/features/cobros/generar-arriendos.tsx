@@ -6,7 +6,7 @@ import { generarArriendosDelMes, type CobroFormState } from "./actions";
 
 const initial: CobroFormState = { error: null, mensaje: null };
 
-export function GenerarArriendos() {
+export function GenerarArriendos({ periodoDefault }: { periodoDefault?: string }) {
   const [state, formAction, pending] = useActionState(
     generarArriendosDelMes,
     initial
@@ -16,7 +16,13 @@ export function GenerarArriendos() {
     <form action={formAction} className="flex flex-wrap items-end gap-3">
       <label className="flex flex-col gap-1 text-sm">
         <span className="font-medium">Período</span>
-        <input name="periodo" type="month" required className={ui.input} />
+        <input
+          name="periodo"
+          type="month"
+          defaultValue={periodoDefault}
+          required
+          className={ui.input}
+        />
       </label>
       <button type="submit" disabled={pending} className={ui.btnPrimary}>
         {pending ? "Generando…" : "Generar arriendos del mes"}

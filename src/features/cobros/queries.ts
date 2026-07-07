@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/server";
+import { etiquetaContrato } from "@/lib/propiedad";
 import type { Database } from "@/types/database.types";
 import type { Cargo, CargoConContexto, FiltrosCargos, Pago } from "./types";
 
@@ -85,6 +86,51 @@ export async function listCargos(
   }
 
   return filas;
+}
+
+export type ContratoSinArriendo = { contratoId: string; label: string };
+
+/**
+ * Contratos vigentes/renovados que aún no tienen un cargo de arriendo
+ * generado para el período dado. Base del indicador "cobros pendientes".
+ */
+export async function listContratosSinArriendo(
+  periodo: string
+): Promise<ContratoSinArriendo[]> {
+  const supabase = await createClient();
+  const { data: contratos } = await supabase
+    .from("contratos")
+    .select(
+      "id, numero_contrato, propiedades(codigo_interno, direccion, numero, departamento)"
+    )
+    .in("estado", ["vigente", "renovado"])
+    .eq("activo", true);
+  if (!contratos || contratos.length === 0) return [];
+
+  const { data: cargos } = await supabase
+    .from("cargos")
+    .select("contrato_id")
+    .eq("periodo", periodo)
+    .eq("tipo_cargo", "arriendo");
+  const conArriendo = new Set((cargos ?? []).map((c) => c.contrato_id));
+
+  type Row = {
+    id: string;
+    numero_contrato: string | null;
+    propiedades: {
+      codigo_interno: string | null;
+      direccion: string | null;
+      numero: string | null;
+      departamento: string | null;
+    } | null;
+  };
+
+  return (contratos as unknown as Row[])
+    .filter((c) => !conArriendo.has(c.id))
+    .map((c) => ({
+      contratoId: c.id,
+      label: etiquetaContrato(c.numero_contrato, c.propiedades),
+    }));
 }
 
 export async function getCargo(id: string): Promise<CargoConContexto | null> {
