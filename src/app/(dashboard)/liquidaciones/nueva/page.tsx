@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { listPropietarios } from "@/features/propietarios/queries";
-import { calcularLiquidacion } from "@/features/liquidaciones/queries";
+import { calcularLiquidacion, existeLiquidacion } from "@/features/liquidaciones/queries";
 import { generarLiquidacion } from "@/features/liquidaciones/actions";
 import { ConfirmarForm } from "@/features/liquidaciones/confirmar-form";
 import { CATEGORIA_GASTO_LABEL } from "@/features/gastos/constants";
@@ -37,9 +37,13 @@ export default async function NuevaLiquidacionPage({
 
   let preview = null;
   let propLabel = "";
+  let yaExiste = false;
   if (haySeleccion) {
     const supabase = await createClient();
-    preview = await calcularLiquidacion(supabase, propietarioId, `${periodo}-01`);
+    [preview, yaExiste] = await Promise.all([
+      calcularLiquidacion(supabase, propietarioId, `${periodo}-01`),
+      existeLiquidacion(propietarioId, `${periodo}-01`),
+    ]);
     propLabel = propietarios.find((p) => p.id === propietarioId)?.label ?? "";
   }
 
@@ -204,11 +208,18 @@ export default async function NuevaLiquidacionPage({
                 <h2 className="mb-3 text-sm font-semibold text-ink">
                   Confirmar generación
                 </h2>
-                <ConfirmarForm
-                  action={generarLiquidacion.bind(null, propietarioId, periodo)}
-                  subtotalIngresos={preview.subtotal_ingresos}
-                  subtotalDescuentos={preview.subtotal_descuentos + preview.subtotal_gastos}
-                />
+                {yaExiste ? (
+                  <p className="rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-800">
+                    Ya existe una liquidación para {propLabel} en el período {periodo}.
+                    No se puede generar otra hasta anular la existente.
+                  </p>
+                ) : (
+                  <ConfirmarForm
+                    action={generarLiquidacion.bind(null, propietarioId, periodo)}
+                    subtotalIngresos={preview.subtotal_ingresos}
+                    subtotalDescuentos={preview.subtotal_descuentos + preview.subtotal_gastos}
+                  />
+                )}
               </div>
             </>
           )}

@@ -268,6 +268,22 @@ export async function getGastosDeLiquidacion(
   }));
 }
 
+/** true si ya existe una liquidación (no anulada) para ese propietario y período. */
+export async function existeLiquidacion(
+  propietarioId: string,
+  periodo: string
+): Promise<boolean> {
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("liquidaciones")
+    .select("id")
+    .eq("propietario_id", propietarioId)
+    .eq("periodo", periodo)
+    .neq("estado", "anulada")
+    .limit(1);
+  return !!data && data.length > 0;
+}
+
 export async function listLiquidaciones(filtros?: {
   propietarioId?: string;
   estado?: string;
