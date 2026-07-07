@@ -268,6 +268,47 @@ export async function getGastosDeLiquidacion(
   }));
 }
 
+export type PendienteLiquidar = {
+  propietarioId: string;
+  propietarioNombre: string;
+  totalEstimado: number;
+};
+
+/**
+ * Propietarios con movimientos en el período (ingresos, comisiones o gastos
+ * descontables) que aún no tienen una liquidación generada para ese período.
+ * Recorre los propietarios activos; a esta escala (uso interno, pocos
+ * propietarios) el costo de un cálculo por propietario es aceptable.
+ */
+export async function listPendientesLiquidar(
+  periodo: string
+): Promise<PendienteLiquidar[]> {
+  const supabase = await createClient();
+  const { data: propietarios } = await supabase
+    .from("propietarios")
+    .select("id, tipo_persona, nombre, apellido, razon_social")
+    .eq("activo", true);
+  if (!propietarios || propietarios.length === 0) return [];
+
+  const pendientes: PendienteLiquidar[] = [];
+  for (const p of propietarios) {
+    const existe = await existeLiquidacion(p.id, periodo);
+    if (existe) continue;
+    const preview = await calcularLiquidacion(supabase, p.id, periodo);
+    const hayMovimientos =
+      preview.ingresos.length > 0 ||
+      preview.descuentos.length > 0 ||
+      preview.gastos.length > 0;
+    if (!hayMovimientos) continue;
+    pendientes.push({
+      propietarioId: p.id,
+      propietarioNombre: nombrePropietario(p),
+      totalEstimado: preview.total_liquidacion,
+    });
+  }
+  return pendientes;
+}
+
 /** true si ya existe una liquidación (no anulada) para ese propietario y período. */
 export async function existeLiquidacion(
   propietarioId: string,
