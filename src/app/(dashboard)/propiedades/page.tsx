@@ -1,9 +1,10 @@
 import Link from "next/link";
 import { Info, Pencil } from "lucide-react";
-import { listPropiedades } from "@/features/propiedades/queries";
+import { listPropiedades, getComunasPropiedades } from "@/features/propiedades/queries";
 import { cambiarActivoPropiedad } from "@/features/propiedades/actions";
 import { PageHeader } from "@/components/page-header";
 import { ToggleSwitch } from "@/components/toggle-switch";
+import { FiltroPropiedades } from "@/features/propiedades/filtro-propiedades";
 import { ui, badge } from "@/components/ui";
 
 const ESTADO: Record<string, { label: string; tone: Parameters<typeof badge>[0] }> = {
@@ -32,8 +33,19 @@ function formatoValor(valor: number | null, moneda: string): string {
     : `$${valor.toLocaleString("es-CL")}`;
 }
 
-export default async function PropiedadesPage() {
-  const propiedades = await listPropiedades();
+type SP = { tipo?: string; comuna?: string; estado?: string; activo?: string };
+
+export default async function PropiedadesPage({
+  searchParams,
+}: {
+  searchParams: Promise<SP>;
+}) {
+  const sp = await searchParams;
+  const [propiedades, comunas] = await Promise.all([
+    listPropiedades(sp),
+    getComunasPropiedades(),
+  ]);
+  const hayFiltros = Boolean(sp.tipo || sp.comuna || sp.estado || sp.activo);
 
   return (
     <div>
@@ -43,9 +55,11 @@ export default async function PropiedadesPage() {
         accion={{ href: "/propiedades/nueva", label: "Nueva propiedad" }}
       />
 
+      <FiltroPropiedades comunas={comunas} valores={sp} hayFiltros={hayFiltros} />
+
       {propiedades.length === 0 ? (
         <div className={`${ui.card} p-10 text-center text-sm text-muted`}>
-          Aún no hay propiedades registradas.
+          {hayFiltros ? "No hay propiedades con esos filtros." : "Aún no hay propiedades registradas."}
         </div>
       ) : (
         <div className={ui.cardGrid}>

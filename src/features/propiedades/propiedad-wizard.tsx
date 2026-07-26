@@ -67,7 +67,7 @@ const PASOS: Paso[] = [
   { key: "region", pregunta: "¿En qué región está ubicada?", tipo: "region", requerido: true },
   { key: "comuna", pregunta: "¿En qué comuna está ubicada?", tipo: "comuna", requerido: true },
   { key: "direccion", pregunta: "¿Cuál es la calle?", tipo: "texto" },
-  { key: "numero", pregunta: "¿Número de la calle?", tipo: "texto" },
+  { key: "numero", pregunta: "¿Número de la calle?", tipo: "numero" },
   { key: "departamento", pregunta: "¿Número de departamento o casa?", tipo: "texto" },
   {
     key: "rol_sii",
@@ -206,10 +206,6 @@ export function PropiedadWizard({ action }: { action: Action }) {
     });
   }
 
-  function omitir() {
-    setPaso(avanzarDesde(paso));
-  }
-
   function renderInput(p: Paso, visible: boolean) {
     const val = valores[p.key];
 
@@ -285,12 +281,13 @@ export function PropiedadWizard({ action }: { action: Action }) {
           />
         );
 
-      case "numero":
+      case "numero": {
+        const esEntero = p.key === "numero";
         return visible ? (
           <input
             type="number"
-            inputMode="decimal"
-            step="any"
+            inputMode={esEntero ? "numeric" : "decimal"}
+            step={esEntero ? "1" : "any"}
             value={String(val)}
             onChange={(e) => set(p.key, e.target.value)}
             className={`${ui.input} text-base`}
@@ -299,6 +296,7 @@ export function PropiedadWizard({ action }: { action: Action }) {
         ) : (
           <input type="hidden" name={p.key} value={String(val)} />
         );
+      }
 
       case "fecha":
         return visible ? (
@@ -408,7 +406,7 @@ export function PropiedadWizard({ action }: { action: Action }) {
   }
 
   return (
-    <div className="mx-auto flex max-w-xl flex-col gap-6 rounded-2xl bg-burgundy p-6 sm:p-10">
+    <div className="mx-auto flex max-w-xl flex-col gap-4 rounded-2xl bg-burgundy p-6 sm:p-10">
       <div className="flex items-center justify-between">
         <button
           type="button"
@@ -417,25 +415,23 @@ export function PropiedadWizard({ action }: { action: Action }) {
         >
           <ArrowLeft size={15} /> Cancelar
         </button>
-        <span className="text-xs font-medium text-white/60">
-          Pregunta {paso + 1} de {PASOS.length}
-        </span>
+        <div className="flex flex-col items-end gap-1">
+          <span className="text-xs font-medium text-white/60">
+            Pregunta {paso + 1} de {PASOS.length}
+          </span>
+          <div className="h-1 w-20 overflow-hidden rounded-full bg-white/10">
+            <div
+              className="h-full rounded-full bg-white transition-all"
+              style={{ width: `${((paso + 1) / PASOS.length) * 100}%` }}
+            />
+          </div>
+        </div>
       </div>
-
-      <div className="h-1.5 w-full overflow-hidden rounded-full bg-white/10">
-        <div
-          className="h-full rounded-full bg-white transition-all"
-          style={{ width: `${((paso + 1) / PASOS.length) * 100}%` }}
-        />
-      </div>
-      <p className="-mt-4 text-center text-xs text-white/50">
-        Tu avance se guarda automáticamente en este dispositivo.
-      </p>
 
       <form
         action={formAction}
         onSubmit={limpiarBorrador}
-        className="flex flex-col items-center gap-6 text-center"
+        className="flex flex-col items-center gap-4 text-center"
       >
         {/* Campos ocultos con todo lo ya respondido (y lo no visitado, con su valor inicial). */}
         {PASOS.map((p, i) => (
@@ -444,17 +440,13 @@ export function PropiedadWizard({ action }: { action: Action }) {
           </div>
         ))}
 
-        <div className="flex flex-col items-center gap-2">
+        <div className="flex flex-col items-center gap-1">
           <h1 className="text-xl font-semibold tracking-tight text-white sm:text-2xl">
             {actual.key === "departamento"
               ? `¿Número de ${(TIPO_OPCIONES.find((o) => o.value === valores.tipo)?.label ?? "unidad").toLowerCase()}?`
               : actual.pregunta}
+            {actual.requerido && <span className="ml-1 text-amber-300">*</span>}
           </h1>
-          {actual.requerido && (
-            <span className="inline-flex items-center rounded-full bg-white/15 px-2.5 py-0.5 text-xs font-medium text-white">
-              Obligatoria
-            </span>
-          )}
           {actual.ayuda && <p className="text-sm text-white/70">{actual.ayuda}</p>}
         </div>
 
@@ -473,15 +465,6 @@ export function PropiedadWizard({ action }: { action: Action }) {
               className="inline-flex items-center gap-1.5 rounded-lg bg-white/10 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-white/20"
             >
               <ArrowLeft size={15} /> Atrás
-            </button>
-          )}
-          {!actual.requerido && !esUltimo && (
-            <button
-              type="button"
-              onClick={omitir}
-              className="inline-flex items-center gap-1.5 rounded-lg bg-white/10 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-white/20"
-            >
-              Omitir
             </button>
           )}
           {!esUltimo ? (

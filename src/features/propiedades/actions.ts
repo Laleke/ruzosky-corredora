@@ -218,6 +218,34 @@ export async function actualizarPropiedad(
   redirect(`/propiedades/${id}`);
 }
 
+/**
+ * Elimina la propiedad definitivamente. Solo es posible si no tiene contratos
+ * (y por lo tanto tampoco arrendatarios ni cargos/deudas asociados, ya que
+ * esos dependen del contrato) ni gastos registrados — la propia base de datos
+ * lo impide vía `on delete restrict` en `contratos.propiedad_id` y
+ * `gastos.propiedad_id`; aquí solo se traduce ese rechazo a un mensaje claro.
+ */
+export async function eliminarPropiedad(id: string): Promise<{ error: string | null }> {
+  const profile = await getCurrentProfile();
+  if (!profile || profile.rol !== "admin") return { error: "No autorizado." };
+
+  const supabase = await createClient();
+  const { error } = await supabase.from("propiedades").delete().eq("id", id);
+
+  if (error) {
+    if (error.message.includes("foreign key") || error.message.includes("violates")) {
+      return {
+        error:
+          "No se puede eliminar: la propiedad tiene contratos, arrendatarios o gastos asociados. Termina o elimina esos registros primero.",
+      };
+    }
+    return { error: "No se pudo eliminar la propiedad." };
+  }
+
+  revalidatePath("/propiedades");
+  redirect("/propiedades");
+}
+
 export async function cambiarActivoPropiedad(id: string, activo: boolean) {
   const profile = await getCurrentProfile();
   if (!profile || profile.rol !== "admin") return;

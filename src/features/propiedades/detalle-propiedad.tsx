@@ -3,11 +3,11 @@
 import { useMemo, useState } from "react";
 import { useActionState } from "react";
 import Link from "next/link";
-import { ArrowLeft, Pencil } from "lucide-react";
+import { ArrowLeft, Pencil, Trash2 } from "lucide-react";
 import { badge, ui } from "@/components/ui";
 import { Combobox } from "@/components/combobox";
 import { NOMBRES_REGIONES, comunasDeRegion } from "@/data/chile";
-import type { actualizarPropiedad } from "./actions";
+import { eliminarPropiedad, type actualizarPropiedad } from "./actions";
 import type { Propiedad } from "./types";
 
 const TIPO_OPCIONES: { value: string; label: string }[] = [
@@ -112,6 +112,23 @@ export function PropiedadDetalle({
   const [rolSii, setRolSii] = useState(propiedad.rol_sii ?? "");
   const [tieneEst, setTieneEst] = useState((propiedad.estacionamientos ?? 0) > 0);
   const [tieneBod, setTieneBod] = useState((propiedad.bodegas ?? 0) > 0);
+  const [eliminando, setEliminando] = useState(false);
+  const [errorEliminar, setErrorEliminar] = useState<string | null>(null);
+
+  async function onEliminar() {
+    if (
+      !confirm(
+        "¿Eliminar esta propiedad? Esta acción no se puede deshacer. Solo funciona si no tiene contratos, arrendatarios ni gastos asociados."
+      )
+    ) {
+      return;
+    }
+    setEliminando(true);
+    setErrorEliminar(null);
+    const res = await eliminarPropiedad(id);
+    setEliminando(false);
+    if (res?.error) setErrorEliminar(res.error);
+  }
 
   const estadoTone = ESTADO_TONE[propiedad.estado] ?? "neutral";
 
@@ -420,6 +437,20 @@ export function PropiedadDetalle({
           </div>
         )}
       </form>
+
+      {!editando && (
+        <div className="mt-2 flex flex-col items-center gap-2">
+          <button
+            type="button"
+            onClick={onEliminar}
+            disabled={eliminando}
+            className="inline-flex items-center gap-1.5 rounded-lg bg-red-950/40 px-3 py-1.5 text-xs font-medium text-red-200 transition-colors hover:bg-red-950/60 disabled:pointer-events-none disabled:opacity-50"
+          >
+            <Trash2 size={14} /> {eliminando ? "Eliminando…" : "Eliminar propiedad"}
+          </button>
+          {errorEliminar && <p className="max-w-sm text-center text-xs text-amber-200">{errorEliminar}</p>}
+        </div>
+      )}
     </div>
   );
 }

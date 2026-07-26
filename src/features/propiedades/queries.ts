@@ -1,15 +1,42 @@
 import { createClient } from "@/lib/supabase/server";
 import type { Propiedad, PropietarioAsignado } from "./types";
+import type { TipoPropiedad, EstadoPropiedad } from "@/types/database.types";
 
-export async function listPropiedades(): Promise<Propiedad[]> {
+export type FiltrosPropiedades = {
+  tipo?: string;
+  comuna?: string;
+  estado?: string;
+  activo?: string; // "true" | "false" | undefined (todos)
+};
+
+export async function listPropiedades(
+  filtros: FiltrosPropiedades = {}
+): Promise<Propiedad[]> {
   const supabase = await createClient();
-  const { data, error } = await supabase
-    .from("propiedades")
-    .select("*")
-    .order("created_at", { ascending: false });
+  let query = supabase.from("propiedades").select("*");
+
+  if (filtros.tipo) query = query.eq("tipo", filtros.tipo as TipoPropiedad);
+  if (filtros.comuna) query = query.eq("comuna", filtros.comuna);
+  if (filtros.estado) query = query.eq("estado", filtros.estado as EstadoPropiedad);
+  if (filtros.activo === "true") query = query.eq("activo", true);
+  if (filtros.activo === "false") query = query.eq("activo", false);
+
+  // Orden alfabético por dirección (el dato principal para reconocer la propiedad).
+  const { data, error } = await query.order("direccion", { ascending: true });
 
   if (error) throw new Error(error.message);
   return data ?? [];
+}
+
+/** Comunas realmente presentes en propiedades, para poblar el filtro. */
+export async function getComunasPropiedades(): Promise<string[]> {
+  const supabase = await createClient();
+  const { data } = await supabase.from("propiedades").select("comuna");
+  const comunas = new Set<string>();
+  for (const row of data ?? []) {
+    if (row.comuna) comunas.add(row.comuna);
+  }
+  return [...comunas].sort((a, b) => a.localeCompare(b, "es"));
 }
 
 export async function getPropiedad(id: string): Promise<Propiedad | null> {
