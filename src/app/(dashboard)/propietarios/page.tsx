@@ -1,6 +1,9 @@
 import Link from "next/link";
 import { Info, Pencil, ToggleLeft, ToggleRight } from "lucide-react";
-import { listPropietarios } from "@/features/propietarios/queries";
+import {
+  listPropietarios,
+  getOpcionesFiltroPropietarios,
+} from "@/features/propietarios/queries";
 import { cambiarActivoPropietario } from "@/features/propietarios/actions";
 import { PageHeader } from "@/components/page-header";
 import { ui, badge } from "@/components/ui";
@@ -15,8 +18,19 @@ function nombreMostrar(p: {
   return [p.nombre, p.apellido].filter(Boolean).join(" ") || "—";
 }
 
-export default async function PropietariosPage() {
-  const propietarios = await listPropietarios();
+type SP = { comuna?: string; region?: string; activo?: string };
+
+export default async function PropietariosPage({
+  searchParams,
+}: {
+  searchParams: Promise<SP>;
+}) {
+  const sp = await searchParams;
+  const [propietarios, opciones] = await Promise.all([
+    listPropietarios(sp),
+    getOpcionesFiltroPropietarios(),
+  ]);
+  const hayFiltros = Boolean(sp.comuna || sp.region || sp.activo);
 
   return (
     <div>
@@ -26,9 +40,55 @@ export default async function PropietariosPage() {
         accion={{ href: "/propietarios/nuevo", label: "Nuevo propietario" }}
       />
 
+      <form
+        method="get"
+        className={`${ui.card} mb-5 grid grid-cols-1 gap-3 p-4 sm:grid-cols-2 lg:grid-cols-4`}
+      >
+        <label className="flex flex-col gap-1 text-sm">
+          <span className="font-medium text-ink">Comuna</span>
+          <select name="comuna" defaultValue={sp.comuna ?? ""} className={ui.input}>
+            <option value="">Todas</option>
+            {opciones.comunas.map((c) => (
+              <option key={c} value={c}>
+                {c}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className="flex flex-col gap-1 text-sm">
+          <span className="font-medium text-ink">Región</span>
+          <select name="region" defaultValue={sp.region ?? ""} className={ui.input}>
+            <option value="">Todas</option>
+            {opciones.regiones.map((r) => (
+              <option key={r} value={r}>
+                {r}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className="flex flex-col gap-1 text-sm">
+          <span className="font-medium text-ink">Activo</span>
+          <select name="activo" defaultValue={sp.activo ?? ""} className={ui.input}>
+            <option value="">Todos</option>
+            <option value="true">Activo</option>
+            <option value="false">Inactivo</option>
+          </select>
+        </label>
+        <div className="flex items-end gap-2">
+          <button type="submit" className={ui.btnSecondary}>
+            Filtrar
+          </button>
+          <Link href="/propietarios" className={ui.btnGhost}>
+            Limpiar
+          </Link>
+        </div>
+      </form>
+
       {propietarios.length === 0 ? (
         <div className={`${ui.card} p-10 text-center text-sm text-muted`}>
-          Aún no hay propietarios registrados.
+          {hayFiltros
+            ? "No hay propietarios con esos filtros."
+            : "Aún no hay propietarios registrados."}
         </div>
       ) : (
         <div className={ui.cardGrid}>

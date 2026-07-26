@@ -59,6 +59,13 @@ Referencia: `src/features/propiedades/propiedad-wizard.tsx` (reemplazó por comp
 - Los campos que eran combobox (región, comuna) o `<select>` (tipo, estado, moneda) se mantienen como tal. Los numéricos usan `type="number"` con teclado numérico. Estacionamiento/Bodega mantienen el patrón *checkbox → revela campo numérico* (el número ingresado es el número de identificación del estacionamiento/bodega, no una cantidad — así se guarda y así se muestra después en la tarjeta de listado, ej. "Estacionamiento N° 54").
 - Todo el estado de las respuestas vive en un único objeto en memoria (`valores`) dentro de un único `<form>`; la pregunta activa renderiza el input real (con su `name`), y todas las demás preguntas ya respondidas quedan como `<input type="hidden">` con el mismo `name` — así el envío final incluye todo, sin necesitar pasos de servidor intermedios ni perder lo ya contestado al navegar atrás/adelante.
 - Al guardar, reutiliza el mismo server action `crearPropiedad` sin cambios.
+- **Foco automático**: el contenedor del input de la pregunta activa usa `key={paso}` para forzar que React lo remonte en cada paso (si no, `autoFocus` de React solo dispara en el montaje inicial y no se repetía al navegar).
+- **Pregunta condicional**: el paso "Número de departamento o casa" se omite automáticamente si el tipo es "Casa" (el número de calle ya identifica la casa) y su pregunta se redacta según el tipo real elegido (ej. "¿Número de departamento?", "¿Número de oficina?").
+- **Borrador persistente** (`localStorage`, clave `rzk:draft:propiedad-wizard`): guarda `{ paso, valores }` en cada cambio y lo restaura al volver a entrar — soluciona perder el avance si el usuario sale de la app a mitad de la creación (ej. cambia a otra app y vuelve). Se limpia al enviar el formulario.
+
+## Filtros en listados
+
+Patrón (ver Propietarios y Cobros): formulario `<form method="get">` con `<select>`/inputs que refleja el estado actual vía `searchParams`, botón "Filtrar" (`ui.btnSecondary`) + botón "Limpiar" (`ui.btnGhost`, vuelve a la URL sin query). El filtrado ocurre en la query de datos (server-side), no en el cliente. Las opciones de los `<select>` se arman a partir de los valores realmente presentes en los datos (`getOpcionesFiltroPropietarios`), no de una lista estática, para no mostrar opciones sin resultados.
 - Rutas de gestión de **listas de N relaciones** (ej. copropietarios) sí pueden seguir en una sub-ruta propia (`/editar` quedó reservado solo para eso en Propiedades) — la regla de "edición en línea, sin modal" aplica al **registro principal**, no reemplaza tablas de relación con su propio flujo de alta/baja.
 
 ## Pendiente al replicar en Propietarios / Arrendatarios / Contratos

@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useActionState } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, ArrowRight, Check } from "lucide-react";
@@ -123,6 +123,8 @@ function formatRol(raw: string): string {
   return d.length <= 5 ? d : `${d.slice(0, 5)}-${d.slice(5)}`;
 }
 
+const DRAFT_KEY = "rzk:draft:propiedad-wizard";
+
 export function PropiedadWizard({ action }: { action: Action }) {
   const router = useRouter();
   const [state, formAction, pending] = useActionState(action, { error: null });
@@ -133,6 +135,42 @@ export function PropiedadWizard({ action }: { action: Action }) {
   const actual = PASOS[paso];
   const esUltimo = paso === PASOS.length - 1;
   const comunas = useMemo(() => comunasDeRegion(String(valores.region ?? "")), [valores.region]);
+
+  // Restaura el avance guardado (si el usuario salió de la app a medio llenar).
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(DRAFT_KEY);
+      if (!raw) return;
+      const guardado = JSON.parse(raw);
+      if (guardado?.valores) setValores({ ...VALORES_INICIALES, ...guardado.valores });
+      if (typeof guardado?.paso === "number") setPaso(guardado.paso);
+    } catch {
+      /* borrador corrupto o no disponible: ignorar */
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Guarda el avance en cada cambio.
+  useEffect(() => {
+    try {
+      localStorage.setItem(DRAFT_KEY, JSON.stringify({ paso, valores }));
+    } catch {
+      /* almacenamiento lleno o no disponible: ignorar */
+    }
+  }, [paso, valores]);
+
+  function limpiarBorrador() {
+    try {
+      localStorage.removeItem(DRAFT_KEY);
+    } catch {
+      /* ignorar */
+    }
+  }
+
+  /** El paso "departamento" no aplica a Casa: el número de calle ya la identifica. */
+  function esPasoOmisibleAutomatico(p: Paso): boolean {
+    return p.key === "departamento" && valores.tipo === "casa";
+  }
 
   function set(key: string, value: string | boolean) {
     setValores((v) => ({ ...v, [key]: value }));
@@ -145,21 +183,31 @@ export function PropiedadWizard({ action }: { action: Action }) {
     return typeof v === "string" ? v.trim() !== "" : true;
   }
 
+  function avanzarDesde(desde: number): number {
+    let next = desde + 1;
+    while (next < PASOS.length && esPasoOmisibleAutomatico(PASOS[next])) next++;
+    return Math.min(next, PASOS.length - 1);
+  }
+
   function siguiente() {
     if (!puedeAvanzar()) {
       setErrorPaso("Este dato es obligatorio para continuar.");
       return;
     }
-    setPaso((p) => Math.min(p + 1, PASOS.length - 1));
+    setPaso(avanzarDesde(paso));
   }
 
   function atras() {
     setErrorPaso(null);
-    setPaso((p) => Math.max(p - 1, 0));
+    setPaso((p) => {
+      let prev = p - 1;
+      while (prev >= 0 && esPasoOmisibleAutomatico(PASOS[prev])) prev--;
+      return Math.max(prev, 0);
+    });
   }
 
   function omitir() {
-    setPaso((p) => Math.min(p + 1, PASOS.length - 1));
+    setPaso(avanzarDesde(paso));
   }
 
   function renderInput(p: Paso, visible: boolean) {
@@ -380,18 +428,27 @@ export function PropiedadWizard({ action }: { action: Action }) {
           style={{ width: `${((paso + 1) / PASOS.length) * 100}%` }}
         />
       </div>
+      <p className="-mt-4 text-center text-xs text-white/50">
+        Tu avance se guarda automáticamente en este dispositivo.
+      </p>
 
-      <form action={formAction} className="flex flex-col items-center gap-6 text-center">
+      <form
+        action={formAction}
+        onSubmit={limpiarBorrador}
+        className="flex flex-col items-center gap-6 text-center"
+      >
         {/* Campos ocultos con todo lo ya respondido (y lo no visitado, con su valor inicial). */}
         {PASOS.map((p, i) => (
           <div key={p.key} className={i === paso ? "contents" : "hidden"}>
-            {i !== paso && renderInput(p, false)}
+            {i !== paso && !esPasoOmisibleAutomatico(p) && renderInput(p, false)}
           </div>
         ))}
 
         <div className="flex flex-col items-center gap-2">
           <h1 className="text-xl font-semibold tracking-tight text-white sm:text-2xl">
-            {actual.pregunta}
+            {actual.key === "departamento"
+              ? `¿Número de ${(TIPO_OPCIONES.find((o) => o.value === valores.tipo)?.label ?? "unidad").toLowerCase()}?`
+              : actual.pregunta}
           </h1>
           {actual.requerido && (
             <span className="inline-flex items-center rounded-full bg-white/15 px-2.5 py-0.5 text-xs font-medium text-white">
@@ -401,7 +458,9 @@ export function PropiedadWizard({ action }: { action: Action }) {
           {actual.ayuda && <p className="text-sm text-white/70">{actual.ayuda}</p>}
         </div>
 
-        <div className="w-full max-w-sm">{renderInput(actual, true)}</div>
+        <div className="w-full max-w-sm" key={paso}>
+          {renderInput(actual, true)}
+        </div>
 
         {errorPaso && <p className="text-sm text-amber-200">{errorPaso}</p>}
         {esUltimo && state.error && <p className="text-sm text-amber-200">{state.error}</p>}
