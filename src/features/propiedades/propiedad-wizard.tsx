@@ -68,7 +68,7 @@ const PASOS: Paso[] = [
   { key: "comuna", pregunta: "¿En qué comuna está ubicada?", tipo: "comuna", requerido: true },
   { key: "direccion", pregunta: "¿Cuál es la calle?", tipo: "texto" },
   { key: "numero", pregunta: "¿Número de la calle?", tipo: "numero" },
-  { key: "departamento", pregunta: "¿Número de departamento o casa?", tipo: "numero" },
+  { key: "departamento", pregunta: "¿Número de departamento o casa?", tipo: "texto" },
   {
     key: "rol_sii",
     pregunta: "¿Cuál es el Rol SII?",
@@ -282,7 +282,7 @@ export function PropiedadWizard({ action }: { action: Action }) {
         );
 
       case "numero": {
-        const esEntero = p.key === "numero" || p.key === "departamento";
+        const esEntero = p.key === "numero";
         return visible ? (
           <input
             type="number"
