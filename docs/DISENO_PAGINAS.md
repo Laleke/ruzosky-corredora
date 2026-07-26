@@ -47,7 +47,18 @@ Referencia: `src/app/(dashboard)/propiedades/[id]/page.tsx` + `src/features/prop
 - Los bloques de datos (`Bloque`) usan fondo `bg-burgundy-strong` (un tono dentro del panel principal) y texto blanco/`white/50` para las etiquetas, en ambos modos (lectura y edición).
 - "Volver" es un **botón** (`Link` con estilo de botón, ícono `ArrowLeft`, fondo `bg-white/10`), no un link de texto suelto.
 - Al cancelar la edición, se vuelve al modo lectura **sin recargar la página** (estado local `editando`, no hay ruta de por medio). Al guardar, el server action redirige de vuelta al detalle (`/propiedades/${id}`), no al listado.
-- El formulario de **creación** (`/propiedades/nueva`, `PropiedadForm`) es una pantalla aparte y se mantiene igual — este patrón de edición en el grid aplica solo al detalle de un registro existente.
+- El formulario de **creación** (`/propiedades/nueva`) ya no es un formulario tradicional — ver "Wizard de creación" más abajo.
+
+## Wizard de creación (una pregunta a la vez)
+
+Referencia: `src/features/propiedades/propiedad-wizard.tsx` (reemplazó por completo al antiguo `PropiedadForm`, que se eliminó — quedó huérfano tras este cambio).
+
+- **Una sola pregunta visible por pantalla.** El orden de las preguntas sigue una secuencia estratégica: primero lo que define la propiedad (tipo, región, comuna), luego la dirección exacta, después características físicas, y al final estado/valorización (lo que más cambia en el tiempo).
+- Navegación con **botones** (nunca links): "Atrás", "Omitir" (solo en preguntas no obligatorias), "Siguiente", y en la última pregunta "Guardar propiedad". Un indicador de progreso ("Pregunta X de N" + barra) arriba.
+- **Solo región y comuna son obligatorias** (coincide con la validación real del server action `crearPropiedad`; el resto tiene default o puede quedar vacío). Se marcan con una etiqueta "Obligatoria" junto a la pregunta. Intentar avanzar sin responder una obligatoria muestra un error en vez de dejar pasar.
+- Los campos que eran combobox (región, comuna) o `<select>` (tipo, estado, moneda) se mantienen como tal. Los numéricos usan `type="number"` con teclado numérico. Estacionamiento/Bodega mantienen el patrón *checkbox → revela campo numérico* (el número ingresado es el número de identificación del estacionamiento/bodega, no una cantidad — así se guarda y así se muestra después en la tarjeta de listado, ej. "Estacionamiento N° 54").
+- Todo el estado de las respuestas vive en un único objeto en memoria (`valores`) dentro de un único `<form>`; la pregunta activa renderiza el input real (con su `name`), y todas las demás preguntas ya respondidas quedan como `<input type="hidden">` con el mismo `name` — así el envío final incluye todo, sin necesitar pasos de servidor intermedios ni perder lo ya contestado al navegar atrás/adelante.
+- Al guardar, reutiliza el mismo server action `crearPropiedad` sin cambios.
 - Rutas de gestión de **listas de N relaciones** (ej. copropietarios) sí pueden seguir en una sub-ruta propia (`/editar` quedó reservado solo para eso en Propiedades) — la regla de "edición en línea, sin modal" aplica al **registro principal**, no reemplaza tablas de relación con su propio flujo de alta/baja.
 
 ## Pendiente al replicar en Propietarios / Arrendatarios / Contratos

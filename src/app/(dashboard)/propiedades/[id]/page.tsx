@@ -52,9 +52,7 @@ export default async function DetallePropiedadPage({
                 key={a.vinculo_id}
                 className="flex items-center justify-between py-2 text-sm"
               >
-                <span className="text-white">
-                  {a.nombre} <span className="text-white/60">· {a.rut}</span>
-                </span>
+                <span className="text-white">{a.nombre}</span>
                 <EditarParticipacion
                   vinculoId={a.vinculo_id}
                   propiedadId={id}

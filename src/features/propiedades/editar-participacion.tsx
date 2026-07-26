@@ -3,7 +3,6 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Check } from "lucide-react";
-import { ui } from "@/components/ui";
 import { actualizarParticipacion } from "./actions";
 
 export function EditarParticipacion({
@@ -30,21 +29,25 @@ export function EditarParticipacion({
   }
 
   return (
-    <span className="flex items-center gap-1">
+    <span className="flex items-center gap-1.5">
       <input
         type="number"
         min="0"
         max="100"
         value={pct}
         onChange={(e) => setPct(e.target.value)}
-        className="w-16 rounded-lg border border-line px-2 py-1 text-right text-sm outline-none focus:border-burgundy"
+        onBlur={() => {
+          const n = Number(pct);
+          if (Number.isFinite(n)) setPct(String(n));
+        }}
+        className="w-16 rounded-lg border border-line bg-white px-2 py-1 text-right text-sm text-ink outline-none focus:border-burgundy"
       />
-      <span className="text-muted">%</span>
+      <span className="text-white/70">%</span>
       {cambiado && (
         <button
           onClick={guardar}
           disabled={pending}
-          className={`${ui.btnGhost} px-2 py-1 text-xs`}
+          className="inline-flex items-center gap-1 rounded-lg bg-white px-2.5 py-1 text-xs font-medium text-burgundy shadow-sm transition-colors hover:bg-white/90 disabled:pointer-events-none disabled:opacity-50"
           title="Guardar participación"
         >
           <Check size={14} /> {pending ? "…" : "Guardar"}

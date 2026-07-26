@@ -125,11 +125,23 @@ export function PropiedadDetalle({
       </Link>
 
       <div className="mt-4 flex flex-col items-center gap-3 text-center">
-        <h1 className="text-2xl font-semibold tracking-tight text-white">
-          {propiedad.direccion ?? "Propiedad sin dirección"}
-          {propiedad.numero ? ` ${propiedad.numero}` : ""}
-          {propiedad.departamento ? `, ${propiedad.departamento}` : ""}
-        </h1>
+        <div className="flex items-center justify-center gap-3">
+          <h1 className="text-2xl font-semibold tracking-tight text-white">
+            {propiedad.direccion ?? "Propiedad sin dirección"}
+            {propiedad.numero ? ` ${propiedad.numero}` : ""}
+            {propiedad.departamento ? `, ${propiedad.departamento}` : ""}
+          </h1>
+          {!editando && (
+            <button
+              type="button"
+              onClick={() => setEditando(true)}
+              className="inline-flex shrink-0 items-center gap-2 rounded-lg bg-white px-4 py-2 text-sm font-medium text-burgundy shadow-sm transition-colors hover:bg-white/90"
+            >
+              <Pencil size={16} />
+              Editar
+            </button>
+          )}
+        </div>
         <div className="flex flex-wrap items-center justify-center gap-2">
           {propiedad.codigo_interno && (
             <span className={badge("info")}>{propiedad.codigo_interno}</span>
@@ -140,16 +152,6 @@ export function PropiedadDetalle({
           {propiedad.publicada && <span className={badge("success")}>Publicada</span>}
           {!propiedad.activo && <span className={badge("neutral")}>Inactiva</span>}
         </div>
-        {!editando && (
-          <button
-            type="button"
-            onClick={() => setEditando(true)}
-            className="inline-flex items-center gap-2 rounded-lg bg-white px-4 py-2 text-sm font-medium text-burgundy shadow-sm transition-colors hover:bg-white/90"
-          >
-            <Pencil size={16} />
-            Editar
-          </button>
-        )}
       </div>
 
       <form action={formAction} className="mt-6 flex flex-col gap-6">
@@ -249,7 +251,7 @@ export function PropiedadDetalle({
           <Campo editando={editando} label="Baños" name="banos" type="number" value={propiedad.banos} />
           {editando ? (
             <div>
-              <label className="flex items-center gap-2 text-xs uppercase tracking-wide text-white/50">
+              <label className="flex items-center gap-1.5 text-[11px] font-medium text-white/70">
                 <input
                   type="checkbox"
                   checked={tieneEst}
@@ -280,7 +282,7 @@ export function PropiedadDetalle({
           )}
           {editando ? (
             <div>
-              <label className="flex items-center gap-2 text-xs uppercase tracking-wide text-white/50">
+              <label className="flex items-center gap-1.5 text-[11px] font-medium text-white/70">
                 <input
                   type="checkbox"
                   checked={tieneBod}
