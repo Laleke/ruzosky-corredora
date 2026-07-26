@@ -19,23 +19,34 @@
 Estructura de 2 filas, sin footer con línea separadora (se evitó a propósito para ahorrar espacio vertical):
 
 **Fila 1 — identificación + estado:**
-- Izquierda: dos líneas de texto — arriba un dato **secundario/corto** en `text-white/60` (ej. comuna), abajo el dato **principal** en `text-white` y `font-medium` (ej. dirección). *Regla general: el campo más usado para reconocer visualmente el registro va abajo en grande; un campo de contexto corto va arriba en chico.* Para Propiedades: arriba = comuna, abajo = dirección (el código interno se movió al detalle expandible — es un dato de trazabilidad interna, no el principal para reconocer la propiedad a simple vista).
-- Derecha: badge de estado — **fondo sólido del color semántico, texto blanco** (`badge()` en `src/components/ui.ts`: success=emerald, warning=amber, danger=red, info=sky, neutral=stone). Ya no es "fondo pastel + texto de color".
+- Izquierda: dos líneas de texto — arriba un dato **secundario/corto** en `text-white/60` (ej. "Departamento - San Miguel", es decir `tipo - comuna`), abajo el dato **principal** en `text-white` y `font-medium` (ej. dirección). *Regla general: el campo más usado para reconocer visualmente el registro va abajo en grande; datos de contexto cortos van arriba, combinados con un separador " - " si son más de uno.*
+- Derecha: badge de estado — **fondo sólido del color semántico, texto blanco** (`badge()` en `src/components/ui.ts`: success=emerald, warning=amber, danger=red, info=sky, neutral=stone).
 
-**Fila 2 — disclosure + valor + acciones (todo en una sola línea):**
-- Un `<details>`/`<summary>` nativo (sin JS) como disclosure de información secundaria — ícono `Info` + "Ver más información". Al expandirse, muestra los campos que no son críticos para escanear la lista (para Propiedades: código interno, tipo, y la leyenda "Inactivo" si aplica).
-- El **valor/monto principal** (ej. valor de arriendo) se muestra siempre a la misma altura que el disclosure, alineado a la derecha del `<summary>` — no queda oculto ni en su propia fila.
-- Los **íconos de acción** (lápiz = editar/detalle; toggle on/off = activar/desactivar) van **fuera del `<details>`** pero en la misma fila visual (hermanos en un flex), para que un click en ellos no dispare accidentalmente la apertura/cierre del disclosure.
-- El ícono toggle usa color semántico: verde (`text-emerald-400`) cuando está activo, rojo (`text-red-400`) cuando está inactivo — no solo cambia de forma (`ToggleRight`/`ToggleLeft`), también de color.
+**Fila 2 — disclosure + acciones (todo en una sola línea):**
+- Un `<details>`/`<summary>` nativo (sin JS) con ícono `Info` + "Ver más información" — **sin ningún valor visible en la línea del summary**, todo el contenido secundario va dentro, expandido. Para Propiedades: precio de referencia, dormitorios/baños/estacionamientos/bodegas — **cada uno solo si tiene valor** (no se muestra la línea si el dato es null/0). El código interno **no se muestra en la tarjeta** (queda solo en el detalle de la propiedad).
+- Los **íconos de acción** (lápiz = editar/detalle; switch on/off = activar/desactivar) van **fuera del `<details>`** pero en la misma fila visual (hermanos en un flex a la derecha), para que un click en ellos no dispare accidentalmente la apertura/cierre del disclosure.
+- El switch on/off es un **componente de interruptor real** (`src/components/toggle-switch.tsx`, `ToggleSwitch`), no un ícono de flecha: pastilla verde con el círculo a la derecha cuando está activo, pastilla gris con el círculo a la izquierda cuando está inactivo.
 
-**Estado inactivo:** la tarjeta completa baja a `opacity-60` — **mismo color base** (no cambia a gris ni a otro tono), solo se atenúa. No se agrega una etiqueta "(inactivo)" visible en la fila 1; queda mencionado dentro del disclosure para quien quiera confirmarlo.
+**Estado inactivo:** la tarjeta completa baja a `opacity-60` — **mismo color base** (no cambia a gris ni a otro tono), solo se atenúa.
 
-## Clases reutilizables (`src/components/ui.ts`)
+## Clases y componentes reutilizables
 
 - `ui.cardGrid` — grid responsivo de tarjetas.
 - `ui.listCard` — tarjeta base burdeo (agregar `opacity-60` condicional para inactivos).
 - `ui.listCardDisclosure` — estilo del `<summary>`.
-- `ui.listCardIconBtn` — botón/ícono circular de acción (agregar color semántico para el toggle según estado).
+- `ui.listCardIconBtn` — botón/ícono circular de acción (lápiz).
+- `ToggleSwitch` (`src/components/toggle-switch.tsx`) — switch on/off reutilizable, recibe `on` y `label`; se usa dentro de un `<form action={...}>`.
+
+## Página de detalle + edición en línea (patrón definido en Propiedades)
+
+Referencia: `src/app/(dashboard)/propiedades/[id]/page.tsx` + `src/features/propiedades/detalle-propiedad.tsx`.
+
+- **Una sola pantalla, sin ruta `/editar` para los campos del registro.** El detalle es un panel `bg-burgundy` (`rounded-2xl p-6`) con un botón "Editar" (client component, `useState`) que intercambia el contenido de solo-lectura por el mismo formulario existente (reutilizado, no duplicado), renderizado **en el mismo lugar** de la pantalla — nunca un modal ni una navegación a otra ruta.
+- Los bloques de datos de solo-lectura (`Bloque`/`Dato`) usan fondo `bg-burgundy-strong` (un tono dentro del panel principal) y texto blanco/`white/50` para las etiquetas.
+- "Volver" es un **botón** (`Link` con estilo de botón, ícono `ArrowLeft`, fondo `bg-white/10`), no un link de texto suelto.
+- Los campos que ya eran `<select>`/`Combobox` en el formulario existente se reutilizan tal cual (cumplen "mostrarse como combobox" sin cambios adicionales).
+- Al cancelar la edición, se vuelve al modo lectura **sin recargar la página** (`onCancel` en `PropiedadForm`, prop opcional). Al guardar, el server action redirige de vuelta al detalle (`/propiedades/${id}`), no al listado.
+- Rutas de gestión de **listas de N relaciones** (ej. copropietarios) sí pueden seguir en una sub-ruta propia (`/editar` quedó reservado solo para eso en Propiedades) — la regla de "edición en línea, sin modal" aplica al **registro principal**, no reemplaza tablas de relación con su propio flujo de alta/baja.
 
 ## Pendiente al replicar en Propietarios / Arrendatarios / Contratos
 

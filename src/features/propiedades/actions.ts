@@ -214,7 +214,8 @@ export async function actualizarPropiedad(
   if (error) return { error: traducirError(error.message) };
 
   revalidatePath("/propiedades");
-  redirect("/propiedades");
+  revalidatePath(`/propiedades/${id}`);
+  redirect(`/propiedades/${id}`);
 }
 
 export async function cambiarActivoPropiedad(id: string, activo: boolean) {

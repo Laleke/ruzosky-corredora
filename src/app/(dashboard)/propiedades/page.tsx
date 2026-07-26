@@ -1,8 +1,9 @@
 import Link from "next/link";
-import { Info, Pencil, ToggleLeft, ToggleRight } from "lucide-react";
+import { Info, Pencil } from "lucide-react";
 import { listPropiedades } from "@/features/propiedades/queries";
 import { cambiarActivoPropiedad } from "@/features/propiedades/actions";
 import { PageHeader } from "@/components/page-header";
+import { ToggleSwitch } from "@/components/toggle-switch";
 import { ui, badge } from "@/components/ui";
 
 const ESTADO: Record<string, { label: string; tone: Parameters<typeof badge>[0] }> = {
@@ -11,6 +12,17 @@ const ESTADO: Record<string, { label: string; tone: Parameters<typeof badge>[0] 
   arrendada: { label: "Arrendada", tone: "success" },
   mantencion: { label: "Mantención", tone: "warning" },
   inactiva: { label: "Inactiva", tone: "danger" },
+};
+
+const TIPO_LABEL: Record<string, string> = {
+  departamento: "Departamento",
+  casa: "Casa",
+  oficina: "Oficina",
+  local_comercial: "Local comercial",
+  bodega: "Bodega",
+  estacionamiento: "Estacionamiento",
+  terreno: "Terreno",
+  otro: "Otro",
 };
 
 function formatoValor(valor: number | null, moneda: string): string {
@@ -46,7 +58,9 @@ export default async function PropiedadesPage() {
               >
                 <div className="flex items-start justify-between gap-2">
                   <div>
-                    <p className="text-xs text-white/60">{p.comuna ?? "—"}</p>
+                    <p className="text-xs text-white/60">
+                      {TIPO_LABEL[p.tipo] ?? p.tipo} - {p.comuna ?? "—"}
+                    </p>
                     <p className="font-medium text-white">
                       {p.direccion ?? <span className="text-white/60">(sin dirección)</span>}
                       {p.numero ? ` ${p.numero}` : ""}
@@ -58,22 +72,19 @@ export default async function PropiedadesPage() {
 
                 <div className="flex items-center justify-between gap-2">
                   <details className="min-w-0 flex-1">
-                    <summary className={`${ui.listCardDisclosure} justify-between`}>
-                      <span className="flex items-center gap-1.5">
-                        <Info size={14} /> Ver más información
-                      </span>
-                      <span className="shrink-0 text-sm font-medium text-white">
-                        {formatoValor(p.valor_referencial_arriendo, p.moneda)}
-                      </span>
+                    <summary className={ui.listCardDisclosure}>
+                      <Info size={14} /> Ver más información
                     </summary>
                     <div className="mt-2 flex flex-col gap-1 text-sm text-white/80">
-                      <span>{p.codigo_interno ?? "—"}</span>
-                      <span className="capitalize">{p.tipo.replace("_", " ")}</span>
-                      {!p.activo && <span className="text-white/60">Inactivo</span>}
+                      <span>{formatoValor(p.valor_referencial_arriendo, p.moneda)}</span>
+                      {!!p.dormitorios && <span>{p.dormitorios} dormitorio(s)</span>}
+                      {!!p.banos && <span>{p.banos} baño(s)</span>}
+                      {!!p.estacionamientos && <span>{p.estacionamientos} estacionamiento(s)</span>}
+                      {!!p.bodegas && <span>{p.bodegas} bodega(s)</span>}
                     </div>
                   </details>
 
-                  <div className="flex shrink-0 items-center gap-1">
+                  <div className="flex shrink-0 items-center gap-2">
                     <Link
                       href={`/propiedades/${p.id}`}
                       aria-label="Editar / ver detalle"
@@ -83,16 +94,7 @@ export default async function PropiedadesPage() {
                       <Pencil size={16} />
                     </Link>
                     <form action={cambiarActivoPropiedad.bind(null, p.id, !p.activo)}>
-                      <button
-                        type="submit"
-                        aria-label={p.activo ? "Desactivar" : "Activar"}
-                        title={p.activo ? "Desactivar" : "Activar"}
-                        className={`${ui.listCardIconBtn} ${
-                          p.activo ? "text-emerald-400 hover:text-emerald-300" : "text-red-400 hover:text-red-300"
-                        }`}
-                      >
-                        {p.activo ? <ToggleRight size={18} /> : <ToggleLeft size={18} />}
-                      </button>
+                      <ToggleSwitch on={p.activo} label={p.activo ? "Desactivar" : "Activar"} />
                     </form>
                   </div>
                 </div>

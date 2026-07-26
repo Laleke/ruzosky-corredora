@@ -56,9 +56,12 @@ function Campo({
 export function PropiedadForm({
   action,
   propiedad,
+  onCancel,
 }: {
   action: Action;
   propiedad?: Propiedad;
+  /** Si se indica, "Cancelar" vuelve al modo vista en la misma pantalla en vez de navegar. */
+  onCancel?: () => void;
 }) {
   const [state, formAction, pending] = useActionState(action, { error: null });
   const draftKey = propiedad ? null : "rzk:draft:propiedad";
@@ -312,9 +315,15 @@ export function PropiedadForm({
         <button type="submit" disabled={pending} className={ui.btnPrimary}>
           {pending ? "Guardando…" : "Guardar"}
         </button>
-        <Link href="/propiedades" className={ui.btnSecondary}>
-          Cancelar
-        </Link>
+        {onCancel ? (
+          <button type="button" onClick={onCancel} className={ui.btnSecondary}>
+            Cancelar
+          </button>
+        ) : (
+          <Link href="/propiedades" className={ui.btnSecondary}>
+            Cancelar
+          </Link>
+        )}
       </div>
     </form>
   );
