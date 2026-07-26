@@ -123,9 +123,13 @@ export function PropiedadDetalle({
     setEliminando(true);
     setErrorEliminar(null);
     const res = await eliminarPropiedad(id);
-    setEliminando(false);
-    if (res?.error) setErrorEliminar(res.error);
-    setConfirmandoEliminar(false);
+    if (res?.error) {
+      setEliminando(false);
+      setErrorEliminar(res.error);
+      setConfirmandoEliminar(false);
+      return;
+    }
+    router.push("/propiedades");
   }
 
   const estadoTone = ESTADO_TONE[propiedad.estado] ?? "neutral";

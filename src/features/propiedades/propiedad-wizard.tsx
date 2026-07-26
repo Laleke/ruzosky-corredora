@@ -131,6 +131,7 @@ export function PropiedadWizard({ action }: { action: Action }) {
   const [paso, setPaso] = useState(0);
   const [valores, setValores] = useState<Valores>(VALORES_INICIALES);
   const [errorPaso, setErrorPaso] = useState<string | null>(null);
+  const [confirmandoCancelar, setConfirmandoCancelar] = useState(false);
 
   const actual = PASOS[paso];
   const esUltimo = paso === PASOS.length - 1;
@@ -407,14 +408,7 @@ export function PropiedadWizard({ action }: { action: Action }) {
 
   return (
     <div className="mx-auto flex max-w-xl flex-col gap-4 rounded-2xl bg-burgundy p-6 sm:p-10">
-      <div className="flex items-center justify-between">
-        <button
-          type="button"
-          onClick={() => router.push("/propiedades")}
-          className="inline-flex items-center gap-1.5 rounded-lg bg-white/10 px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-white/20"
-        >
-          <ArrowLeft size={15} /> Cancelar
-        </button>
+      <div className="flex items-center justify-end">
         <div className="flex flex-col items-end gap-1">
           <span className="text-xs font-medium text-white/60">
             Pregunta {paso + 1} de {PASOS.length}
@@ -427,6 +421,31 @@ export function PropiedadWizard({ action }: { action: Action }) {
           </div>
         </div>
       </div>
+
+      {confirmandoCancelar && (
+        <div className="flex flex-col items-center gap-2 rounded-xl bg-white/10 p-4">
+          <p className="text-sm text-white">Se perderá el avance de esta propiedad. ¿Cancelar de todas formas?</p>
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={() => {
+                limpiarBorrador();
+                router.push("/propiedades");
+              }}
+              className="inline-flex items-center gap-1.5 rounded-lg bg-white px-4 py-2 text-sm font-medium text-burgundy shadow-sm transition-colors hover:bg-white/90"
+            >
+              Sí, cancelar
+            </button>
+            <button
+              type="button"
+              onClick={() => setConfirmandoCancelar(false)}
+              className="inline-flex items-center gap-1.5 rounded-lg bg-white/10 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-white/20"
+            >
+              No
+            </button>
+          </div>
+        </div>
+      )}
 
       <form
         action={formAction}
@@ -458,6 +477,13 @@ export function PropiedadWizard({ action }: { action: Action }) {
         {esUltimo && state.error && <p className="text-sm text-amber-200">{state.error}</p>}
 
         <div className="flex flex-wrap items-center justify-center gap-3">
+          <button
+            type="button"
+            onClick={() => setConfirmandoCancelar(true)}
+            className="inline-flex items-center gap-1.5 rounded-lg bg-white/10 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-white/20"
+          >
+            Cancelar
+          </button>
           {paso > 0 && (
             <button
               type="button"

@@ -230,7 +230,14 @@ export async function eliminarPropiedad(id: string): Promise<{ error: string | n
   if (!profile || profile.rol !== "admin") return { error: "No autorizado." };
 
   const supabase = await createClient();
-  const { error } = await supabase.from("propiedades").delete().eq("id", id);
+  // `.select("id")` es necesario para poder distinguir "se eliminó" de
+  // "RLS no encontró filas y no eliminó nada" — sin esto, un DELETE bloqueado
+  // por falta de política RLS no devuelve error, simplemente afecta 0 filas.
+  const { data, error } = await supabase
+    .from("propiedades")
+    .delete()
+    .eq("id", id)
+    .select("id");
 
   if (error) {
     if (error.message.includes("foreign key") || error.message.includes("violates")) {
@@ -242,8 +249,12 @@ export async function eliminarPropiedad(id: string): Promise<{ error: string | n
     return { error: "No se pudo eliminar la propiedad." };
   }
 
+  if (!data || data.length === 0) {
+    return { error: "No se pudo eliminar la propiedad (sin permisos o ya no existe)." };
+  }
+
   revalidatePath("/propiedades");
-  redirect("/propiedades");
+  return { error: null };
 }
 
 export async function cambiarActivoPropiedad(id: string, activo: boolean) {
