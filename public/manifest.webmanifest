@@ -4,8 +4,8 @@
   "description": "Plataforma de administración inmobiliaria",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#ffffff",
-  "theme_color": "#0a0a0a",
+  "background_color": "#7c1d3f",
+  "theme_color": "#7c1d3f",
   "orientation": "portrait",
   "lang": "es-CL",
   "icons": [

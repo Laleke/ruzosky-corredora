@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Info, Pencil, ToggleLeft, ToggleRight } from "lucide-react";
 import { listContratos } from "@/features/contratos/queries";
 import { cambiarActivoContrato } from "@/features/contratos/actions";
 import { PageHeader } from "@/components/page-header";
@@ -41,8 +42,8 @@ export default async function ContratosPage() {
               <div key={c.id} className={ui.listCard}>
                 <div className="flex items-start justify-between gap-2">
                   <div>
-                    <p className="text-xs text-muted">{c.numero_contrato ?? "—"}</p>
-                    <p className="font-medium text-ink">
+                    <p className="text-xs text-white/60">{c.numero_contrato ?? "—"}</p>
+                    <p className="font-medium text-white">
                       {c.propiedad_codigo ? `${c.propiedad_codigo} · ` : ""}
                       {c.propiedad_direccion}
                     </p>
@@ -50,25 +51,35 @@ export default async function ContratosPage() {
                   <span className={badge(est.tone)}>{est.label}</span>
                 </div>
 
-                <div className="grid grid-cols-2 gap-2 text-sm text-muted">
-                  <span>Inicio: {c.fecha_inicio}</span>
-                  <span>Término: {c.fecha_termino ?? "—"}</span>
-                </div>
+                <details>
+                  <summary className={ui.listCardDisclosure}>
+                    <Info size={14} /> Ver más información
+                  </summary>
+                  <div className="mt-2 flex flex-col gap-1 text-sm text-white/80">
+                    <span>Inicio: {c.fecha_inicio}</span>
+                    <span>Término: {c.fecha_termino ?? "—"}</span>
+                    <span>{formatoCanon(c.canon_monto, c.canon_moneda)}</span>
+                    {!c.activo && <span className="text-white/60">Inactivo</span>}
+                  </div>
+                </details>
 
-                <div className="flex items-center justify-between text-sm">
-                  <span className="font-medium text-ink">
-                    {formatoCanon(c.canon_monto, c.canon_moneda)}
-                  </span>
-                  {!c.activo && <span className="text-xs text-muted">Inactivo</span>}
-                </div>
-
-                <div className="mt-1 flex items-center justify-end gap-4 border-t border-line pt-3">
-                  <Link href={`/contratos/${c.id}`} className={ui.linkAction}>
-                    Detalle
+                <div className="mt-1 flex items-center justify-end gap-1 border-t border-white/15 pt-2">
+                  <Link
+                    href={`/contratos/${c.id}`}
+                    aria-label="Editar / ver detalle"
+                    title="Editar / ver detalle"
+                    className={ui.listCardIconBtn}
+                  >
+                    <Pencil size={16} />
                   </Link>
                   <form action={cambiarActivoContrato.bind(null, c.id, !c.activo)}>
-                    <button type="submit" className="text-sm text-muted hover:text-ink">
-                      {c.activo ? "Desactivar" : "Activar"}
+                    <button
+                      type="submit"
+                      aria-label={c.activo ? "Desactivar" : "Activar"}
+                      title={c.activo ? "Desactivar" : "Activar"}
+                      className={ui.listCardIconBtn}
+                    >
+                      {c.activo ? <ToggleRight size={18} /> : <ToggleLeft size={18} />}
                     </button>
                   </form>
                 </div>

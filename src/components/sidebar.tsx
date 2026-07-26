@@ -95,17 +95,17 @@ export function Sidebar({
   return (
     <>
       {/* Topbar móvil */}
-      <header className="no-print sticky top-0 z-30 flex items-center justify-between border-b border-line bg-white px-4 py-3 md:hidden">
+      <header className="no-print sticky top-0 z-30 flex items-center justify-between border-b border-white/10 bg-canvas px-4 py-3 md:hidden">
         <div className="flex items-center gap-2">
           <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-burgundy text-[10px] font-bold text-white">
             RZK
           </span>
-          <span className="font-semibold text-ink">RZK Prop</span>
+          <span className="font-semibold text-canvas-fg">RZK Prop</span>
         </div>
         <button
           onClick={() => setAbierto(true)}
           aria-label="Abrir menú"
-          className="rounded-lg p-2 text-ink hover:bg-stone-100"
+          className="rounded-lg p-2 text-canvas-fg hover:bg-white/10"
         >
           <Menu size={22} />
         </button>

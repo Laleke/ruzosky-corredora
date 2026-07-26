@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Info, Pencil, ToggleLeft, ToggleRight } from "lucide-react";
 import { listPropietarios } from "@/features/propietarios/queries";
 import { cambiarActivoPropietario } from "@/features/propietarios/actions";
 import { PageHeader } from "@/components/page-header";
@@ -35,26 +36,41 @@ export default async function PropietariosPage() {
             <div key={p.id} className={ui.listCard}>
               <div className="flex items-start justify-between gap-2">
                 <div>
-                  <p className="font-medium text-ink">{nombreMostrar(p)}</p>
-                  <p className="text-sm text-muted">{p.rut}</p>
+                  <p className="font-medium text-white">{nombreMostrar(p)}</p>
+                  <p className="text-sm text-white/60">{p.rut}</p>
                 </div>
                 <span className={badge(p.activo ? "success" : "neutral")}>
                   {p.activo ? "Activo" : "Inactivo"}
                 </span>
               </div>
 
-              <div className="text-sm text-muted">
-                <p>{p.email ?? "—"}</p>
-                <p>{p.telefono ?? "—"}</p>
-              </div>
+              <details>
+                <summary className={ui.listCardDisclosure}>
+                  <Info size={14} /> Ver más información
+                </summary>
+                <div className="mt-2 flex flex-col gap-1 text-sm text-white/80">
+                  <span>{p.email ?? "—"}</span>
+                  <span>{p.telefono ?? "—"}</span>
+                </div>
+              </details>
 
-              <div className="mt-1 flex items-center justify-end gap-4 border-t border-line pt-3">
-                <Link href={`/propietarios/${p.id}`} className={ui.linkAction}>
-                  Editar
+              <div className="mt-1 flex items-center justify-end gap-1 border-t border-white/15 pt-2">
+                <Link
+                  href={`/propietarios/${p.id}`}
+                  aria-label="Editar"
+                  title="Editar"
+                  className={ui.listCardIconBtn}
+                >
+                  <Pencil size={16} />
                 </Link>
                 <form action={cambiarActivoPropietario.bind(null, p.id, !p.activo)}>
-                  <button type="submit" className="text-sm text-muted hover:text-ink">
-                    {p.activo ? "Desactivar" : "Activar"}
+                  <button
+                    type="submit"
+                    aria-label={p.activo ? "Desactivar" : "Activar"}
+                    title={p.activo ? "Desactivar" : "Activar"}
+                    className={ui.listCardIconBtn}
+                  >
+                    {p.activo ? <ToggleRight size={18} /> : <ToggleLeft size={18} />}
                   </button>
                 </form>
               </div>

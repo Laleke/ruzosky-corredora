@@ -20,7 +20,13 @@ export const ui = {
   // Grid de tarjetas para listados (Propiedades, Propietarios, Arrendatarios, Contratos)
   cardGrid: "grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3",
   listCard:
-    "flex flex-col gap-3 rounded-xl border border-line bg-white p-5 shadow-sm transition hover:border-burgundy/30 hover:shadow-md",
+    "flex flex-col gap-3 rounded-xl bg-burgundy p-5 shadow-sm transition hover:bg-burgundy-strong",
+  // Icono de acción sobre listCard (editar, activar/desactivar)
+  listCardIconBtn:
+    "flex h-8 w-8 items-center justify-center rounded-full text-white/80 transition-colors hover:bg-white/15 hover:text-white",
+  // Disclosure (<summary>) para info secundaria oculta tras un ícono
+  listCardDisclosure:
+    "flex cursor-pointer list-none items-center gap-1.5 text-xs text-white/70 [&::-webkit-details-marker]:hidden hover:text-white",
 
   // Encabezado de tabla y celdas
   th: "px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted",
