@@ -12,7 +12,7 @@ export function LoginForm() {
   return (
     <form action={formAction} className="flex w-full flex-col gap-4">
       <div className="flex flex-col gap-1.5">
-        <label htmlFor="email" className={ui.label}>
+        <label htmlFor="email" className="text-sm font-medium text-white">
           Email
         </label>
         <input
@@ -26,7 +26,7 @@ export function LoginForm() {
       </div>
 
       <div className="flex flex-col gap-1.5">
-        <label htmlFor="password" className={ui.label}>
+        <label htmlFor="password" className="text-sm font-medium text-white">
           Contraseña
         </label>
         <input
@@ -51,7 +51,7 @@ export function LoginForm() {
       <button
         type="submit"
         disabled={pending}
-        className={`${ui.btnPrimary} mt-2 w-full py-2.5`}
+        className="mt-2 inline-flex w-full items-center justify-center gap-2 rounded-lg bg-white px-4 py-2.5 text-sm font-medium text-burgundy shadow-sm transition-colors hover:bg-white/90 disabled:pointer-events-none disabled:opacity-50"
       >
         {pending ? "Ingresando…" : "Ingresar"}
       </button>

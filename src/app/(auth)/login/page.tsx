@@ -36,20 +36,20 @@ export default async function LoginPage() {
         />
       </div>
 
-      {/* Formulario */}
-      <div className="flex items-center justify-center px-6 py-12">
+      {/* Formulario — fondo burdeo (antes blanco/canvas) */}
+      <div className="flex items-center justify-center bg-burgundy px-6 py-12">
         <div className="flex w-full max-w-sm flex-col gap-8">
           <div className="flex items-center gap-2.5 lg:hidden">
-            <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-burgundy text-xs font-bold text-white">
+            <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-white text-xs font-bold text-burgundy">
               RZK
             </span>
-            <span className="text-lg font-semibold text-ink">RZK Prop</span>
+            <span className="text-lg font-semibold text-white">RZK Prop</span>
           </div>
           <div>
-            <h1 className="text-2xl font-semibold tracking-tight text-ink">
+            <h1 className="text-2xl font-semibold tracking-tight text-white">
               Iniciar sesión
             </h1>
-            <p className="mt-1 text-sm text-muted">
+            <p className="mt-1 text-sm text-white/70">
               Ingresa tus credenciales para acceder al sistema.
             </p>
           </div>

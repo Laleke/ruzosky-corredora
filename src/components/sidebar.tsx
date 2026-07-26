@@ -9,27 +9,24 @@ import {
   Users,
   UserSquare2,
   FileText,
-  Receipt,
-  Wallet,
-  FolderArchive,
-  TrendingDown,
-  BarChart3,
   LogOut,
   Menu,
   X,
 } from "lucide-react";
 
+/**
+ * Etapa inicial de la modalidad "Administrador de Contratos de Arriendo":
+ * solo Propiedades, Propietarios, Arrendatarios y Contratos. El resto de
+ * módulos (Cobros, Liquidaciones, Gastos, Reportes, Documentos) sigue
+ * existiendo en el código — solo se oculta del menú mientras se valida
+ * el flujo con datos reales. Ver `PROYECTO.md` / handoff de sesión.
+ */
 const NAV = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/propiedades", label: "Propiedades", icon: Building2 },
   { href: "/propietarios", label: "Propietarios", icon: Users },
   { href: "/arrendatarios", label: "Arrendatarios", icon: UserSquare2 },
   { href: "/contratos", label: "Contratos", icon: FileText },
-  { href: "/cobros", label: "Cobros y pagos", icon: Receipt },
-  { href: "/liquidaciones", label: "Liquidaciones", icon: Wallet },
-  { href: "/gastos", label: "Gastos", icon: TrendingDown },
-  { href: "/reportes", label: "Reportes", icon: BarChart3 },
-  { href: "/documentos", label: "Documentos", icon: FolderArchive },
 ];
 
 function NavLinks({ onNavigate }: { onNavigate?: () => void }) {

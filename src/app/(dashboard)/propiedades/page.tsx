@@ -35,64 +35,47 @@ export default async function PropiedadesPage() {
           Aún no hay propiedades registradas.
         </div>
       ) : (
-        <div className={`${ui.card} overflow-hidden`}>
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="border-b border-line bg-stone-50/60">
-                <tr>
-                  <th className={ui.th}>Código</th>
-                  <th className={ui.th}>Dirección</th>
-                  <th className={ui.th}>Comuna</th>
-                  <th className={ui.th}>Tipo</th>
-                  <th className={ui.th}>Estado</th>
-                  <th className={ui.th}>Valor ref.</th>
-                  <th className={ui.th}></th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-line">
-                {propiedades.map((p) => {
-                  const est = ESTADO[p.estado] ?? { label: p.estado, tone: "neutral" as const };
-                  return (
-                    <tr key={p.id} className="transition-colors hover:bg-stone-50/50">
-                      <td className={`${ui.td} text-muted`}>{p.codigo_interno ?? "—"}</td>
-                      <td className={`${ui.td} font-medium`}>
-                        {p.direccion ?? <span className="text-muted">(sin dirección)</span>}
-                        {p.numero ? ` ${p.numero}` : ""}
-                        {p.departamento ? `, ${p.departamento}` : ""}
-                      </td>
-                      <td className={`${ui.td} text-muted`}>{p.comuna ?? "—"}</td>
-                      <td className={`${ui.td} capitalize text-muted`}>
-                        {p.tipo.replace("_", " ")}
-                      </td>
-                      <td className={ui.td}>
-                        <span className={badge(est.tone)}>{est.label}</span>
-                        {!p.activo && (
-                          <span className="ml-1 text-xs text-muted">(inactivo)</span>
-                        )}
-                      </td>
-                      <td className={ui.td}>
-                        {formatoValor(p.valor_referencial_arriendo, p.moneda)}
-                      </td>
-                      <td className={`${ui.td} text-right`}>
-                        <div className="flex justify-end gap-4">
-                          <Link href={`/propiedades/${p.id}`} className={ui.linkAction}>
-                            Detalle
-                          </Link>
-                          <form
-                            action={cambiarActivoPropiedad.bind(null, p.id, !p.activo)}
-                          >
-                            <button type="submit" className="text-sm text-muted hover:text-ink">
-                              {p.activo ? "Desactivar" : "Activar"}
-                            </button>
-                          </form>
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
+        <div className={ui.cardGrid}>
+          {propiedades.map((p) => {
+            const est = ESTADO[p.estado] ?? { label: p.estado, tone: "neutral" as const };
+            return (
+              <div key={p.id} className={ui.listCard}>
+                <div className="flex items-start justify-between gap-2">
+                  <div>
+                    <p className="text-xs text-muted">{p.codigo_interno ?? "—"}</p>
+                    <p className="font-medium text-ink">
+                      {p.direccion ?? <span className="text-muted">(sin dirección)</span>}
+                      {p.numero ? ` ${p.numero}` : ""}
+                      {p.departamento ? `, ${p.departamento}` : ""}
+                    </p>
+                    <p className="text-sm text-muted">{p.comuna ?? "—"}</p>
+                  </div>
+                  <span className={badge(est.tone)}>{est.label}</span>
+                </div>
+
+                <div className="flex items-center justify-between text-sm">
+                  <span className="capitalize text-muted">{p.tipo.replace("_", " ")}</span>
+                  <span className="font-medium text-ink">
+                    {formatoValor(p.valor_referencial_arriendo, p.moneda)}
+                  </span>
+                </div>
+
+                <div className="mt-1 flex items-center justify-between border-t border-line pt-3">
+                  {!p.activo && <span className="text-xs text-muted">Inactivo</span>}
+                  <div className="ml-auto flex items-center gap-4">
+                    <Link href={`/propiedades/${p.id}`} className={ui.linkAction}>
+                      Detalle
+                    </Link>
+                    <form action={cambiarActivoPropiedad.bind(null, p.id, !p.activo)}>
+                      <button type="submit" className="text-sm text-muted hover:text-ink">
+                        {p.activo ? "Desactivar" : "Activar"}
+                      </button>
+                    </form>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
         </div>
       )}
     </div>

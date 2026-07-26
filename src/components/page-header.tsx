@@ -13,11 +13,11 @@ export function PageHeader({
   return (
     <div className="mb-6 flex items-end justify-between gap-4">
       <div>
-        <h1 className="text-2xl font-semibold tracking-tight text-ink">
+        <h1 className="text-2xl font-semibold tracking-tight text-canvas-fg">
           {titulo}
         </h1>
         {descripcion && (
-          <p className="mt-1 text-sm text-muted">{descripcion}</p>
+          <p className="mt-1 text-sm text-canvas-muted">{descripcion}</p>
         )}
       </div>
       {accion && (

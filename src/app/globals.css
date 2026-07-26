@@ -2,7 +2,9 @@
 
 @theme {
   /* Marca RZK Prop — grafito + burdeo */
-  --color-canvas: #faf9f8;
+  --color-canvas: #1b1b22;
+  --color-canvas-fg: #f5f4f2;
+  --color-canvas-muted: #a29da3;
   --color-ink: #1b1b22;
   --color-ink-soft: #2b2b34;
   --color-line: #e8e6e4;
@@ -14,13 +16,22 @@
   --font-sans: var(--font-inter), system-ui, -apple-system, "Segoe UI", sans-serif;
 }
 
+/*
+ * `--color-canvas` es ahora el mismo gris grafito que el menú lateral
+ * (antes blanco). Las tarjetas (`ui.card`, fondo blanco explícito) NO
+ * cambian: todo el texto que vive dentro de una tarjeta sigue usando
+ * `text-ink`/`text-muted` sin modificaciones. Los textos que se pintan
+ * DIRECTO sobre el canvas (fuera de una tarjeta, ej. `PageHeader`) deben
+ * usar `text-canvas-fg` / `text-canvas-muted` en vez de `text-ink`/`text-muted`.
+ */
+
 html {
   -webkit-text-size-adjust: 100%;
 }
 
 body {
   background: var(--color-canvas);
-  color: var(--color-ink);
+  color: var(--color-canvas-fg);
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;

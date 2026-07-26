@@ -34,57 +34,47 @@ export default async function ContratosPage() {
           Aún no hay contratos registrados.
         </div>
       ) : (
-        <div className={`${ui.card} overflow-hidden`}>
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="border-b border-line bg-stone-50/60">
-                <tr>
-                  <th className={ui.th}>N°</th>
-                  <th className={ui.th}>Propiedad</th>
-                  <th className={ui.th}>Inicio</th>
-                  <th className={ui.th}>Término</th>
-                  <th className={ui.th}>Canon</th>
-                  <th className={ui.th}>Estado</th>
-                  <th className={ui.th}></th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-line">
-                {contratos.map((c) => {
-                  const est = ESTADO[c.estado] ?? { label: c.estado, tone: "neutral" as const };
-                  return (
-                    <tr key={c.id} className="transition-colors hover:bg-stone-50/50">
-                      <td className={`${ui.td} text-muted`}>{c.numero_contrato ?? "—"}</td>
-                      <td className={`${ui.td} font-medium`}>
-                        {c.propiedad_codigo ? `${c.propiedad_codigo} · ` : ""}
-                        {c.propiedad_direccion}
-                      </td>
-                      <td className={`${ui.td} text-muted`}>{c.fecha_inicio}</td>
-                      <td className={`${ui.td} text-muted`}>{c.fecha_termino ?? "—"}</td>
-                      <td className={ui.td}>{formatoCanon(c.canon_monto, c.canon_moneda)}</td>
-                      <td className={ui.td}>
-                        <span className={badge(est.tone)}>{est.label}</span>
-                        {!c.activo && (
-                          <span className="ml-1 text-xs text-muted">(inactivo)</span>
-                        )}
-                      </td>
-                      <td className={`${ui.td} text-right`}>
-                        <div className="flex justify-end gap-4">
-                          <Link href={`/contratos/${c.id}`} className={ui.linkAction}>
-                            Detalle
-                          </Link>
-                          <form action={cambiarActivoContrato.bind(null, c.id, !c.activo)}>
-                            <button type="submit" className="text-sm text-muted hover:text-ink">
-                              {c.activo ? "Desactivar" : "Activar"}
-                            </button>
-                          </form>
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
+        <div className={ui.cardGrid}>
+          {contratos.map((c) => {
+            const est = ESTADO[c.estado] ?? { label: c.estado, tone: "neutral" as const };
+            return (
+              <div key={c.id} className={ui.listCard}>
+                <div className="flex items-start justify-between gap-2">
+                  <div>
+                    <p className="text-xs text-muted">{c.numero_contrato ?? "—"}</p>
+                    <p className="font-medium text-ink">
+                      {c.propiedad_codigo ? `${c.propiedad_codigo} · ` : ""}
+                      {c.propiedad_direccion}
+                    </p>
+                  </div>
+                  <span className={badge(est.tone)}>{est.label}</span>
+                </div>
+
+                <div className="grid grid-cols-2 gap-2 text-sm text-muted">
+                  <span>Inicio: {c.fecha_inicio}</span>
+                  <span>Término: {c.fecha_termino ?? "—"}</span>
+                </div>
+
+                <div className="flex items-center justify-between text-sm">
+                  <span className="font-medium text-ink">
+                    {formatoCanon(c.canon_monto, c.canon_moneda)}
+                  </span>
+                  {!c.activo && <span className="text-xs text-muted">Inactivo</span>}
+                </div>
+
+                <div className="mt-1 flex items-center justify-end gap-4 border-t border-line pt-3">
+                  <Link href={`/contratos/${c.id}`} className={ui.linkAction}>
+                    Detalle
+                  </Link>
+                  <form action={cambiarActivoContrato.bind(null, c.id, !c.activo)}>
+                    <button type="submit" className="text-sm text-muted hover:text-ink">
+                      {c.activo ? "Desactivar" : "Activar"}
+                    </button>
+                  </form>
+                </div>
+              </div>
+            );
+          })}
         </div>
       )}
     </div>

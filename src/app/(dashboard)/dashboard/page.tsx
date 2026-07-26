@@ -1,7 +1,6 @@
 import Link from "next/link";
 import {
   Building2,
-  KeyRound,
   FileCheck2,
   Wallet,
   AlertTriangle,
@@ -27,15 +26,20 @@ function Kpi({
   valor,
   sub,
   alerta,
+  href,
 }: {
   icon: React.ComponentType<{ size?: number; className?: string }>;
   label: string;
   valor: string;
   sub?: string;
   alerta?: boolean;
+  href: string;
 }) {
   return (
-    <div className={`${ui.card} p-5`}>
+    <Link
+      href={href}
+      className={`${ui.card} block p-5 transition hover:border-burgundy/30 hover:shadow-md`}
+    >
       <div className="flex items-center justify-between">
         <span className="text-sm font-medium text-muted">{label}</span>
         <span
@@ -50,15 +54,9 @@ function Kpi({
         {valor}
       </p>
       {sub && <p className="mt-1 text-xs text-muted">{sub}</p>}
-    </div>
+    </Link>
   );
 }
-
-const ACCESOS = [
-  { href: "/propiedades", label: "Propiedades" },
-  { href: "/contratos", label: "Contratos" },
-  { href: "/cobros", label: "Cobros y pagos" },
-];
 
 export default async function DashboardPage() {
   const [profile, stats, tareas] = await Promise.all([
@@ -71,11 +69,11 @@ export default async function DashboardPage() {
   return (
     <div className="flex flex-col gap-8">
       <div>
-        <h1 className="text-2xl font-semibold tracking-tight text-ink">
+        <h1 className="text-2xl font-semibold tracking-tight text-canvas-fg">
           Hola, {profile?.nombre ?? "administrador"}
         </h1>
-        <p className="mt-1 text-sm text-muted">
-          Resumen general de la corredora.
+        <p className="mt-1 text-sm text-canvas-muted">
+          Resumen general de la corredora. Toca una tarjeta para ver el detalle.
         </p>
       </div>
 
@@ -85,16 +83,19 @@ export default async function DashboardPage() {
           label="Propiedades"
           valor={String(stats.propiedadesTotal)}
           sub={`${stats.propiedadesArrendadas} arrendadas`}
+          href="/propiedades"
         />
         <Kpi
           icon={FileCheck2}
           label="Contratos vigentes"
           valor={String(stats.contratosVigentes)}
+          href="/contratos"
         />
         <Kpi
           icon={Wallet}
           label="Deuda pendiente"
           valor={clp(stats.deudaPendiente)}
+          href="/cobros"
         />
         <Kpi
           icon={AlertTriangle}
@@ -102,6 +103,7 @@ export default async function DashboardPage() {
           valor={String(stats.cargosMorosos)}
           sub="vencidos con saldo"
           alerta={stats.cargosMorosos > 0}
+          href="/cobros"
         />
       </div>
 
@@ -136,28 +138,6 @@ export default async function DashboardPage() {
             Próximamente: {TAREAS_PROXIMAMENTE.join("; ")}.
           </p>
         )}
-      </div>
-
-      <div className={`${ui.card} p-6`}>
-        <div className="mb-4 flex items-center gap-2 text-ink">
-          <KeyRound size={18} className="text-burgundy" />
-          <h2 className="font-semibold">Accesos rápidos</h2>
-        </div>
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-          {ACCESOS.map((a) => (
-            <Link
-              key={a.href}
-              href={a.href}
-              className="group flex items-center justify-between rounded-lg border border-line px-4 py-3 text-sm font-medium text-ink transition-colors hover:border-burgundy/40 hover:bg-burgundy-50/40"
-            >
-              {a.label}
-              <ArrowRight
-                size={16}
-                className="text-muted transition-transform group-hover:translate-x-0.5 group-hover:text-burgundy"
-              />
-            </Link>
-          ))}
-        </div>
       </div>
     </div>
   );

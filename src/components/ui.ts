@@ -17,6 +17,11 @@ export const ui = {
 
   card: "rounded-xl border border-line bg-white shadow-sm",
 
+  // Grid de tarjetas para listados (Propiedades, Propietarios, Arrendatarios, Contratos)
+  cardGrid: "grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3",
+  listCard:
+    "flex flex-col gap-3 rounded-xl border border-line bg-white p-5 shadow-sm transition hover:border-burgundy/30 hover:shadow-md",
+
   // Encabezado de tabla y celdas
   th: "px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted",
   td: "px-4 py-3 text-sm text-ink",
