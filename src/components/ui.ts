@@ -42,7 +42,7 @@ export function badge(
   // Fondo sólido del color que antes era solo el texto; letra blanca.
   const tones: Record<string, string> = {
     neutral: "bg-stone-500 text-white",
-    success: "bg-emerald-600 text-white",
+    success: "bg-emerald-800 text-white",
     warning: "bg-amber-600 text-white",
     danger: "bg-red-600 text-white",
     info: "bg-sky-600 text-white",

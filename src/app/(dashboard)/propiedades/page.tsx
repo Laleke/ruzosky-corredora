@@ -79,8 +79,8 @@ export default async function PropiedadesPage() {
                       <span>{formatoValor(p.valor_referencial_arriendo, p.moneda)}</span>
                       {!!p.dormitorios && <span>{p.dormitorios} dormitorio(s)</span>}
                       {!!p.banos && <span>{p.banos} baño(s)</span>}
-                      {!!p.estacionamientos && <span>{p.estacionamientos} estacionamiento(s)</span>}
-                      {!!p.bodegas && <span>{p.bodegas} bodega(s)</span>}
+                      {!!p.estacionamientos && <span>Estacionamiento</span>}
+                      {!!p.bodegas && <span>Bodega</span>}
                     </div>
                   </details>
 

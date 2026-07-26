@@ -10,7 +10,7 @@ export function ToggleSwitch({ on, label }: { on: boolean; label: string }) {
       title={label}
       aria-pressed={on}
       className={`relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors ${
-        on ? "bg-emerald-400" : "bg-white/25"
+        on ? "bg-emerald-600" : "bg-white/25"
       }`}
     >
       <span

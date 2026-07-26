@@ -110,6 +110,8 @@ export function PropiedadDetalle({
   const [comuna, setComuna] = useState(propiedad.comuna ?? "");
   const comunas = useMemo(() => comunasDeRegion(region), [region]);
   const [rolSii, setRolSii] = useState(propiedad.rol_sii ?? "");
+  const [tieneEst, setTieneEst] = useState((propiedad.estacionamientos ?? 0) > 0);
+  const [tieneBod, setTieneBod] = useState((propiedad.bodegas ?? 0) > 0);
 
   const estadoTone = ESTADO_TONE[propiedad.estado] ?? "neutral";
 
@@ -122,23 +124,21 @@ export function PropiedadDetalle({
         <ArrowLeft size={15} /> Volver a propiedades
       </Link>
 
-      <div className="mt-4 flex items-start justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight text-white">
-            {propiedad.direccion ?? "Propiedad sin dirección"}
-            {propiedad.numero ? ` ${propiedad.numero}` : ""}
-            {propiedad.departamento ? `, ${propiedad.departamento}` : ""}
-          </h1>
-          <div className="mt-2 flex flex-wrap items-center gap-2">
-            {propiedad.codigo_interno && (
-              <span className={badge("info")}>{propiedad.codigo_interno}</span>
-            )}
-            <span className={badge(estadoTone)}>
-              {ESTADO_OPCIONES.find((o) => o.value === propiedad.estado)?.label ?? propiedad.estado}
-            </span>
-            {propiedad.publicada && <span className={badge("success")}>Publicada</span>}
-            {!propiedad.activo && <span className={badge("neutral")}>Inactiva</span>}
-          </div>
+      <div className="mt-4 flex flex-col items-center gap-3 text-center">
+        <h1 className="text-2xl font-semibold tracking-tight text-white">
+          {propiedad.direccion ?? "Propiedad sin dirección"}
+          {propiedad.numero ? ` ${propiedad.numero}` : ""}
+          {propiedad.departamento ? `, ${propiedad.departamento}` : ""}
+        </h1>
+        <div className="flex flex-wrap items-center justify-center gap-2">
+          {propiedad.codigo_interno && (
+            <span className={badge("info")}>{propiedad.codigo_interno}</span>
+          )}
+          <span className={badge(estadoTone)}>
+            {ESTADO_OPCIONES.find((o) => o.value === propiedad.estado)?.label ?? propiedad.estado}
+          </span>
+          {propiedad.publicada && <span className={badge("success")}>Publicada</span>}
+          {!propiedad.activo && <span className={badge("neutral")}>Inactiva</span>}
         </div>
         {!editando && (
           <button
@@ -247,20 +247,63 @@ export function PropiedadDetalle({
             value={propiedad.dormitorios}
           />
           <Campo editando={editando} label="Baños" name="banos" type="number" value={propiedad.banos} />
-          <Campo
-            editando={editando}
-            label="Estacionamientos"
-            name="estacionamientos"
-            type="number"
-            value={propiedad.estacionamientos}
-          />
-          <Campo
-            editando={editando}
-            label="Bodegas"
-            name="bodegas"
-            type="number"
-            value={propiedad.bodegas}
-          />
+          {editando ? (
+            <div>
+              <label className="flex items-center gap-2 text-xs uppercase tracking-wide text-white/50">
+                <input
+                  type="checkbox"
+                  checked={tieneEst}
+                  onChange={(e) => setTieneEst(e.target.checked)}
+                />
+                Estacionamiento
+              </label>
+              {tieneEst && (
+                <input
+                  name="estacionamientos"
+                  type="number"
+                  inputMode="numeric"
+                  min="1"
+                  step="1"
+                  required
+                  defaultValue={propiedad.estacionamientos ?? 1}
+                  className={`${ui.input} mt-1`}
+                />
+              )}
+            </div>
+          ) : (
+            <Campo
+              editando={false}
+              label="Estacionamientos"
+              name="estacionamientos"
+              value={propiedad.estacionamientos}
+            />
+          )}
+          {editando ? (
+            <div>
+              <label className="flex items-center gap-2 text-xs uppercase tracking-wide text-white/50">
+                <input
+                  type="checkbox"
+                  checked={tieneBod}
+                  onChange={(e) => setTieneBod(e.target.checked)}
+                />
+                Bodega
+              </label>
+              {tieneBod && (
+                <input
+                  name="bodegas"
+                  type="number"
+                  inputMode="numeric"
+                  min="1"
+                  step="1"
+                  required
+                  defaultValue={propiedad.bodegas ?? 1}
+                  className={`${ui.input} mt-1`}
+                />
+              )}
+            </div>
+          ) : (
+            <Campo editando={false} label="Bodegas" name="bodegas" value={propiedad.bodegas} />
+          )}
           <Campo
             editando={editando}
             label="Sup. útil"
@@ -357,7 +400,7 @@ export function PropiedadDetalle({
         )}
 
         {editando && (
-          <div className="flex gap-3">
+          <div className="flex justify-center gap-3">
             <button
               type="submit"
               disabled={pending}
