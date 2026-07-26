@@ -39,12 +39,13 @@ export const ui = {
 export function badge(
   tone: "neutral" | "success" | "warning" | "danger" | "info" = "neutral"
 ): string {
+  // Fondo sólido del color que antes era solo el texto; letra blanca.
   const tones: Record<string, string> = {
-    neutral: "bg-stone-100 text-stone-600",
-    success: "bg-green-50 text-green-700",
-    warning: "bg-amber-50 text-amber-700",
-    danger: "bg-red-50 text-red-700",
-    info: "bg-burgundy-50 text-burgundy",
+    neutral: "bg-stone-500 text-white",
+    success: "bg-emerald-600 text-white",
+    warning: "bg-amber-600 text-white",
+    danger: "bg-red-600 text-white",
+    info: "bg-sky-600 text-white",
   };
   return `inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium ${tones[tone]}`;
 }
