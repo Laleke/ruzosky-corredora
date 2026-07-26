@@ -42,10 +42,10 @@ export default async function PropietariosPage({
 
       <form
         method="get"
-        className={`${ui.card} mb-5 grid grid-cols-1 gap-3 p-4 sm:grid-cols-2 lg:grid-cols-4`}
+        className="mb-5 grid grid-cols-1 gap-3 rounded-xl bg-white/10 p-4 sm:grid-cols-2 lg:grid-cols-4"
       >
         <label className="flex flex-col gap-1 text-sm">
-          <span className="font-medium text-ink">Comuna</span>
+          <span className="font-medium text-canvas-fg">Comuna</span>
           <select name="comuna" defaultValue={sp.comuna ?? ""} className={ui.input}>
             <option value="">Todas</option>
             {opciones.comunas.map((c) => (
@@ -56,7 +56,7 @@ export default async function PropietariosPage({
           </select>
         </label>
         <label className="flex flex-col gap-1 text-sm">
-          <span className="font-medium text-ink">Región</span>
+          <span className="font-medium text-canvas-fg">Región</span>
           <select name="region" defaultValue={sp.region ?? ""} className={ui.input}>
             <option value="">Todas</option>
             {opciones.regiones.map((r) => (
@@ -67,7 +67,7 @@ export default async function PropietariosPage({
           </select>
         </label>
         <label className="flex flex-col gap-1 text-sm">
-          <span className="font-medium text-ink">Activo</span>
+          <span className="font-medium text-canvas-fg">Activo</span>
           <select name="activo" defaultValue={sp.activo ?? ""} className={ui.input}>
             <option value="">Todos</option>
             <option value="true">Activo</option>
@@ -78,7 +78,10 @@ export default async function PropietariosPage({
           <button type="submit" className={ui.btnSecondary}>
             Filtrar
           </button>
-          <Link href="/propietarios" className={ui.btnGhost}>
+          <Link
+            href="/propietarios"
+            className="inline-flex items-center justify-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-canvas-muted transition-colors hover:bg-white/10 hover:text-canvas-fg"
+          >
             Limpiar
           </Link>
         </div>

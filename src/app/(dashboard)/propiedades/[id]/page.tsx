@@ -3,6 +3,7 @@ import Link from "next/link";
 import {
   getPropiedad,
   getPropietariosAsignados,
+  tieneRelacionesBloqueantes,
 } from "@/features/propiedades/queries";
 import { actualizarPropiedad } from "@/features/propiedades/actions";
 import { EditarParticipacion } from "@/features/propiedades/editar-participacion";
@@ -15,9 +16,10 @@ export default async function DetallePropiedadPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const [p, asignados] = await Promise.all([
+  const [p, asignados, relaciones] = await Promise.all([
     getPropiedad(id),
     getPropietariosAsignados(id),
+    tieneRelacionesBloqueantes(id),
   ]);
   if (!p) notFound();
 
@@ -30,7 +32,12 @@ export default async function DetallePropiedadPage({
 
   return (
     <div className="flex flex-col gap-6">
-      <PropiedadDetalle id={id} propiedad={p} actualizarAction={actualizarPropiedad} />
+      <PropiedadDetalle
+        id={id}
+        propiedad={p}
+        actualizarAction={actualizarPropiedad}
+        eliminacionBloqueada={relaciones}
+      />
 
       <div className="rounded-2xl bg-burgundy p-6">
         <div className="mb-4 flex items-center justify-between">

@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { useActionState } from "react";
-import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { ArrowLeft, Pencil, Trash2 } from "lucide-react";
 import { badge, ui } from "@/components/ui";
 import { Combobox } from "@/components/combobox";
@@ -96,11 +96,14 @@ export function PropiedadDetalle({
   id,
   propiedad,
   actualizarAction,
+  eliminacionBloqueada,
 }: {
   id: string;
   propiedad: Propiedad;
   actualizarAction: typeof actualizarPropiedad;
+  eliminacionBloqueada: { bloqueada: boolean; motivo: string | null };
 }) {
+  const router = useRouter();
   const [editando, setEditando] = useState(false);
   const [state, formAction, pending] = useActionState(actualizarAction.bind(null, id), {
     error: null,
@@ -112,34 +115,30 @@ export function PropiedadDetalle({
   const [rolSii, setRolSii] = useState(propiedad.rol_sii ?? "");
   const [tieneEst, setTieneEst] = useState((propiedad.estacionamientos ?? 0) > 0);
   const [tieneBod, setTieneBod] = useState((propiedad.bodegas ?? 0) > 0);
+  const [confirmandoEliminar, setConfirmandoEliminar] = useState(false);
   const [eliminando, setEliminando] = useState(false);
   const [errorEliminar, setErrorEliminar] = useState<string | null>(null);
 
-  async function onEliminar() {
-    if (
-      !confirm(
-        "¿Eliminar esta propiedad? Esta acción no se puede deshacer. Solo funciona si no tiene contratos, arrendatarios ni gastos asociados."
-      )
-    ) {
-      return;
-    }
+  async function onConfirmarEliminar() {
     setEliminando(true);
     setErrorEliminar(null);
     const res = await eliminarPropiedad(id);
     setEliminando(false);
     if (res?.error) setErrorEliminar(res.error);
+    setConfirmandoEliminar(false);
   }
 
   const estadoTone = ESTADO_TONE[propiedad.estado] ?? "neutral";
 
   return (
     <div className="rounded-2xl bg-burgundy p-6">
-      <Link
-        href="/propiedades"
+      <button
+        type="button"
+        onClick={() => router.back()}
         className="inline-flex items-center gap-1.5 rounded-lg bg-white/10 px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-white/20"
       >
         <ArrowLeft size={15} /> Volver a propiedades
-      </Link>
+      </button>
 
       <div className="mt-4 flex flex-col items-center gap-3 text-center">
         <div className="flex items-center justify-center gap-3">
@@ -440,14 +439,43 @@ export function PropiedadDetalle({
 
       {!editando && (
         <div className="mt-2 flex flex-col items-center gap-2">
-          <button
-            type="button"
-            onClick={onEliminar}
-            disabled={eliminando}
-            className="inline-flex items-center gap-1.5 rounded-lg bg-red-950/40 px-3 py-1.5 text-xs font-medium text-red-200 transition-colors hover:bg-red-950/60 disabled:pointer-events-none disabled:opacity-50"
-          >
-            <Trash2 size={14} /> {eliminando ? "Eliminando…" : "Eliminar propiedad"}
-          </button>
+          {eliminacionBloqueada.bloqueada ? (
+            <p className="max-w-sm text-center text-xs text-white/60">
+              No se puede eliminar esta propiedad: {eliminacionBloqueada.motivo}
+            </p>
+          ) : confirmandoEliminar ? (
+            <div className="flex flex-col items-center gap-2 rounded-xl bg-white/10 p-4">
+              <p className="text-sm text-white">
+                ¿Eliminar esta propiedad? Esta acción no se puede deshacer.
+              </p>
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={onConfirmarEliminar}
+                  disabled={eliminando}
+                  className="inline-flex items-center gap-1.5 rounded-lg bg-white px-4 py-2 text-sm font-medium text-red-600 shadow-sm transition-colors hover:bg-white/90 disabled:pointer-events-none disabled:opacity-50"
+                >
+                  {eliminando ? "Eliminando…" : "Sí, eliminar"}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setConfirmandoEliminar(false)}
+                  disabled={eliminando}
+                  className="inline-flex items-center gap-1.5 rounded-lg bg-white/10 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-white/20"
+                >
+                  No
+                </button>
+              </div>
+            </div>
+          ) : (
+            <button
+              type="button"
+              onClick={() => setConfirmandoEliminar(true)}
+              className="inline-flex items-center gap-1.5 rounded-lg bg-white px-3 py-1.5 text-xs font-medium text-red-600 transition-colors hover:bg-white/90"
+            >
+              <Trash2 size={14} /> Eliminar propiedad
+            </button>
+          )}
           {errorEliminar && <p className="max-w-sm text-center text-xs text-amber-200">{errorEliminar}</p>}
         </div>
       )}

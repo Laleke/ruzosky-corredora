@@ -39,6 +39,36 @@ export async function getComunasPropiedades(): Promise<string[]> {
   return [...comunas].sort((a, b) => a.localeCompare(b, "es"));
 }
 
+/**
+ * Indica si la propiedad tiene contratos o gastos asociados — en ese caso
+ * no se puede eliminar (la base de datos lo impediría igual vía
+ * `on delete restrict`, pero esto permite avisarlo ANTES de que el usuario
+ * intente borrar, en vez de solo tras el rechazo).
+ */
+export async function tieneRelacionesBloqueantes(
+  propiedadId: string
+): Promise<{ bloqueada: boolean; motivo: string | null }> {
+  const supabase = await createClient();
+  const [{ count: contratos }, { count: gastos }] = await Promise.all([
+    supabase
+      .from("contratos")
+      .select("id", { count: "exact", head: true })
+      .eq("propiedad_id", propiedadId),
+    supabase
+      .from("gastos")
+      .select("id", { count: "exact", head: true })
+      .eq("propiedad_id", propiedadId),
+  ]);
+
+  if ((contratos ?? 0) > 0) {
+    return { bloqueada: true, motivo: "Tiene contratos (y posiblemente arrendatarios y cargos) asociados." };
+  }
+  if ((gastos ?? 0) > 0) {
+    return { bloqueada: true, motivo: "Tiene gastos registrados asociados." };
+  }
+  return { bloqueada: false, motivo: null };
+}
+
 export async function getPropiedad(id: string): Promise<Propiedad | null> {
   const supabase = await createClient();
   const { data } = await supabase
