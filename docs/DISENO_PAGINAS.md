@@ -1,6 +1,6 @@
 # Diseño de páginas — RZK Prop
 
-> **Estado: cerrado sobre Propiedades.** Este documento es la fuente de verdad del formato de página (listado, detalle+edición, creación) para todo el sistema. Se definió y terminó de pulir sobre el módulo **Propiedades** (`src/app/(dashboard)/propiedades/`, `src/features/propiedades/`) — ese código es la implementación de referencia. **Pendiente**: replicar este mismo formato en **Arrendatarios** y **Contratos** (ver sección final con el mapeo de campos propuesto y las dudas a resolver antes de aplicarlo). Propietarios recibió parcialmente el tratamiento (tarjetas, filtros) pero no el detalle en línea ni el wizard — queda en la misma bolsa de "pendiente de replicar".
+> **Estado: cerrado sobre Propiedades, ya replicado en Arrendatarios.** Este documento es la fuente de verdad del formato de página (listado, detalle+edición, creación) para todo el sistema. Implementación de referencia: `src/features/propiedades/` y `src/features/arrendatarios/`. **Pendiente**: **Contratos** (ver sección final — es más complejo por sus relaciones obligatorias con propiedad/arrendatario). **Propietarios** recibió solo el tratamiento de tarjetas/filtros, no el detalle en línea ni el wizard — sigue pendiente de replicar igual que Contratos.
 
 ## Paleta
 
@@ -75,10 +75,20 @@ Referencia: `src/features/propiedades/propiedad-wizard.tsx` (reemplazó por comp
 - **Borrador persistente** (`localStorage`, clave propia por wizard, ej. `rzk:draft:propiedad-wizard`): guarda `{ paso, valores }` en cada cambio y lo restaura al volver a entrar — soluciona perder el avance si el usuario sale de la app a mitad de la creación. Se limpia al enviar el formulario o al cancelar confirmando.
 - Al guardar, reutiliza el mismo server action de creación de siempre, sin cambios.
 
-## Pendiente: replicar en Arrendatarios y Contratos
+## Arrendatarios (replicado, referencia adicional)
 
-No es copy-paste literal — cada página tiene sus propios campos. Mapeo propuesto (a confirmar con Eduardo antes de tocar código):
+- Tarjeta: RUT (arriba, chico) + nombre/razón social (abajo, grande); disclosure con email/teléfono/comuna solo si tienen valor.
+- Detalle: bloques Identificación (tipo de persona, RUT, nombres/apellidos **o** razón social según tipo), Contacto (email, teléfono), Dirección (región/comuna combobox, calle, número) — mismo patrón de edición en línea que Propiedades.
+- Wizard de creación (`arrendatario-wizard.tsx`): confirmado que sí lleva wizard pese a ser un formulario corto — prioridad es consistencia de la experiencia de creación en todos los módulos. El tipo de persona (natural/jurídica) determina dinámicamente qué preguntas son obligatorias y cuáles se omiten (`requerido`/`omitirSi` como funciones de los valores acumulados, no solo booleanos fijos — necesario porque "nombre/apellido" son obligatorios solo si es persona natural, y "razón social" solo si es jurídica).
+- Eliminar: a diferencia de Propiedades, la FK `contratos_arrendatarios.arrendatario_id` es `on delete cascade`, **no** `restrict` — la base de datos no bloquea el borrado de un arrendatario con contratos por sí sola. La validación previa (¿tiene contratos vinculados?) se hace en la capa de aplicación (`tieneContratosVinculados`), no se puede delegar 100% a la base de datos como en Propiedades.
+- Migración `0018_arrendatarios_delete.sql`: agrega la política RLS de DELETE que faltaba (mismo gotcha que Propiedades).
 
-- **Arrendatarios**: nombre (abajo, grande) + tipo de persona o RUT (arriba, chico); detrás del disclosure: email, teléfono. Detalle en línea con los mismos campos que hoy tiene el formulario. ¿Necesita wizard de creación? Es un formulario corto (persona natural/jurídica, contacto) — a diferencia de Propiedades (~20 campos), puede que una sola pantalla con todos los campos siga siendo razonable; **confirmar si de verdad quieres el formato "una pregunta a la vez" aquí o basta con aplicar el resto del patrón (tarjetas, detalle en línea, filtros, eliminar) sin wizard.**
-- **Contratos**: propiedad/dirección (abajo, grande) + número de contrato (arriba, chico); canon visible en el disclosure; fechas de inicio/término también en el disclosure. Contratos es más complejo que Propiedades porque tiene relaciones obligatorias (propiedad, arrendatario(s)) que no son campos simples de un wizard lineal — **hay que decidir cómo entra la propiedad y el/los arrendatario(s) en el flujo de preguntas** (¿combobox de propiedad como primera pregunta? ¿selección de arrendatario(s) existente(s), con opción de crear uno nuevo sobre la marcha?). También tiene reglas de negocio activas (sincronización contrato↔propiedad, estados) que hay que respetar al decidir qué preguntas son obligatorias.
-- **Eliminar**: para Contratos, ¿qué lo bloquea? (cargos/pagos asociados, probablemente). Para Arrendatarios, ¿contratos vigentes o históricos? Hay que identificar las tablas y FKs relevantes en cada caso, igual que se hizo para Propiedades (`contratos`/`gastos`), y confirmar si aplica **baja lógica** (`activo=false`, ya existente) en vez de eliminación dura cuando haya historial que sí se quiera conservar (a diferencia de Propiedades, donde el borrado duro solo aplica si nunca tuvo contratos).
+## Pendiente: replicar en Contratos (y Propietarios)
+
+No es copy-paste literal. Mapeo propuesto para Contratos (a confirmar con Eduardo antes de tocar código):
+
+- Tarjeta: número de contrato (arriba, chico) + propiedad/dirección (abajo, grande); disclosure con canon y fechas de inicio/término.
+- **Wizard de creación — decisión ya tomada:** la propiedad y el/los arrendatario(s) se seleccionan por **combobox sobre registros ya existentes** (no se permite crear un arrendatario nuevo sobre la marcha desde el wizard de contrato — si no existe, se crea antes, aparte, en su propia pantalla).
+- Reglas de negocio activas a respetar en el orden de preguntas y validaciones: sincronización contrato↔propiedad (estado de la propiedad cambia según estado del contrato), no permitir vigente si la propiedad ya tiene otro contrato activo — esto probablemente implica que el combobox de propiedad debería excluir o advertir sobre propiedades ya arrendadas activamente, según el estado que se vaya a elegir para el contrato nuevo.
+- Eliminar: falta identificar qué tablas bloquean el borrado de un contrato (cargos/pagos, probablemente vía `on delete restrict` o similar) — repetir el mismo ejercicio de revisión de FKs que se hizo para Propiedades antes de escribir la acción de eliminar.
+- **Propietarios** quedó con tarjetas y filtros ya aplicados, pero sin el detalle en línea ni wizard — aplicar el mismo patrón que Arrendatarios (es una entidad muy similar en forma).

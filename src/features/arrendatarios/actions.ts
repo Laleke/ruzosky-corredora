@@ -102,7 +102,8 @@ export async function actualizarArrendatario(
   if (error) return { error: traducirError(error.message) };
 
   revalidatePath("/arrendatarios");
-  redirect("/arrendatarios");
+  revalidatePath(`/arrendatarios/${id}`);
+  redirect(`/arrendatarios/${id}`);
 }
 
 export async function cambiarActivoArrendatario(id: string, activo: boolean) {
@@ -112,4 +113,30 @@ export async function cambiarActivoArrendatario(id: string, activo: boolean) {
   const supabase = await createClient();
   await supabase.from("arrendatarios").update({ activo }).eq("id", id);
   revalidatePath("/arrendatarios");
+}
+
+/**
+ * Elimina el arrendatario. La FK `contratos_arrendatarios.arrendatario_id`
+ * es `on delete cascade` (no `restrict`), así que a diferencia de Propiedades
+ * la base de datos NO bloquea el borrado por sí sola — se valida en la capa
+ * de aplicación antes de intentarlo (ver `tieneContratosVinculados`).
+ */
+export async function eliminarArrendatario(id: string): Promise<{ error: string | null }> {
+  const profile = await getCurrentProfile();
+  if (!profile || profile.rol !== "admin") return { error: "No autorizado." };
+
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("arrendatarios")
+    .delete()
+    .eq("id", id)
+    .select("id");
+
+  if (error) return { error: "No se pudo eliminar el arrendatario." };
+  if (!data || data.length === 0) {
+    return { error: "No se pudo eliminar el arrendatario (sin permisos o ya no existe)." };
+  }
+
+  revalidatePath("/arrendatarios");
+  return { error: null };
 }

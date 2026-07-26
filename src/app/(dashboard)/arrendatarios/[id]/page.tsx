@@ -1,25 +1,26 @@
 import { notFound } from "next/navigation";
-import { ArrendatarioForm } from "@/features/arrendatarios/arrendatario-form";
+import { getArrendatario, tieneContratosVinculados } from "@/features/arrendatarios/queries";
 import { actualizarArrendatario } from "@/features/arrendatarios/actions";
-import { getArrendatario } from "@/features/arrendatarios/queries";
+import { DetalleArrendatario } from "@/features/arrendatarios/detalle-arrendatario";
 
-export default async function EditarArrendatarioPage({
+export default async function DetalleArrendatarioPage({
   params,
 }: {
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const arrendatario = await getArrendatario(id);
+  const [arrendatario, bloqueada] = await Promise.all([
+    getArrendatario(id),
+    tieneContratosVinculados(id),
+  ]);
   if (!arrendatario) notFound();
 
-  const action = actualizarArrendatario.bind(null, id);
-
   return (
-    <div className="flex flex-col gap-6">
-      <h1 className="text-2xl font-semibold tracking-tight text-ink">
-        Editar arrendatario
-      </h1>
-      <ArrendatarioForm action={action} arrendatario={arrendatario} />
-    </div>
+    <DetalleArrendatario
+      id={id}
+      arrendatario={arrendatario}
+      actualizarAction={actualizarArrendatario}
+      eliminacionBloqueada={bloqueada}
+    />
   );
 }
