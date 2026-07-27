@@ -22,7 +22,11 @@ export async function listPropietarios(
   if (filtros.activo === "true") query = query.eq("activo", true);
   if (filtros.activo === "false") query = query.eq("activo", false);
 
-  const { data, error } = await query.order("created_at", { ascending: false });
+  // Orden alfabético (aproximado: prioriza nombre; persona jurídica sin
+  // nombre queda ordenada por razón social).
+  const { data, error } = await query
+    .order("nombre", { ascending: true, nullsFirst: false })
+    .order("razon_social", { ascending: true });
 
   if (error) throw new Error(error.message);
   return data ?? [];
@@ -59,4 +63,16 @@ export async function getPropietario(id: string): Promise<Propietario | null> {
     .single();
 
   return data;
+}
+
+/** Indica si el propietario tiene liquidaciones (bloquea la eliminación: FK restrict). */
+export async function tieneLiquidacionesVinculadas(
+  propietarioId: string
+): Promise<boolean> {
+  const supabase = await createClient();
+  const { count } = await supabase
+    .from("liquidaciones")
+    .select("id", { count: "exact", head: true })
+    .eq("propietario_id", propietarioId);
+  return (count ?? 0) > 0;
 }

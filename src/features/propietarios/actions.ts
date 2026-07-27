@@ -130,7 +130,8 @@ export async function actualizarPropietario(
   if (error) return { error: traducirError(error.message) };
 
   revalidatePath("/propietarios");
-  redirect("/propietarios");
+  revalidatePath(`/propietarios/${id}`);
+  redirect(`/propietarios/${id}`);
 }
 
 /** Baja/alta lógica (soft-delete). */
@@ -141,4 +142,37 @@ export async function cambiarActivoPropietario(id: string, activo: boolean) {
   const supabase = await createClient();
   await supabase.from("propietarios").update({ activo }).eq("id", id);
   revalidatePath("/propietarios");
+}
+
+/**
+ * Elimina el propietario. `liquidaciones.propietario_id` es `on delete
+ * restrict`, así que la base de datos ya bloquea el borrado si tiene
+ * liquidaciones — aquí se traduce ese rechazo a un mensaje legible.
+ * `propietarios_propiedades` es `cascade` (no bloquea).
+ */
+export async function eliminarPropietario(id: string): Promise<{ error: string | null }> {
+  const profile = await getCurrentProfile();
+  if (!profile || profile.rol !== "admin") return { error: "No autorizado." };
+
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("propietarios")
+    .delete()
+    .eq("id", id)
+    .select("id");
+
+  if (error) {
+    if (error.message.includes("foreign key") || error.message.includes("violates")) {
+      return {
+        error: "No se puede eliminar: el propietario tiene liquidaciones asociadas.",
+      };
+    }
+    return { error: "No se pudo eliminar el propietario." };
+  }
+  if (!data || data.length === 0) {
+    return { error: "No se pudo eliminar el propietario (sin permisos o ya no existe)." };
+  }
+
+  revalidatePath("/propietarios");
+  return { error: null };
 }

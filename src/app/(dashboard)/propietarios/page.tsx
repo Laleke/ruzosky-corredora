@@ -1,11 +1,13 @@
 import Link from "next/link";
-import { Info, Pencil, ToggleLeft, ToggleRight } from "lucide-react";
+import { Info, Pencil } from "lucide-react";
 import {
   listPropietarios,
   getOpcionesFiltroPropietarios,
 } from "@/features/propietarios/queries";
 import { cambiarActivoPropietario } from "@/features/propietarios/actions";
 import { PageHeader } from "@/components/page-header";
+import { ToggleSwitch } from "@/components/toggle-switch";
+import { FiltroPropietarios } from "@/features/propietarios/filtro-propietarios";
 import { ui, badge } from "@/components/ui";
 
 function nombreMostrar(p: {
@@ -40,52 +42,12 @@ export default async function PropietariosPage({
         accion={{ href: "/propietarios/nuevo", label: "Nuevo propietario" }}
       />
 
-      <form
-        method="get"
-        className="mb-5 grid grid-cols-1 gap-3 rounded-xl bg-white/10 p-4 sm:grid-cols-2 lg:grid-cols-4"
-      >
-        <label className="flex flex-col gap-1 text-sm">
-          <span className="font-medium text-canvas-fg">Comuna</span>
-          <select name="comuna" defaultValue={sp.comuna ?? ""} className={ui.input}>
-            <option value="">Todas</option>
-            {opciones.comunas.map((c) => (
-              <option key={c} value={c}>
-                {c}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label className="flex flex-col gap-1 text-sm">
-          <span className="font-medium text-canvas-fg">Región</span>
-          <select name="region" defaultValue={sp.region ?? ""} className={ui.input}>
-            <option value="">Todas</option>
-            {opciones.regiones.map((r) => (
-              <option key={r} value={r}>
-                {r}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label className="flex flex-col gap-1 text-sm">
-          <span className="font-medium text-canvas-fg">Activo</span>
-          <select name="activo" defaultValue={sp.activo ?? ""} className={ui.input}>
-            <option value="">Todos</option>
-            <option value="true">Activo</option>
-            <option value="false">Inactivo</option>
-          </select>
-        </label>
-        <div className="flex items-end gap-2">
-          <button type="submit" className={ui.btnSecondary}>
-            Filtrar
-          </button>
-          <Link
-            href="/propietarios"
-            className="inline-flex items-center justify-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-canvas-muted transition-colors hover:bg-white/10 hover:text-canvas-fg"
-          >
-            Limpiar
-          </Link>
-        </div>
-      </form>
+      <FiltroPropietarios
+        comunas={opciones.comunas}
+        regiones={opciones.regiones}
+        valores={sp}
+        hayFiltros={hayFiltros}
+      />
 
       {propietarios.length === 0 ? (
         <div className={`${ui.card} p-10 text-center text-sm text-muted`}>
@@ -96,46 +58,45 @@ export default async function PropietariosPage({
       ) : (
         <div className={ui.cardGrid}>
           {propietarios.map((p) => (
-            <div key={p.id} className={ui.listCard}>
+            <div
+              key={p.id}
+              className={`${ui.listCard} ${!p.activo ? "opacity-60" : ""}`}
+            >
               <div className="flex items-start justify-between gap-2">
                 <div>
+                  <p className="text-xs text-white/60">{p.rut}</p>
                   <p className="font-medium text-white">{nombreMostrar(p)}</p>
-                  <p className="text-sm text-white/60">{p.rut}</p>
                 </div>
                 <span className={badge(p.activo ? "success" : "neutral")}>
                   {p.activo ? "Activo" : "Inactivo"}
                 </span>
               </div>
 
-              <details>
-                <summary className={ui.listCardDisclosure}>
-                  <Info size={14} /> Ver más información
-                </summary>
-                <div className="mt-2 flex flex-col gap-1 text-sm text-white/80">
-                  <span>{p.email ?? "—"}</span>
-                  <span>{p.telefono ?? "—"}</span>
-                </div>
-              </details>
+              <div className="flex items-center justify-between gap-2">
+                <details className="min-w-0 flex-1">
+                  <summary className={ui.listCardDisclosure}>
+                    <Info size={14} /> Ver más información
+                  </summary>
+                  <div className="mt-2 flex flex-col gap-1 text-sm text-white/80">
+                    {p.email && <span>{p.email}</span>}
+                    {p.telefono && <span>{p.telefono}</span>}
+                    {p.comuna && <span>{p.comuna}</span>}
+                  </div>
+                </details>
 
-              <div className="mt-1 flex items-center justify-end gap-1 border-t border-white/15 pt-2">
-                <Link
-                  href={`/propietarios/${p.id}`}
-                  aria-label="Editar"
-                  title="Editar"
-                  className={ui.listCardIconBtn}
-                >
-                  <Pencil size={16} />
-                </Link>
-                <form action={cambiarActivoPropietario.bind(null, p.id, !p.activo)}>
-                  <button
-                    type="submit"
-                    aria-label={p.activo ? "Desactivar" : "Activar"}
-                    title={p.activo ? "Desactivar" : "Activar"}
+                <div className="flex shrink-0 items-center gap-2">
+                  <Link
+                    href={`/propietarios/${p.id}`}
+                    aria-label="Editar / ver detalle"
+                    title="Editar / ver detalle"
                     className={ui.listCardIconBtn}
                   >
-                    {p.activo ? <ToggleRight size={18} /> : <ToggleLeft size={18} />}
-                  </button>
-                </form>
+                    <Pencil size={16} />
+                  </Link>
+                  <form action={cambiarActivoPropietario.bind(null, p.id, !p.activo)}>
+                    <ToggleSwitch on={p.activo} label={p.activo ? "Desactivar" : "Activar"} />
+                  </form>
+                </div>
               </div>
             </div>
           ))}

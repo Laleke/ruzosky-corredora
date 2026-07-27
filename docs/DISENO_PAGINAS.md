@@ -1,6 +1,6 @@
 # Diseño de páginas — RZK Prop
 
-> **Estado: cerrado sobre Propiedades, ya replicado en Arrendatarios.** Este documento es la fuente de verdad del formato de página (listado, detalle+edición, creación) para todo el sistema. Implementación de referencia: `src/features/propiedades/` y `src/features/arrendatarios/`. **Pendiente**: **Contratos** (ver sección final — es más complejo por sus relaciones obligatorias con propiedad/arrendatario). **Propietarios** recibió solo el tratamiento de tarjetas/filtros, no el detalle en línea ni el wizard — sigue pendiente de replicar igual que Contratos.
+> **Estado: cerrado sobre Propiedades, ya replicado en Arrendatarios y Propietarios.** Este documento es la fuente de verdad del formato de página (listado, detalle+edición, creación) para todo el sistema. Implementación de referencia: `src/features/propiedades/`, `src/features/arrendatarios/`, `src/features/propietarios/`. **Pendiente: Contratos** (ver sección final — es más complejo por sus relaciones obligatorias con propiedad/arrendatario).
 
 ## Paleta
 
@@ -83,12 +83,17 @@ Referencia: `src/features/propiedades/propiedad-wizard.tsx` (reemplazó por comp
 - Eliminar: a diferencia de Propiedades, la FK `contratos_arrendatarios.arrendatario_id` es `on delete cascade`, **no** `restrict` — la base de datos no bloquea el borrado de un arrendatario con contratos por sí sola. La validación previa (¿tiene contratos vinculados?) se hace en la capa de aplicación (`tieneContratosVinculados`), no se puede delegar 100% a la base de datos como en Propiedades.
 - Migración `0018_arrendatarios_delete.sql`: agrega la política RLS de DELETE que faltaba (mismo gotcha que Propiedades).
 
-## Pendiente: replicar en Contratos (y Propietarios)
+## Propietarios (replicado, referencia adicional)
+
+- Mismo patrón que Arrendatarios (comparten forma: persona natural/jurídica + contacto + dirección), más un bloque extra "Datos bancarios" (banco, tipo de cuenta, N° de cuenta, titular, RUT del titular) — ninguno obligatorio.
+- Eliminar: a diferencia de Arrendatarios, aquí sí hay una FK `restrict` real (`liquidaciones.propietario_id`) que bloquea el borrado en la base de datos si el propietario tiene liquidaciones — no depende solo de una validación de aplicación. `propietarios_propiedades` es `cascade` (no bloquea); `documentos`/`gastos` son `set null` (no bloquean, quedan huérfanos).
+- Migración `0019_propietarios_delete.sql`: agrega la política RLS de DELETE que faltaba (mismo gotcha que las anteriores).
+
+## Pendiente: replicar en Contratos
 
 No es copy-paste literal. Mapeo propuesto para Contratos (a confirmar con Eduardo antes de tocar código):
 
 - Tarjeta: número de contrato (arriba, chico) + propiedad/dirección (abajo, grande); disclosure con canon y fechas de inicio/término.
 - **Wizard de creación — decisión ya tomada:** la propiedad y el/los arrendatario(s) se seleccionan por **combobox sobre registros ya existentes** (no se permite crear un arrendatario nuevo sobre la marcha desde el wizard de contrato — si no existe, se crea antes, aparte, en su propia pantalla).
 - Reglas de negocio activas a respetar en el orden de preguntas y validaciones: sincronización contrato↔propiedad (estado de la propiedad cambia según estado del contrato), no permitir vigente si la propiedad ya tiene otro contrato activo — esto probablemente implica que el combobox de propiedad debería excluir o advertir sobre propiedades ya arrendadas activamente, según el estado que se vaya a elegir para el contrato nuevo.
-- Eliminar: falta identificar qué tablas bloquean el borrado de un contrato (cargos/pagos, probablemente vía `on delete restrict` o similar) — repetir el mismo ejercicio de revisión de FKs que se hizo para Propiedades antes de escribir la acción de eliminar.
-- **Propietarios** quedó con tarjetas y filtros ya aplicados, pero sin el detalle en línea ni wizard — aplicar el mismo patrón que Arrendatarios (es una entidad muy similar en forma).
+- Eliminar: falta identificar qué tablas bloquean el borrado de un contrato (cargos/pagos, probablemente vía `on delete restrict` o similar) — repetir el mismo ejercicio de revisión de FKs que se hizo para Propiedades/Arrendatarios/Propietarios antes de escribir la acción de eliminar.
