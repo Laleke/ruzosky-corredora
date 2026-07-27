@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
 import { Filter, X } from "lucide-react";
 import { ui } from "@/components/ui";
 
@@ -24,6 +23,9 @@ const ESTADO_OPCIONES = [
   { value: "inactiva", label: "Inactiva" },
 ];
 
+type Campos = { tipo: string; comuna: string; estado: string; activo: string };
+const VACIOS: Campos = { tipo: "", comuna: "", estado: "", activo: "" };
+
 export function FiltroPropiedades({
   comunas,
   valores,
@@ -36,6 +38,16 @@ export function FiltroPropiedades({
   // Siempre arranca oculto: se abre con el ícono, y al aplicar (recarga de
   // página con los filtros en la URL) vuelve a quedar oculto por defecto.
   const [abierto, setAbierto] = useState(false);
+  const [campos, setCampos] = useState<Campos>({
+    tipo: valores.tipo ?? "",
+    comuna: valores.comuna ?? "",
+    estado: valores.estado ?? "",
+    activo: valores.activo ?? "",
+  });
+
+  function set(key: keyof Campos, value: string) {
+    setCampos((c) => ({ ...c, [key]: value }));
+  }
 
   return (
     <div className="mb-5">
@@ -58,7 +70,12 @@ export function FiltroPropiedades({
         >
           <label className="flex flex-col gap-1 text-sm">
             <span className="font-medium text-canvas-fg">Tipo</span>
-            <select name="tipo" defaultValue={valores.tipo ?? ""} className={ui.input}>
+            <select
+              name="tipo"
+              value={campos.tipo}
+              onChange={(e) => set("tipo", e.target.value)}
+              className={ui.input}
+            >
               <option value="">Todos</option>
               {TIPO_OPCIONES.map((o) => (
                 <option key={o.value} value={o.value}>
@@ -69,7 +86,12 @@ export function FiltroPropiedades({
           </label>
           <label className="flex flex-col gap-1 text-sm">
             <span className="font-medium text-canvas-fg">Comuna</span>
-            <select name="comuna" defaultValue={valores.comuna ?? ""} className={ui.input}>
+            <select
+              name="comuna"
+              value={campos.comuna}
+              onChange={(e) => set("comuna", e.target.value)}
+              className={ui.input}
+            >
               <option value="">Todas</option>
               {comunas.map((c) => (
                 <option key={c} value={c}>
@@ -80,7 +102,12 @@ export function FiltroPropiedades({
           </label>
           <label className="flex flex-col gap-1 text-sm">
             <span className="font-medium text-canvas-fg">Estado</span>
-            <select name="estado" defaultValue={valores.estado ?? ""} className={ui.input}>
+            <select
+              name="estado"
+              value={campos.estado}
+              onChange={(e) => set("estado", e.target.value)}
+              className={ui.input}
+            >
               <option value="">Todos</option>
               {ESTADO_OPCIONES.map((o) => (
                 <option key={o.value} value={o.value}>
@@ -91,7 +118,12 @@ export function FiltroPropiedades({
           </label>
           <label className="flex flex-col gap-1 text-sm">
             <span className="font-medium text-canvas-fg">Activo</span>
-            <select name="activo" defaultValue={valores.activo ?? ""} className={ui.input}>
+            <select
+              name="activo"
+              value={campos.activo}
+              onChange={(e) => set("activo", e.target.value)}
+              className={ui.input}
+            >
               <option value="">Todos</option>
               <option value="true">Activo</option>
               <option value="false">Inactivo</option>
@@ -101,12 +133,13 @@ export function FiltroPropiedades({
             <button type="submit" className={ui.btnSecondary}>
               Aplicar
             </button>
-            <Link
-              href="/propiedades"
+            <button
+              type="button"
+              onClick={() => setCampos(VACIOS)}
               className="inline-flex items-center justify-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-canvas-muted transition-colors hover:bg-white/10 hover:text-canvas-fg"
             >
               Limpiar
-            </Link>
+            </button>
           </div>
         </form>
       )}

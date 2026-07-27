@@ -1,9 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
 import { Filter, X } from "lucide-react";
 import { ui } from "@/components/ui";
+
+type Campos = { tipoPersona: string; comuna: string; region: string; activo: string };
+const VACIOS: Campos = { tipoPersona: "", comuna: "", region: "", activo: "" };
 
 export function FiltroArrendatarios({
   comunas,
@@ -17,6 +19,16 @@ export function FiltroArrendatarios({
   hayFiltros: boolean;
 }) {
   const [abierto, setAbierto] = useState(false);
+  const [campos, setCampos] = useState<Campos>({
+    tipoPersona: valores.tipoPersona ?? "",
+    comuna: valores.comuna ?? "",
+    region: valores.region ?? "",
+    activo: valores.activo ?? "",
+  });
+
+  function set(key: keyof Campos, value: string) {
+    setCampos((c) => ({ ...c, [key]: value }));
+  }
 
   return (
     <div className="mb-5">
@@ -39,7 +51,12 @@ export function FiltroArrendatarios({
         >
           <label className="flex flex-col gap-1 text-sm">
             <span className="font-medium text-canvas-fg">Tipo de persona</span>
-            <select name="tipoPersona" defaultValue={valores.tipoPersona ?? ""} className={ui.input}>
+            <select
+              name="tipoPersona"
+              value={campos.tipoPersona}
+              onChange={(e) => set("tipoPersona", e.target.value)}
+              className={ui.input}
+            >
               <option value="">Todos</option>
               <option value="persona_natural">Persona natural</option>
               <option value="persona_juridica">Persona jurídica</option>
@@ -47,7 +64,12 @@ export function FiltroArrendatarios({
           </label>
           <label className="flex flex-col gap-1 text-sm">
             <span className="font-medium text-canvas-fg">Comuna</span>
-            <select name="comuna" defaultValue={valores.comuna ?? ""} className={ui.input}>
+            <select
+              name="comuna"
+              value={campos.comuna}
+              onChange={(e) => set("comuna", e.target.value)}
+              className={ui.input}
+            >
               <option value="">Todas</option>
               {comunas.map((c) => (
                 <option key={c} value={c}>
@@ -58,7 +80,12 @@ export function FiltroArrendatarios({
           </label>
           <label className="flex flex-col gap-1 text-sm">
             <span className="font-medium text-canvas-fg">Región</span>
-            <select name="region" defaultValue={valores.region ?? ""} className={ui.input}>
+            <select
+              name="region"
+              value={campos.region}
+              onChange={(e) => set("region", e.target.value)}
+              className={ui.input}
+            >
               <option value="">Todas</option>
               {regiones.map((r) => (
                 <option key={r} value={r}>
@@ -69,7 +96,12 @@ export function FiltroArrendatarios({
           </label>
           <label className="flex flex-col gap-1 text-sm">
             <span className="font-medium text-canvas-fg">Activo</span>
-            <select name="activo" defaultValue={valores.activo ?? ""} className={ui.input}>
+            <select
+              name="activo"
+              value={campos.activo}
+              onChange={(e) => set("activo", e.target.value)}
+              className={ui.input}
+            >
               <option value="">Todos</option>
               <option value="true">Activo</option>
               <option value="false">Inactivo</option>
@@ -79,12 +111,13 @@ export function FiltroArrendatarios({
             <button type="submit" className={ui.btnSecondary}>
               Aplicar
             </button>
-            <Link
-              href="/arrendatarios"
+            <button
+              type="button"
+              onClick={() => setCampos(VACIOS)}
               className="inline-flex items-center justify-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-canvas-muted transition-colors hover:bg-white/10 hover:text-canvas-fg"
             >
               Limpiar
-            </Link>
+            </button>
           </div>
         </form>
       )}
