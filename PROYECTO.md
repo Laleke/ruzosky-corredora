@@ -7,24 +7,32 @@ El producto es una **PWA** (no app nativa): funciona como web e instalable en An
 
 ## Estado Actual
 **Fase: en PRODUCCIÓN (Vercel), desplegándose con cada push. Transición activa a uso con datos reales (modalidad "Administrador de Contratos de Arriendo" — ver Punto de Continuación).**
-App **RZK Prop** operativa: auth, dashboard con KPIs + **Dashboard Operativo (tareas pendientes)**, y módulos **Propietarios, Propiedades (+copropiedad N:M), Arrendatarios, Contratos, Cobros (cargos+pagos, con filtros e indicador de arriendos pendientes), Liquidaciones (con descuento automático de gastos, guardia de duplicados e indicador de pendientes), Documentos (Storage privado + versiones), Gastos (fuente oficial) y Reportes Financieros**. **16 migraciones (`0001`–`0016`) aplicadas y verificadas en Supabase**, más **3 migraciones nuevas (`0017`–`0019`) pendientes de ejecutar** (políticas RLS de DELETE — ver Punto de Continuación). Build de producción verde, `tsc` limpio, **Vitest** con 12 pruebas.
+App **RZK Prop** operativa: auth, dashboard con KPIs + **Dashboard Operativo (tareas pendientes)**, y módulos **Propietarios, Propiedades (+copropiedad N:M), Arrendatarios, Contratos, Cobros (cargos+pagos, con filtros e indicador de arriendos pendientes), Liquidaciones (con descuento automático de gastos, guardia de duplicados e indicador de pendientes), Documentos (Storage privado + versiones), Gastos (fuente oficial) y Reportes Financieros**. **19 migraciones (`0001`–`0019`) aplicadas y verificadas en Supabase**, incluyendo las políticas RLS de DELETE de Propiedades/Arrendatarios/Propietarios. Build de producción verde, `tsc` limpio, **Vitest** con 12 pruebas.
 **UI en rediseño activo**: tema oscuro grafito+burdeo, navegación reducida a Propiedades/Propietarios/Arrendatarios/Contratos mientras se valida con datos reales (resto de módulos oculto del menú, no eliminado). Patrón de página (listado en tarjetas, detalle con edición en línea, wizard de creación) ya replicado en Propiedades/Arrendatarios/Propietarios — pendiente Contratos. Fuente de verdad: `docs/DISENO_PAGINAS.md`.
 **Filosofía vigente: app centrada en la Propiedad** — el usuario solo elige Propiedad + datos; propietario/contrato/arrendatario se derivan automáticamente (ver "Simplificación de flujo"). En curso: **roadmap oficial de Hardening** (Sprint 1: T1/T1b hechos; faltan T2/T3/T5/T11) y **Backlog QA** (reglas R1–R5 de negocio para el motor de liquidaciones y gastos compartidos) — **sin avance esta sesión**, todo el foco fue UI + modalidad de contratos.
 Ciclo operable: propiedad → (propietario/contrato/arrendatario auto) → cargos/cobros → pagos → gastos → liquidación al propietario (con gastos descontados) → reportes.
 
 ## Punto de Continuación (handoff — actualizar al cerrar cada sesión)
 
-**Última sesión: 2026-07-26.** App **en producción** (Vercel), redeploy con cada push. Repo `github.com/Laleke/ruzosky-corredora`. Rama `main` **pusheada hasta `d2a68cc`** (todos los commits de esta sesión ya están en `origin/main`, con autorización explícita de Eduardo en cada push). Vercel debería haber redesplegado automáticamente con cada uno.
+**Última sesión: 2026-07-27.** App **en producción** (Vercel), redeploy con cada push. Repo `github.com/Laleke/ruzosky-corredora`. Rama `main` **pusheada hasta `d2a68cc`** al cierre de la sesión anterior (los cambios de esta sesión están commiteados localmente, sin push todavía — pendiente de autorización explícita de Eduardo).
 
-### ⚠️ ACCIÓN PENDIENTE CRÍTICA — 3 migraciones sin ejecutar
+### ✅ Migraciones 0017/0018/0019 ejecutadas (2026-07-27)
 
-Antes de seguir trabajando (y antes de que "Eliminar" funcione en Propiedades/Arrendatarios/Propietarios), Eduardo debe correr esto en el **SQL Editor de Supabase**, en orden:
+Eduardo confirmó que corrió las 3 migraciones de política RLS `DELETE` (`propiedades`, `arrendatarios`, `propietarios`) en el SQL Editor de Supabase. El botón "Eliminar" en esos 3 módulos ya debería funcionar en producción — **falta validar en el celular** (ver pendientes más abajo).
 
-1. `supabase/migrations/0017_propiedades_delete.sql`
-2. `supabase/migrations/0018_arrendatarios_delete.sql`
-3. `supabase/migrations/0019_propietarios_delete.sql`
+### Ajustes de campos en Propietarios/Arrendatarios (detalle + creación) — 2026-07-27
 
-**Por qué:** estas 3 tablas nunca tuvieron política RLS de `DELETE` (a propósito, solo baja lógica). Al agregar el botón "Eliminar" se descubrió un gotcha real: sin política RLS, un `DELETE` no lanza error — simplemente afecta 0 filas en silencio. El código ya está preparado para detectar esto (`.select("id")` tras el delete, ver cualquier `eliminarX` en `actions.ts`), pero sin la migración el botón seguirá sin funcionar. **Cualquier tabla nueva que necesite borrado real debe llevar su propia política `for delete` desde el principio** — quedó documentado como lección en `docs/DISENO_PAGINAS.md`.
+Feedback de Eduardo probando el formulario en el celular. Cambios aplicados en `detalle-propietario.tsx`, `detalle-arrendatario.tsx`, `propietario-wizard.tsx`, `arrendatario-wizard.tsx` y sus `actions.ts`:
+- **RUT**: máscara en vivo mientras se escribe (`formatearRut` en `lib/rut.ts`, formato `12.345.678-9`), aplicada a RUT y RUT del titular. La validación de dígito verificador (`normalizarRut`) sigue siendo la que manda en el servidor.
+- **Banco**: pasó de texto libre a `Combobox` con catálogo `data/bancos.ts` (bancos operando en Chile) — mismo patrón que Región/Comuna.
+- **N° de cuenta**: filtra a solo dígitos al escribir (`formatearNumeroCuenta`); se guarda como texto, no `type=number`, para no perder ceros a la izquierda.
+- **Titular de la cuenta**: label acortado a "Titular" en el detalle (el `name="titular_cuenta"` del formulario no cambió).
+- **Email**: `type=email` + validación de estructura (`esEmailValido` en `lib/contacto.ts`) tanto en el wizard (bloquea "Siguiente" con mensaje) como en el detalle (error al perder foco) y en el servidor (`actions.ts`, frontera real). En modo lectura, el correo se renderiza con `<wbr/>` antes del `@` (componente `EmailTexto`) para que el salto de línea ocurra ahí y no se sobreponga al teléfono en pantallas angostas.
+- **Teléfono**: `type=tel` + filtro a dígitos y un único `+` inicial al escribir (`formatearTelefono`), sin forzar un formato rígido (agrupamiento) porque el proyecto no fija aún un único formato de número (fijo/móvil/extranjero).
+- **Botones del wizard**: fila `grid grid-cols-3` (antes `flex flex-wrap justify-center`) para que Cancelar/Atrás/Siguiente queden en posiciones fijas y alineadas incluso cuando "Atrás" no está visible (primera pregunta).
+- **Confirmación de "Cancelar" en el wizard**: pasó de tarjeta inline (podía quedar tapada por el teclado o fuera de foco) a **overlay fijo** (`fixed inset-0` con fondo oscuro), centrado sobre toda la pantalla — ahora siempre visible al presionar Cancelar.
+
+`tsc --noEmit`, `next build` y `npm test` (12/12) verdes tras el cambio. **Sin cambios de esquema** (no hay migración nueva).
 
 También pendientes de ejecutar (dependientes de que Eduardo confirme fechas/datos, no urgentes):
 - `supabase/maintenance/limpiar_datos_prueba_2026-07-24.sql` (antes de cargar datos reales)
@@ -53,11 +61,11 @@ Se abrió una nueva etapa de la app (uso con datos reales, no solo demo): tema o
 - `../RZK.md` (en la carpeta `Ruzosky/`, fuera del proyecto) — playbook transversal OPT-IN; solo se usa si se solicita explícitamente.
 
 **Pendiente / próximo (en orden):**
-1. **Eduardo ejecuta las 3 migraciones de DELETE** (0017/0018/0019) y confirma.
-2. Probar en el celular: Propiedades, Arrendatarios, Propietarios (tarjetas, detalle, wizard, eliminar, filtros) — dar feedback de ajustes si algo se ve mal, como en las rondas anteriores.
-3. Replicar el patrón de diseño en **Contratos** (ver dudas ya resueltas y pendientes en la última sección de `docs/DISENO_PAGINAS.md`).
+1. Probar en el celular los ajustes de campos de esta sesión (RUT, banco, N° de cuenta, email/teléfono, botones y overlay de cancelar del wizard) en Propietarios y Arrendatarios — confirmar antes de pushear.
+2. Confirmar que "Eliminar" funciona en producción en Propiedades/Arrendatarios/Propietarios (ya con las 3 migraciones DELETE aplicadas).
+3. Replicar el patrón de diseño completo en **Contratos** — quedó explícitamente para una sesión propia (decisión de Eduardo 2026-07-27, por el tamaño: combobox sobre propiedad/arrendatario existentes + reglas de sincronización contrato↔propiedad). Ver dudas ya resueltas y pendientes en la última sección de `docs/DISENO_PAGINAS.md`.
 4. Una vez estable, correr `limpiar_datos_prueba` + `cargar_datos_reales_803_1907A` para empezar a usar la app con datos reales.
-5. Roadmap de Hardening — Sprint 1 sigue incompleto: faltan T2 (auditoría), T3 (backups), T5 (gate de rol), T11 (regenerar `database.types.ts`). No se tocó esta sesión (todo el foco fue UI + modalidad de contratos).
+5. Roadmap de Hardening — Sprint 1 sigue incompleto: faltan T2 (auditoría), T3 (backups), T5 (gate de rol), T11 (regenerar `database.types.ts`). No se tocó esta sesión.
 6. Backlog QA (R1/R2/R3/R5, motor de liquidación) — sin cambios esta sesión, sigue pendiente.
 
 **Flujo de trabajo:** construir → `next build` verde + `tsc` limpio → commits locales pequeños por entregable → **push solo con autorización explícita** de Eduardo (dice "push"/"aplica commit y push"). Migraciones: Eduardo las aplica en el SQL Editor y confirma — nunca asumir que ya corrieron.

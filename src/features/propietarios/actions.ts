@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentProfile } from "@/lib/auth";
 import { normalizarRut } from "@/lib/rut";
+import { esEmailValido, formatearNumeroCuenta } from "@/lib/contacto";
 import type { PropietarioInsert } from "./types";
 
 export type PropietarioFormState = { error: string | null };
@@ -41,6 +42,9 @@ function parse(
     return { error: "La razón social es obligatoria para persona jurídica." };
   }
 
+  const email = valorOpcional(formData, "email");
+  if (email && !esEmailValido(email)) return { error: "El email no tiene un formato válido." };
+
   const rutTitularRaw = valorOpcional(formData, "rut_titular");
   let rut_titular: string | null = null;
   if (rutTitularRaw) {
@@ -63,7 +67,7 @@ function parse(
       nombre,
       apellido,
       razon_social,
-      email: valorOpcional(formData, "email"),
+      email,
       telefono: valorOpcional(formData, "telefono"),
       direccion: valorOpcional(formData, "direccion"),
       numero: valorOpcional(formData, "numero"),
@@ -71,7 +75,10 @@ function parse(
       region: valorOpcional(formData, "region"),
       banco: valorOpcional(formData, "banco"),
       tipo_cuenta,
-      numero_cuenta: valorOpcional(formData, "numero_cuenta"),
+      numero_cuenta: (() => {
+        const v = valorOpcional(formData, "numero_cuenta");
+        return v ? formatearNumeroCuenta(v) : null;
+      })(),
       titular_cuenta: valorOpcional(formData, "titular_cuenta"),
       rut_titular,
     },

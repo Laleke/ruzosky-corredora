@@ -7,6 +7,8 @@ import { ArrowLeft, ArrowRight, Check } from "lucide-react";
 import { ui } from "@/components/ui";
 import { Combobox } from "@/components/combobox";
 import { NOMBRES_REGIONES, comunasDeRegion } from "@/data/chile";
+import { formatearRut } from "@/lib/rut";
+import { formatearTelefono, esEmailValido } from "@/lib/contacto";
 import type { ArrendatarioFormState } from "./actions";
 
 type Action = (
@@ -14,7 +16,7 @@ type Action = (
   formData: FormData
 ) => Promise<ArrendatarioFormState>;
 
-type TipoPaso = "select" | "texto" | "region" | "comuna";
+type TipoPaso = "select" | "texto" | "region" | "comuna" | "rut" | "telefono" | "email";
 
 type Paso = {
   key: string;
@@ -51,7 +53,7 @@ const PASOS: Paso[] = [
       { value: "persona_juridica", label: "Persona jurídica" },
     ],
   },
-  { key: "rut", pregunta: "¿Cuál es el RUT?", tipo: "texto", requerido: true },
+  { key: "rut", pregunta: "¿Cuál es el RUT?", tipo: "rut", requerido: true },
   {
     key: "nombre",
     pregunta: "¿Cuáles son los nombres?",
@@ -73,8 +75,8 @@ const PASOS: Paso[] = [
     requerido: (v) => v.tipo_persona === "persona_juridica",
     omitirSi: (v) => v.tipo_persona === "persona_natural",
   },
-  { key: "email", pregunta: "¿Cuál es el email?", tipo: "texto" },
-  { key: "telefono", pregunta: "¿Cuál es el teléfono?", tipo: "texto" },
+  { key: "email", pregunta: "¿Cuál es el email?", tipo: "email" },
+  { key: "telefono", pregunta: "¿Cuál es el teléfono?", tipo: "telefono" },
   { key: "region", pregunta: "¿En qué región vive?", tipo: "region" },
   { key: "comuna", pregunta: "¿En qué comuna vive?", tipo: "comuna" },
   { key: "direccion", pregunta: "¿Cuál es la calle?", tipo: "texto" },
@@ -134,6 +136,7 @@ export function ArrendatarioWizard({ action }: { action: Action }) {
   }
 
   function puedeAvanzar(): boolean {
+    if (actual.tipo === "email" && !esEmailValido(valores.email)) return false;
     if (!esRequerido(actual)) return true;
     return valores[actual.key].trim() !== "";
   }
@@ -145,6 +148,10 @@ export function ArrendatarioWizard({ action }: { action: Action }) {
   }
 
   function siguiente() {
+    if (actual.tipo === "email" && !esEmailValido(valores.email)) {
+      setErrorPaso("El formato del correo no es válido.");
+      return;
+    }
     if (!puedeAvanzar()) {
       setErrorPaso("Este dato es obligatorio para continuar.");
       return;
@@ -213,7 +220,14 @@ export function ArrendatarioWizard({ action }: { action: Action }) {
     return (
       <input
         value={val}
-        onChange={(e) => set(p.key, e.target.value)}
+        onChange={(e) => {
+          const raw = e.target.value;
+          const formateado =
+            p.tipo === "rut" ? formatearRut(raw) : p.tipo === "telefono" ? formatearTelefono(raw) : raw;
+          set(p.key, formateado);
+        }}
+        type={p.tipo === "email" ? "email" : p.tipo === "telefono" ? "tel" : "text"}
+        inputMode={p.tipo === "telefono" ? "tel" : undefined}
         className={`${ui.input} text-base`}
         autoFocus
       />
@@ -237,26 +251,30 @@ export function ArrendatarioWizard({ action }: { action: Action }) {
       </div>
 
       {confirmandoCancelar && (
-        <div className="flex flex-col items-center gap-2 rounded-xl bg-white/10 p-4">
-          <p className="text-sm text-white">Se perderá el avance de este arrendatario. ¿Cancelar de todas formas?</p>
-          <div className="flex gap-2">
-            <button
-              type="button"
-              onClick={() => {
-                limpiarBorrador();
-                router.push("/arrendatarios");
-              }}
-              className="inline-flex items-center gap-1.5 rounded-lg bg-white px-4 py-2 text-sm font-medium text-burgundy shadow-sm transition-colors hover:bg-white/90"
-            >
-              Sí, cancelar
-            </button>
-            <button
-              type="button"
-              onClick={() => setConfirmandoCancelar(false)}
-              className="inline-flex items-center gap-1.5 rounded-lg bg-white/10 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-white/20"
-            >
-              No
-            </button>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
+          <div className="flex w-full max-w-sm flex-col items-center gap-3 rounded-xl bg-burgundy-strong p-5 shadow-lg">
+            <p className="text-center text-sm text-white">
+              Se perderá el avance de este arrendatario. ¿Cancelar de todas formas?
+            </p>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  limpiarBorrador();
+                  router.push("/arrendatarios");
+                }}
+                className="inline-flex items-center gap-1.5 rounded-lg bg-white px-4 py-2 text-sm font-medium text-burgundy shadow-sm transition-colors hover:bg-white/90"
+              >
+                Sí, cancelar
+              </button>
+              <button
+                type="button"
+                onClick={() => setConfirmandoCancelar(false)}
+                className="inline-flex items-center gap-1.5 rounded-lg bg-white/10 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-white/20"
+              >
+                No
+              </button>
+            </div>
           </div>
         </div>
       )}
@@ -286,28 +304,30 @@ export function ArrendatarioWizard({ action }: { action: Action }) {
         {errorPaso && <p className="text-sm text-amber-200">{errorPaso}</p>}
         {esUltimo && state.error && <p className="text-sm text-amber-200">{state.error}</p>}
 
-        <div className="flex flex-wrap items-center justify-center gap-3">
+        <div className="grid w-full grid-cols-3 items-center gap-2">
           <button
             type="button"
             onClick={() => setConfirmandoCancelar(true)}
-            className="inline-flex items-center gap-1.5 rounded-lg bg-white/10 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-white/20"
+            className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-white/10 px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-white/20"
           >
             Cancelar
           </button>
-          {paso > 0 && (
+          {paso > 0 ? (
             <button
               type="button"
               onClick={atras}
-              className="inline-flex items-center gap-1.5 rounded-lg bg-white/10 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-white/20"
+              className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-white/10 px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-white/20"
             >
               <ArrowLeft size={15} /> Atrás
             </button>
+          ) : (
+            <span />
           )}
           {!esUltimo ? (
             <button
               type="button"
               onClick={siguiente}
-              className="inline-flex items-center gap-1.5 rounded-lg bg-white px-4 py-2 text-sm font-medium text-burgundy shadow-sm transition-colors hover:bg-white/90"
+              className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-white px-3 py-2 text-sm font-medium text-burgundy shadow-sm transition-colors hover:bg-white/90"
             >
               Siguiente <ArrowRight size={15} />
             </button>
@@ -315,9 +335,9 @@ export function ArrendatarioWizard({ action }: { action: Action }) {
             <button
               type="submit"
               disabled={pending}
-              className="inline-flex items-center gap-1.5 rounded-lg bg-white px-4 py-2 text-sm font-medium text-burgundy shadow-sm transition-colors hover:bg-white/90 disabled:pointer-events-none disabled:opacity-50"
+              className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-white px-3 py-2 text-sm font-medium text-burgundy shadow-sm transition-colors hover:bg-white/90 disabled:pointer-events-none disabled:opacity-50"
             >
-              <Check size={15} /> {pending ? "Guardando…" : "Guardar arrendatario"}
+              <Check size={15} /> {pending ? "Guardando…" : "Guardar"}
             </button>
           )}
         </div>

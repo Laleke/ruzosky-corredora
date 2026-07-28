@@ -40,3 +40,18 @@ export function normalizarRut(rut: string): string | null {
   const dv = limpio.slice(-1);
   return `${cuerpo}-${dv}`;
 }
+
+/**
+ * Máscara de RUT para escribir en vivo: "12.345.678-9". Tolera entradas
+ * incompletas (mientras el usuario todavía está tipeando), a diferencia de
+ * `normalizarRut` que exige un RUT completo y válido.
+ */
+export function formatearRut(valor: string): string {
+  const limpio = limpiar(valor).replace(/[^0-9K]/g, "");
+  if (limpio.length === 0) return "";
+  const cuerpo = limpio.slice(0, -1);
+  const dv = limpio.slice(-1);
+  if (cuerpo.length === 0) return dv;
+  const cuerpoConPuntos = cuerpo.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+  return `${cuerpoConPuntos}-${dv}`;
+}

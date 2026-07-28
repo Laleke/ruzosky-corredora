@@ -6,7 +6,11 @@ import { useRouter } from "next/navigation";
 import { ArrowLeft, Pencil, Trash2 } from "lucide-react";
 import { badge, ui } from "@/components/ui";
 import { Combobox } from "@/components/combobox";
+import { EmailTexto } from "@/components/email-texto";
 import { NOMBRES_REGIONES, comunasDeRegion } from "@/data/chile";
+import { BANCOS_CHILE } from "@/data/bancos";
+import { formatearRut } from "@/lib/rut";
+import { formatearTelefono, formatearNumeroCuenta, esEmailValido } from "@/lib/contacto";
 import { eliminarPropietario, type actualizarPropietario } from "./actions";
 import type { Propietario } from "./types";
 
@@ -35,22 +39,55 @@ function Dato({ label, value }: { label: string; value: React.ReactNode }) {
   );
 }
 
+type TipoCampo = "text" | "rut" | "telefono" | "email" | "numero_cuenta";
+
 function Campo({
   editando,
   label,
   name,
   value,
+  tipo = "text",
 }: {
   editando: boolean;
   label: string;
   name: string;
   value?: string | null;
+  tipo?: TipoCampo;
 }) {
+  const [error, setError] = useState<string | null>(null);
+
+  function onInput(e: React.FormEvent<HTMLInputElement>) {
+    if (tipo === "rut") e.currentTarget.value = formatearRut(e.currentTarget.value);
+    else if (tipo === "telefono") e.currentTarget.value = formatearTelefono(e.currentTarget.value);
+    else if (tipo === "numero_cuenta") e.currentTarget.value = formatearNumeroCuenta(e.currentTarget.value);
+  }
+
+  function onBlur(e: React.FocusEvent<HTMLInputElement>) {
+    if (tipo === "email") {
+      setError(esEmailValido(e.currentTarget.value) ? null : "Formato de correo inválido");
+    }
+  }
+
   return (
     <div>
       <dt className="text-xs uppercase tracking-wide text-white/50">{label}</dt>
       {editando ? (
-        <input name={name} defaultValue={value ?? ""} className={`${ui.input} mt-1`} />
+        <>
+          <input
+            name={name}
+            defaultValue={value ?? ""}
+            className={`${ui.input} mt-1`}
+            type={tipo === "email" ? "email" : tipo === "telefono" ? "tel" : "text"}
+            inputMode={tipo === "numero_cuenta" ? "numeric" : tipo === "telefono" ? "tel" : undefined}
+            onInput={onInput}
+            onBlur={onBlur}
+          />
+          {error && <p className="mt-1 text-xs text-amber-200">{error}</p>}
+        </>
+      ) : tipo === "email" && value ? (
+        <dd className="mt-0.5 text-sm text-white">
+          <EmailTexto value={value} />
+        </dd>
       ) : (
         <dd className="mt-0.5 text-sm text-white">{value || "—"}</dd>
       )}
@@ -87,6 +124,7 @@ export function DetallePropietario({
   const [tipoPersona, setTipoPersona] = useState(propietario.tipo_persona);
   const [region, setRegion] = useState(propietario.region ?? "");
   const [comuna, setComuna] = useState(propietario.comuna ?? "");
+  const [banco, setBanco] = useState(propietario.banco ?? "");
   const comunas = useMemo(() => comunasDeRegion(region), [region]);
   const esNatural = tipoPersona === "persona_natural";
 
@@ -164,7 +202,7 @@ export function DetallePropietario({
               value={esNatural ? "Persona natural" : "Persona jurídica"}
             />
           )}
-          <Campo editando={editando} label="RUT" name="rut" value={propietario.rut} />
+          <Campo editando={editando} label="RUT" name="rut" value={propietario.rut} tipo="rut" />
           {esNatural ? (
             <>
               <Campo editando={editando} label="Nombres" name="nombre" value={propietario.nombre} />
@@ -186,8 +224,14 @@ export function DetallePropietario({
         </Bloque>
 
         <Bloque titulo="Contacto">
-          <Campo editando={editando} label="Email" name="email" value={propietario.email} />
-          <Campo editando={editando} label="Teléfono" name="telefono" value={propietario.telefono} />
+          <Campo editando={editando} label="Email" name="email" value={propietario.email} tipo="email" />
+          <Campo
+            editando={editando}
+            label="Teléfono"
+            name="telefono"
+            value={propietario.telefono}
+            tipo="telefono"
+          />
         </Bloque>
 
         <Bloque titulo="Dirección">
@@ -233,7 +277,22 @@ export function DetallePropietario({
         </Bloque>
 
         <Bloque titulo="Datos bancarios (para liquidaciones)">
-          <Campo editando={editando} label="Banco" name="banco" value={propietario.banco} />
+          {editando ? (
+            <div>
+              <dt className="text-xs uppercase tracking-wide text-white/50">Banco</dt>
+              <div className="mt-1">
+                <Combobox
+                  name="banco"
+                  options={BANCOS_CHILE}
+                  value={banco}
+                  onChange={setBanco}
+                  placeholder="Selecciona o escribe…"
+                />
+              </div>
+            </div>
+          ) : (
+            <Dato label="Banco" value={propietario.banco} />
+          )}
           {editando ? (
             <div>
               <dt className="text-xs uppercase tracking-wide text-white/50">Tipo de cuenta</dt>
@@ -260,10 +319,11 @@ export function DetallePropietario({
             label="N° de cuenta"
             name="numero_cuenta"
             value={propietario.numero_cuenta}
+            tipo="numero_cuenta"
           />
           <Campo
             editando={editando}
-            label="Titular de la cuenta"
+            label="Titular"
             name="titular_cuenta"
             value={propietario.titular_cuenta}
           />
@@ -272,6 +332,7 @@ export function DetallePropietario({
             label="RUT del titular"
             name="rut_titular"
             value={propietario.rut_titular}
+            tipo="rut"
           />
         </Bloque>
 

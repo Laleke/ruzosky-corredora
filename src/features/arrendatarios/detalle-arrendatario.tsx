@@ -6,7 +6,10 @@ import { useRouter } from "next/navigation";
 import { ArrowLeft, Pencil, Trash2 } from "lucide-react";
 import { badge, ui } from "@/components/ui";
 import { Combobox } from "@/components/combobox";
+import { EmailTexto } from "@/components/email-texto";
 import { NOMBRES_REGIONES, comunasDeRegion } from "@/data/chile";
+import { formatearRut } from "@/lib/rut";
+import { formatearTelefono, esEmailValido } from "@/lib/contacto";
 import { eliminarArrendatario, type actualizarArrendatario } from "./actions";
 import type { Arrendatario } from "./types";
 
@@ -24,22 +27,54 @@ function Dato({ label, value }: { label: string; value: React.ReactNode }) {
   );
 }
 
+type TipoCampo = "text" | "rut" | "telefono" | "email";
+
 function Campo({
   editando,
   label,
   name,
   value,
+  tipo = "text",
 }: {
   editando: boolean;
   label: string;
   name: string;
   value?: string | null;
+  tipo?: TipoCampo;
 }) {
+  const [error, setError] = useState<string | null>(null);
+
+  function onInput(e: React.FormEvent<HTMLInputElement>) {
+    if (tipo === "rut") e.currentTarget.value = formatearRut(e.currentTarget.value);
+    else if (tipo === "telefono") e.currentTarget.value = formatearTelefono(e.currentTarget.value);
+  }
+
+  function onBlur(e: React.FocusEvent<HTMLInputElement>) {
+    if (tipo === "email") {
+      setError(esEmailValido(e.currentTarget.value) ? null : "Formato de correo inválido");
+    }
+  }
+
   return (
     <div>
       <dt className="text-xs uppercase tracking-wide text-white/50">{label}</dt>
       {editando ? (
-        <input name={name} defaultValue={value ?? ""} className={`${ui.input} mt-1`} />
+        <>
+          <input
+            name={name}
+            defaultValue={value ?? ""}
+            className={`${ui.input} mt-1`}
+            type={tipo === "email" ? "email" : tipo === "telefono" ? "tel" : "text"}
+            inputMode={tipo === "telefono" ? "tel" : undefined}
+            onInput={onInput}
+            onBlur={onBlur}
+          />
+          {error && <p className="mt-1 text-xs text-amber-200">{error}</p>}
+        </>
+      ) : tipo === "email" && value ? (
+        <dd className="mt-0.5 text-sm text-white">
+          <EmailTexto value={value} />
+        </dd>
       ) : (
         <dd className="mt-0.5 text-sm text-white">{value || "—"}</dd>
       )}
@@ -153,7 +188,7 @@ export function DetalleArrendatario({
               value={esNatural ? "Persona natural" : "Persona jurídica"}
             />
           )}
-          <Campo editando={editando} label="RUT" name="rut" value={arrendatario.rut} />
+          <Campo editando={editando} label="RUT" name="rut" value={arrendatario.rut} tipo="rut" />
           {esNatural ? (
             <>
               <Campo editando={editando} label="Nombres" name="nombre" value={arrendatario.nombre} />
@@ -175,8 +210,14 @@ export function DetalleArrendatario({
         </Bloque>
 
         <Bloque titulo="Contacto">
-          <Campo editando={editando} label="Email" name="email" value={arrendatario.email} />
-          <Campo editando={editando} label="Teléfono" name="telefono" value={arrendatario.telefono} />
+          <Campo editando={editando} label="Email" name="email" value={arrendatario.email} tipo="email" />
+          <Campo
+            editando={editando}
+            label="Teléfono"
+            name="telefono"
+            value={arrendatario.telefono}
+            tipo="telefono"
+          />
         </Bloque>
 
         <Bloque titulo="Dirección">

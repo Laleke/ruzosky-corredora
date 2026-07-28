@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentProfile } from "@/lib/auth";
 import { normalizarRut } from "@/lib/rut";
+import { esEmailValido } from "@/lib/contacto";
 import type { ArrendatarioInsert } from "./types";
 
 export type ArrendatarioFormState = { error: string | null };
@@ -37,6 +38,9 @@ function parse(
     return { error: "La razón social es obligatoria para persona jurídica." };
   }
 
+  const email = valorOpcional(formData, "email");
+  if (email && !esEmailValido(email)) return { error: "El email no tiene un formato válido." };
+
   return {
     data: {
       tipo_persona,
@@ -44,7 +48,7 @@ function parse(
       nombre,
       apellido,
       razon_social,
-      email: valorOpcional(formData, "email"),
+      email,
       telefono: valorOpcional(formData, "telefono"),
       direccion: valorOpcional(formData, "direccion"),
       numero: valorOpcional(formData, "numero"),

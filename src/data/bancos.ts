@@ -1,0 +1,20 @@
+/** Bancos e instituciones financieras operando en Chile (para combobox de datos bancarios). */
+export const BANCOS_CHILE: string[] = [
+  "Banco de Chile",
+  "Banco Internacional",
+  "Scotiabank Chile",
+  "BCI",
+  "Banco BICE",
+  "HSBC Bank Chile",
+  "Banco Santander Chile",
+  "Itaú Chile",
+  "Banco Security",
+  "Banco Falabella",
+  "Banco Ripley",
+  "Banco Consorcio",
+  "Banco Estado",
+  "Coopeuch",
+  "Tenpo",
+  "MACH (Banco BICE)",
+  "Mercado Pago",
+];
