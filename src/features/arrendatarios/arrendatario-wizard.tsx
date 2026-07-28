@@ -178,6 +178,7 @@ export function ArrendatarioWizard({ action }: { action: Action }) {
     if (p.tipo === "select") {
       return (
         <select
+          name={p.key}
           value={val}
           onChange={(e) => set(p.key, e.target.value)}
           className={`${ui.input} text-base`}
@@ -219,6 +220,7 @@ export function ArrendatarioWizard({ action }: { action: Action }) {
     }
     return (
       <input
+        name={p.key}
         value={val}
         onChange={(e) => {
           const raw = e.target.value;

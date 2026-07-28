@@ -7,8 +7,8 @@ El producto es una **PWA** (no app nativa): funciona como web e instalable en An
 
 ## Estado Actual
 **Fase: en PRODUCCIÓN (Vercel), desplegándose con cada push. Transición activa a uso con datos reales (modalidad "Administrador de Contratos de Arriendo" — ver Punto de Continuación).**
-App **RZK Prop** operativa: auth, dashboard con KPIs + **Dashboard Operativo (tareas pendientes)**, y módulos **Propietarios, Propiedades (+copropiedad N:M), Arrendatarios, Contratos, Cobros (cargos+pagos, con filtros e indicador de arriendos pendientes), Liquidaciones (con descuento automático de gastos, guardia de duplicados e indicador de pendientes), Documentos (Storage privado + versiones), Gastos (fuente oficial) y Reportes Financieros**. **19 migraciones (`0001`–`0019`) aplicadas y verificadas en Supabase**, incluyendo las políticas RLS de DELETE de Propiedades/Arrendatarios/Propietarios. Build de producción verde, `tsc` limpio, **Vitest** con 12 pruebas.
-**UI en rediseño activo**: tema oscuro grafito+burdeo, navegación reducida a Propiedades/Propietarios/Arrendatarios/Contratos mientras se valida con datos reales (resto de módulos oculto del menú, no eliminado). Patrón de página (listado en tarjetas, detalle con edición en línea, wizard de creación) ya replicado en Propiedades/Arrendatarios/Propietarios — pendiente Contratos. Fuente de verdad: `docs/DISENO_PAGINAS.md`.
+App **RZK Prop** operativa: auth, dashboard con KPIs + **Dashboard Operativo (tareas pendientes)**, y módulos **Propietarios, Propiedades (+copropiedad N:M), Arrendatarios, Contratos, Cobros (cargos+pagos, con filtros e indicador de arriendos pendientes), Liquidaciones (con descuento automático de gastos, guardia de duplicados e indicador de pendientes), Documentos (Storage privado + versiones), Gastos (fuente oficial) y Reportes Financieros**. **19 migraciones (`0001`–`0019`) aplicadas y verificadas en Supabase**, incluyendo las políticas RLS de DELETE de Propiedades/Arrendatarios/Propietarios, más **1 migración nueva (`0020`) pendiente de ejecutar** (política RLS de DELETE de Contratos — ver Punto de Continuación). Build de producción verde, `tsc` limpio, **Vitest** con 12 pruebas.
+**UI en rediseño activo**: tema oscuro grafito+burdeo, navegación reducida a Propiedades/Propietarios/Arrendatarios/Contratos mientras se valida con datos reales (resto de módulos oculto del menú, no eliminado). Patrón de página (listado en tarjetas, detalle con edición en línea, wizard de creación) ya replicado en los **4 módulos** (Propiedades, Arrendatarios, Propietarios, Contratos). Fuente de verdad: `docs/DISENO_PAGINAS.md`.
 **Filosofía vigente: app centrada en la Propiedad** — el usuario solo elige Propiedad + datos; propietario/contrato/arrendatario se derivan automáticamente (ver "Simplificación de flujo"). En curso: **roadmap oficial de Hardening** (Sprint 1: T1/T1b hechos; faltan T2/T3/T5/T11) y **Backlog QA** (reglas R1–R5 de negocio para el motor de liquidaciones y gastos compartidos) — **sin avance esta sesión**, todo el foco fue UI + modalidad de contratos.
 Ciclo operable: propiedad → (propietario/contrato/arrendatario auto) → cargos/cobros → pagos → gastos → liquidación al propietario (con gastos descontados) → reportes.
 
@@ -34,6 +34,20 @@ Feedback de Eduardo probando el formulario en el celular. Cambios aplicados en `
 
 `tsc --noEmit`, `next build` y `npm test` (12/12) verdes tras el cambio. **Sin cambios de esquema** (no hay migración nueva).
 
+### Contratos — patrón de diseño replicado (2026-07-27, misma sesión)
+
+Eduardo confirmó que Propiedades/Arrendatarios/Propietarios quedaron bien y pidió seguir con Contratos, el único módulo que faltaba. Detalle completo de las decisiones tomadas en `docs/DISENO_PAGINAS.md` (sección "Contratos"); resumen:
+- Tarjetas + filtros (estado, activo) + detalle con edición en línea (bloques Propiedad y estado, Fechas, Canon y reajuste, Comisión y administración, Observaciones) + wizard de creación paso a paso, mismo patrón que los otros 3 módulos.
+- Propiedad se edita con `<select>` nativo (no `Combobox`) — decisión de alcance explícita, documentada en el diseño.
+- Arrendatarios del contrato quedaron embebidos en el mismo `/contratos/[id]` (no hay ruta `/editar` aparte, a diferencia de Propiedades/copropietarios).
+- El wizard de creación no pide arrendatarios (igual que la pantalla vieja) — se asignan después desde el detalle.
+- **Eliminar contrato**: bloqueado por la base de datos si tiene cargos (`cargos.contrato_id on delete restrict`), validado proactivamente antes de ofrecer el botón. Requiere la migración `0020_contratos_delete.sql` (política RLS DELETE, mismo gotcha que las 3 anteriores) — **pendiente de ejecutar por Eduardo**.
+- Se eliminó `contrato-form.tsx` (formulario viejo, reemplazado por el wizard + edición en línea).
+
+**Bug real encontrado y corregido en los 3 wizards existentes**: el input de la pregunta *actualmente visible* nunca tenía `name`, así que el navegador no lo incluía en el `FormData` al enviar — **la última pregunta de cada wizard nunca se guardaba** (`rut_titular` en Propietarios, `numero` en Arrendatarios, `observaciones` en Propiedades), sin error visible porque los 3 campos afectados son opcionales. Corregido agregando `name` a cada rama de input visible en los 3 archivos; `contrato-wizard.tsx` se construyó con esto correcto desde el inicio. Detalle técnico completo en `docs/DISENO_PAGINAS.md`.
+
+`tsc --noEmit`, `next build` y `npm test` (12/12) verdes tras el cambio.
+
 También pendientes de ejecutar (dependientes de que Eduardo confirme fechas/datos, no urgentes):
 - `supabase/maintenance/limpiar_datos_prueba_2026-07-24.sql` (antes de cargar datos reales)
 - `supabase/maintenance/cargar_datos_reales_803_1907A.sql` (carga a Eduardo como propietario + las 2 propiedades reales + Jimmy/Paul + contratos directos — tiene 3 campos marcados "AJUSTAR" antes de correr)
@@ -49,8 +63,8 @@ Se abrió una nueva etapa de la app (uso con datos reales, no solo demo): tema o
 - **Tarjetas de listado** burdeo (no blancas), badges de estado con fondo sólido, disclosure "Ver más información" para datos secundarios, switch on/off real, filtros colapsables detrás de un ícono (arrancan ocultos, "Limpiar" solo resetea el formulario sin navegar — "Aplicar" es quien ejecuta el filtro).
 - **Detalle de un registro**: panel burdeo único, edición **campo por campo en el mismo grid** al presionar "Editar" (nunca un formulario aparte ni modal), botón "Eliminar" que se auto-valida contra relaciones bloqueantes ANTES de ofrecerse, confirmación propia (no `confirm()` nativo), "Volver" con `router.back()` (preserva filtros de la pantalla de origen).
 - **Creación**: wizard de una pregunta por pantalla (Atrás/Siguiente, sin "Omitir"), con borrador persistente en `localStorage` (sobrevive si el usuario sale de la app a medio llenar), preguntas condicionales según respuestas previas, y confirmación propia al cancelar.
-- **Ya replicado en**: Propiedades (referencia original), Arrendatarios, Propietarios — los 3 con este patrón completo.
-- **Pendiente de replicar**: **Contratos** (más complejo — relaciones obligatorias con propiedad/arrendatario vía combobox sobre registros existentes, ya decidido así; reglas de negocio de sincronización contrato↔propiedad a respetar). Cobros/Liquidaciones/Gastos/Reportes/Documentos siguen con el diseño anterior (ocultos del menú por ahora, no urgente).
+- **Ya replicado en los 4 módulos activos**: Propiedades (referencia original), Arrendatarios, Propietarios, Contratos.
+- Cobros/Liquidaciones/Gastos/Reportes/Documentos siguen con el diseño anterior (ocultos del menú por ahora, no urgente).
 
 **Detalle línea por línea de todo lo hecho** (útil solo si se necesita el porqué de una decisión puntual): ver `## Últimos Cambios` más abajo, entradas del 26-jul-2026 en adelante — hay ~20 commits pequeños e iterativos con el feedback real de Eduardo probando en el celular (colores, alineaciones, textos). No hace falta leerlos todos para continuar; `docs/DISENO_PAGINAS.md` ya consolida las decisiones finales.
 
@@ -61,12 +75,13 @@ Se abrió una nueva etapa de la app (uso con datos reales, no solo demo): tema o
 - `../RZK.md` (en la carpeta `Ruzosky/`, fuera del proyecto) — playbook transversal OPT-IN; solo se usa si se solicita explícitamente.
 
 **Pendiente / próximo (en orden):**
-1. Probar en el celular los ajustes de campos de esta sesión (RUT, banco, N° de cuenta, email/teléfono, botones y overlay de cancelar del wizard) en Propietarios y Arrendatarios — confirmar antes de pushear.
-2. Confirmar que "Eliminar" funciona en producción en Propiedades/Arrendatarios/Propietarios (ya con las 3 migraciones DELETE aplicadas).
-3. Replicar el patrón de diseño completo en **Contratos** — quedó explícitamente para una sesión propia (decisión de Eduardo 2026-07-27, por el tamaño: combobox sobre propiedad/arrendatario existentes + reglas de sincronización contrato↔propiedad). Ver dudas ya resueltas y pendientes en la última sección de `docs/DISENO_PAGINAS.md`.
+1. **Eduardo ejecuta la migración `0020_contratos_delete.sql`** en el SQL Editor de Supabase y confirma (antes de que "Eliminar" funcione en Contratos).
+2. Probar en el celular los 4 módulos con el patrón de diseño nuevo: Propietarios/Arrendatarios (ajustes de campos: RUT, banco, N° de cuenta, email/teléfono, botones y overlay de cancelar) y **Contratos completo** (tarjetas, filtros, detalle, wizard, asignar/quitar arrendatario, eliminar) — confirmar antes de pushear.
+3. Confirmar que "Eliminar" funciona en producción en Propiedades/Arrendatarios/Propietarios (ya con las 3 migraciones DELETE aplicadas).
 4. Una vez estable, correr `limpiar_datos_prueba` + `cargar_datos_reales_803_1907A` para empezar a usar la app con datos reales.
 5. Roadmap de Hardening — Sprint 1 sigue incompleto: faltan T2 (auditoría), T3 (backups), T5 (gate de rol), T11 (regenerar `database.types.ts`). No se tocó esta sesión.
 6. Backlog QA (R1/R2/R3/R5, motor de liquidación) — sin cambios esta sesión, sigue pendiente.
+7. Deuda de bajo riesgo anotada esta sesión: Propiedad en el detalle/wizard de Contratos usa `<select>` nativo en vez de un combobox con búsqueda (el `Combobox` genérico del proyecto no soporta id≠label) — revisar si la lista de propiedades crece mucho.
 
 **Flujo de trabajo:** construir → `next build` verde + `tsc` limpio → commits locales pequeños por entregable → **push solo con autorización explícita** de Eduardo (dice "push"/"aplica commit y push"). Migraciones: Eduardo las aplica en el SQL Editor y confirma — nunca asumir que ya corrieron.
 

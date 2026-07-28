@@ -1,115 +1,80 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { useActionState } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, ArrowRight, Check } from "lucide-react";
 import { ui } from "@/components/ui";
-import { Combobox } from "@/components/combobox";
-import { NOMBRES_REGIONES, comunasDeRegion } from "@/data/chile";
-import { BANCOS_CHILE } from "@/data/bancos";
-import { formatearRut } from "@/lib/rut";
-import { formatearTelefono, formatearNumeroCuenta, esEmailValido } from "@/lib/contacto";
-import type { PropietarioFormState } from "./actions";
+import type { ContratoFormState } from "./actions";
 
 type Action = (
-  prev: PropietarioFormState,
+  prev: ContratoFormState,
   formData: FormData
-) => Promise<PropietarioFormState>;
+) => Promise<ContratoFormState>;
 
-type TipoPaso = "select" | "texto" | "region" | "comuna" | "banco" | "rut" | "telefono" | "email" | "numero_cuenta";
+type TipoPaso = "propiedad" | "select" | "fecha" | "numero" | "checkbox" | "textarea";
 
 type Paso = {
   key: string;
   pregunta: string;
+  ayuda?: string;
   tipo: TipoPaso;
   requerido?: boolean | ((v: Valores) => boolean);
   opciones?: { value: string; label: string }[];
   omitirSi?: (v: Valores) => boolean;
 };
 
-type Valores = Record<string, string>;
+type Valores = Record<string, string | boolean>;
+
+const ESTADO_OPCIONES = [
+  { value: "borrador", label: "Borrador" },
+  { value: "vigente", label: "Vigente" },
+  { value: "vencido", label: "Vencido" },
+  { value: "terminado", label: "Terminado" },
+  { value: "renovado", label: "Renovado" },
+];
+const MONEDA_OPCIONES = [
+  { value: "CLP", label: "CLP (pesos chilenos)" },
+  { value: "UF", label: "UF" },
+];
+const REAJUSTE_OPCIONES = [
+  { value: "sin_reajuste", label: "Sin reajuste" },
+  { value: "IPC", label: "IPC" },
+  { value: "UF", label: "UF" },
+];
+const TIPO_COMISION_OPCIONES = [
+  { value: "", label: "No cobra comisión" },
+  { value: "porcentaje", label: "Porcentaje" },
+  { value: "monto_fijo", label: "Monto fijo" },
+];
 
 const VALORES_INICIALES: Valores = {
-  tipo_persona: "persona_natural",
-  rut: "",
-  nombre: "",
-  apellido: "",
-  razon_social: "",
-  email: "",
-  telefono: "",
-  region: "",
-  comuna: "",
-  direccion: "",
-  numero: "",
-  banco: "",
-  tipo_cuenta: "",
-  numero_cuenta: "",
-  titular_cuenta: "",
-  rut_titular: "",
+  propiedad_id: "",
+  estado: "borrador",
+  fecha_firma: "",
+  fecha_inicio: "",
+  fecha_termino: "",
+  canon_monto: "",
+  canon_moneda: "CLP",
+  reajuste_tipo: "sin_reajuste",
+  periodicidad_reajuste_meses: "",
+  tipo_comision: "",
+  comision_monto: "",
+  cobra_administracion: false,
+  administracion_monto: "",
+  administracion_porcentaje: "",
+  observaciones: "",
 };
 
-const TIPO_CUENTA_OPCIONES = [
-  { value: "", label: "No indicar por ahora" },
-  { value: "corriente", label: "Cuenta corriente" },
-  { value: "vista", label: "Cuenta vista" },
-  { value: "ahorro", label: "Cuenta de ahorro" },
-  { value: "rut", label: "Cuenta RUT" },
-];
+const DRAFT_KEY = "rzk:draft:contrato-wizard";
 
-const PASOS: Paso[] = [
-  {
-    key: "tipo_persona",
-    pregunta: "¿Es persona natural o jurídica?",
-    tipo: "select",
-    opciones: [
-      { value: "persona_natural", label: "Persona natural" },
-      { value: "persona_juridica", label: "Persona jurídica" },
-    ],
-  },
-  { key: "rut", pregunta: "¿Cuál es el RUT?", tipo: "rut", requerido: true },
-  {
-    key: "nombre",
-    pregunta: "¿Cuáles son los nombres?",
-    tipo: "texto",
-    requerido: (v) => v.tipo_persona === "persona_natural",
-    omitirSi: (v) => v.tipo_persona === "persona_juridica",
-  },
-  {
-    key: "apellido",
-    pregunta: "¿Cuáles son los apellidos?",
-    tipo: "texto",
-    requerido: (v) => v.tipo_persona === "persona_natural",
-    omitirSi: (v) => v.tipo_persona === "persona_juridica",
-  },
-  {
-    key: "razon_social",
-    pregunta: "¿Cuál es la razón social?",
-    tipo: "texto",
-    requerido: (v) => v.tipo_persona === "persona_juridica",
-    omitirSi: (v) => v.tipo_persona === "persona_natural",
-  },
-  { key: "email", pregunta: "¿Cuál es el email?", tipo: "email" },
-  { key: "telefono", pregunta: "¿Cuál es el teléfono?", tipo: "telefono" },
-  { key: "region", pregunta: "¿En qué región vive?", tipo: "region" },
-  { key: "comuna", pregunta: "¿En qué comuna vive?", tipo: "comuna" },
-  { key: "direccion", pregunta: "¿Cuál es la calle?", tipo: "texto" },
-  { key: "numero", pregunta: "¿Número de la calle?", tipo: "texto" },
-  { key: "banco", pregunta: "¿En qué banco tiene su cuenta?", tipo: "banco" },
-  {
-    key: "tipo_cuenta",
-    pregunta: "¿Qué tipo de cuenta es?",
-    tipo: "select",
-    opciones: TIPO_CUENTA_OPCIONES,
-  },
-  { key: "numero_cuenta", pregunta: "¿Cuál es el número de cuenta?", tipo: "numero_cuenta" },
-  { key: "titular_cuenta", pregunta: "¿A nombre de quién está la cuenta (titular)?", tipo: "texto" },
-  { key: "rut_titular", pregunta: "¿Cuál es el RUT del titular de la cuenta?", tipo: "rut" },
-];
-
-const DRAFT_KEY = "rzk:draft:propietario-wizard";
-
-export function PropietarioWizard({ action }: { action: Action }) {
+export function ContratoWizard({
+  action,
+  propiedades,
+}: {
+  action: Action;
+  propiedades: { id: string; label: string }[];
+}) {
   const router = useRouter();
   const [state, formAction, pending] = useActionState(action, { error: null });
   const [paso, setPaso] = useState(0);
@@ -117,9 +82,48 @@ export function PropietarioWizard({ action }: { action: Action }) {
   const [errorPaso, setErrorPaso] = useState<string | null>(null);
   const [confirmandoCancelar, setConfirmandoCancelar] = useState(false);
 
+  const PASOS: Paso[] = [
+    { key: "propiedad_id", pregunta: "¿A qué propiedad corresponde el contrato?", tipo: "propiedad", requerido: true },
+    { key: "fecha_inicio", pregunta: "¿Cuál es la fecha de inicio?", tipo: "fecha", requerido: true },
+    { key: "fecha_firma", pregunta: "¿Cuál es la fecha de firma?", tipo: "fecha" },
+    { key: "fecha_termino", pregunta: "¿Cuál es la fecha de término?", tipo: "fecha" },
+    { key: "estado", pregunta: "¿Cuál es el estado del contrato?", tipo: "select", opciones: ESTADO_OPCIONES },
+    { key: "canon_monto", pregunta: "¿Cuál es el monto del canon de arriendo?", tipo: "numero", requerido: true },
+    { key: "canon_moneda", pregunta: "¿En qué moneda se expresa el canon?", tipo: "select", opciones: MONEDA_OPCIONES },
+    { key: "reajuste_tipo", pregunta: "¿Tiene reajuste periódico?", tipo: "select", opciones: REAJUSTE_OPCIONES },
+    {
+      key: "periodicidad_reajuste_meses",
+      pregunta: "¿Cada cuántos meses se reajusta?",
+      tipo: "numero",
+      requerido: (v) => v.reajuste_tipo !== "sin_reajuste",
+      omitirSi: (v) => v.reajuste_tipo === "sin_reajuste",
+    },
+    { key: "tipo_comision", pregunta: "¿Cobra comisión la corredora?", tipo: "select", opciones: TIPO_COMISION_OPCIONES },
+    {
+      key: "comision_monto",
+      pregunta: "¿Cuál es el valor de la comisión (% o $)?",
+      tipo: "numero",
+      requerido: (v) => v.tipo_comision !== "",
+      omitirSi: (v) => v.tipo_comision === "",
+    },
+    { key: "cobra_administracion", pregunta: "¿Cobra administración mensual?", tipo: "checkbox" },
+    {
+      key: "administracion_monto",
+      pregunta: "¿Monto fijo de administración (si aplica)?",
+      tipo: "numero",
+      omitirSi: (v) => !v.cobra_administracion,
+    },
+    {
+      key: "administracion_porcentaje",
+      pregunta: "¿Porcentaje de administración (si aplica)?",
+      tipo: "numero",
+      omitirSi: (v) => !v.cobra_administracion,
+    },
+    { key: "observaciones", pregunta: "¿Alguna observación adicional?", tipo: "textarea" },
+  ];
+
   const actual = PASOS[paso];
   const esUltimo = paso === PASOS.length - 1;
-  const comunas = useMemo(() => comunasDeRegion(valores.region ?? ""), [valores.region]);
 
   useEffect(() => {
     try {
@@ -150,7 +154,7 @@ export function PropietarioWizard({ action }: { action: Action }) {
     }
   }
 
-  function set(key: string, value: string) {
+  function set(key: string, value: string | boolean) {
     setValores((v) => ({ ...v, [key]: value }));
     setErrorPaso(null);
   }
@@ -160,9 +164,9 @@ export function PropietarioWizard({ action }: { action: Action }) {
   }
 
   function puedeAvanzar(): boolean {
-    if (actual.tipo === "email" && !esEmailValido(valores.email)) return false;
     if (!esRequerido(actual)) return true;
-    return valores[actual.key].trim() !== "";
+    const v = valores[actual.key];
+    return typeof v === "string" ? v.trim() !== "" : true;
   }
 
   function avanzarDesde(desde: number): number {
@@ -172,10 +176,6 @@ export function PropietarioWizard({ action }: { action: Action }) {
   }
 
   function siguiente() {
-    if (actual.tipo === "email" && !esEmailValido(valores.email)) {
-      setErrorPaso("El formato del correo no es válido.");
-      return;
-    }
     if (!puedeAvanzar()) {
       setErrorPaso("Este dato es obligatorio para continuar.");
       return;
@@ -194,16 +194,53 @@ export function PropietarioWizard({ action }: { action: Action }) {
 
   function renderInput(p: Paso, visible: boolean) {
     const val = valores[p.key];
+
+    if (p.tipo === "checkbox") {
+      if (!visible) return Boolean(val) && <input type="hidden" name={p.key} value="on" />;
+      return (
+        <label className="flex items-center justify-center gap-2 text-white">
+          <input
+            name={p.key}
+            type="checkbox"
+            value="on"
+            checked={Boolean(val)}
+            onChange={(e) => set(p.key, e.target.checked)}
+            className="h-5 w-5"
+          />
+          Sí, cobra administración
+        </label>
+      );
+    }
+
     if (!visible) {
       if (p.omitirSi?.(valores)) return null;
-      return <input type="hidden" name={p.key} value={val} />;
+      return <input type="hidden" name={p.key} value={String(val)} />;
+    }
+
+    if (p.tipo === "propiedad") {
+      return (
+        <select
+          name={p.key}
+          value={String(val)}
+          onChange={(e) => set(p.key, e.target.value)}
+          className={`${ui.input} text-base`}
+          autoFocus
+        >
+          <option value="">Selecciona…</option>
+          {propiedades.map((o) => (
+            <option key={o.id} value={o.id}>
+              {o.label}
+            </option>
+          ))}
+        </select>
+      );
     }
 
     if (p.tipo === "select") {
       return (
         <select
           name={p.key}
-          value={val}
+          value={String(val)}
           onChange={(e) => set(p.key, e.target.value)}
           className={`${ui.input} text-base`}
           autoFocus
@@ -216,61 +253,41 @@ export function PropietarioWizard({ action }: { action: Action }) {
         </select>
       );
     }
-    if (p.tipo === "region") {
+
+    if (p.tipo === "fecha") {
       return (
-        <Combobox
-          name="region"
-          options={NOMBRES_REGIONES}
-          value={val}
-          onChange={(v) => {
-            set("region", v);
-            set("comuna", "");
-          }}
-          placeholder="Selecciona o escribe…"
+        <input
+          name={p.key}
+          type="date"
+          value={String(val)}
+          onChange={(e) => set(p.key, e.target.value)}
+          className={`${ui.input} text-base`}
+          autoFocus
         />
       );
     }
-    if (p.tipo === "comuna") {
+
+    if (p.tipo === "numero") {
       return (
-        <Combobox
-          name="comuna"
-          options={comunas}
-          value={val}
-          onChange={(v) => set("comuna", v)}
-          placeholder={valores.region ? "Selecciona o escribe…" : "Elige una región primero"}
-          disabled={!valores.region}
+        <input
+          name={p.key}
+          type="number"
+          inputMode="decimal"
+          step="any"
+          value={String(val)}
+          onChange={(e) => set(p.key, e.target.value)}
+          className={`${ui.input} text-base`}
+          autoFocus
         />
       );
     }
-    if (p.tipo === "banco") {
-      return (
-        <Combobox
-          name="banco"
-          options={BANCOS_CHILE}
-          value={val}
-          onChange={(v) => set("banco", v)}
-          placeholder="Selecciona o escribe…"
-        />
-      );
-    }
+
     return (
-      <input
+      <textarea
         name={p.key}
-        value={val}
-        onChange={(e) => {
-          const raw = e.target.value;
-          const formateado =
-            p.tipo === "rut"
-              ? formatearRut(raw)
-              : p.tipo === "telefono"
-                ? formatearTelefono(raw)
-                : p.tipo === "numero_cuenta"
-                  ? formatearNumeroCuenta(raw)
-                  : raw;
-          set(p.key, formateado);
-        }}
-        type={p.tipo === "email" ? "email" : p.tipo === "telefono" ? "tel" : "text"}
-        inputMode={p.tipo === "numero_cuenta" ? "numeric" : p.tipo === "telefono" ? "tel" : undefined}
+        value={String(val)}
+        onChange={(e) => set(p.key, e.target.value)}
+        rows={4}
         className={`${ui.input} text-base`}
         autoFocus
       />
@@ -297,14 +314,14 @@ export function PropietarioWizard({ action }: { action: Action }) {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
           <div className="flex w-full max-w-sm flex-col items-center gap-3 rounded-xl bg-burgundy-strong p-5 shadow-lg">
             <p className="text-center text-sm text-white">
-              Se perderá el avance de este propietario. ¿Cancelar de todas formas?
+              Se perderá el avance de este contrato. ¿Cancelar de todas formas?
             </p>
             <div className="flex gap-2">
               <button
                 type="button"
                 onClick={() => {
                   limpiarBorrador();
-                  router.push("/propietarios");
+                  router.push("/contratos");
                 }}
                 className="inline-flex items-center gap-1.5 rounded-lg bg-white px-4 py-2 text-sm font-medium text-burgundy shadow-sm transition-colors hover:bg-white/90"
               >
@@ -338,6 +355,7 @@ export function PropietarioWizard({ action }: { action: Action }) {
             {actual.pregunta}
             {esRequerido(actual) && <span className="ml-1 text-amber-300">*</span>}
           </h1>
+          {actual.ayuda && <p className="text-sm text-white/60">{actual.ayuda}</p>}
         </div>
 
         <div className="w-full max-w-sm" key={paso}>
@@ -378,7 +396,7 @@ export function PropietarioWizard({ action }: { action: Action }) {
             <button
               type="submit"
               disabled={pending}
-              className="col-span-1 inline-flex items-center justify-center gap-1.5 rounded-lg bg-white px-3 py-2 text-sm font-medium text-burgundy shadow-sm transition-colors hover:bg-white/90 disabled:pointer-events-none disabled:opacity-50"
+              className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-white px-3 py-2 text-sm font-medium text-burgundy shadow-sm transition-colors hover:bg-white/90 disabled:pointer-events-none disabled:opacity-50"
             >
               <Check size={15} /> {pending ? "Guardando…" : "Guardar"}
             </button>

@@ -298,6 +298,39 @@ export async function cambiarActivoContrato(id: string, activo: boolean) {
   revalidatePath("/contratos");
 }
 
+/**
+ * Elimina el contrato. `cargos.contrato_id` es `on delete restrict`, así
+ * que la base de datos ya bloquea el borrado si tiene cargos — aquí se
+ * traduce ese rechazo a un mensaje legible. `contratos_arrendatarios` es
+ * `cascade` (no bloquea); `documentos`/`gastos` son `set null` (no bloquean).
+ */
+export async function eliminarContrato(id: string): Promise<{ error: string | null }> {
+  const profile = await getCurrentProfile();
+  if (!profile || profile.rol !== "admin") return { error: "No autorizado." };
+
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("contratos")
+    .delete()
+    .eq("id", id)
+    .select("id");
+
+  if (error) {
+    if (error.message.includes("foreign key") || error.message.includes("violates")) {
+      return {
+        error: "No se puede eliminar: el contrato tiene cargos (cobros) asociados.",
+      };
+    }
+    return { error: "No se pudo eliminar el contrato." };
+  }
+  if (!data || data.length === 0) {
+    return { error: "No se pudo eliminar el contrato (sin permisos o ya no existe)." };
+  }
+
+  revalidatePath("/contratos");
+  return { error: null };
+}
+
 export async function asignarArrendatario(
   contratoId: string,
   _prev: ContratoFormState,

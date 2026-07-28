@@ -5,13 +5,26 @@ import type {
   ContratoConPropiedad,
   ArrendatarioVinculado,
 } from "./types";
+import type { EstadoContrato } from "@/types/database.types";
 
-export async function listContratos(): Promise<ContratoConPropiedad[]> {
+export type FiltrosContratos = {
+  estado?: string;
+  activo?: string; // "true" | "false" | undefined (todos)
+};
+
+export async function listContratos(
+  filtros: FiltrosContratos = {}
+): Promise<ContratoConPropiedad[]> {
   const supabase = await createClient();
-  const { data, error } = await supabase
+  let query = supabase
     .from("contratos")
-    .select("*, propiedades(codigo_interno, direccion, numero, departamento)")
-    .order("created_at", { ascending: false });
+    .select("*, propiedades(codigo_interno, direccion, numero, departamento)");
+
+  if (filtros.estado) query = query.eq("estado", filtros.estado as EstadoContrato);
+  if (filtros.activo === "true") query = query.eq("activo", true);
+  if (filtros.activo === "false") query = query.eq("activo", false);
+
+  const { data, error } = await query.order("created_at", { ascending: false });
 
   if (error) throw new Error(error.message);
 
@@ -30,6 +43,28 @@ export async function listContratos(): Promise<ContratoConPropiedad[]> {
     propiedad_codigo: c.propiedades?.codigo_interno ?? null,
     propiedad_label: etiquetaPropiedad(c.propiedades),
   }));
+}
+
+/**
+ * Indica si el contrato tiene cargos asociados — en ese caso no se puede
+ * eliminar (la base de datos lo impediría igual vía `on delete restrict`
+ * en `cargos.contrato_id`, pero esto permite avisarlo ANTES de que el
+ * usuario intente borrar). `contratos_arrendatarios` es `cascade` y
+ * `documentos`/`gastos` son `set null` — ninguno de esos bloquea.
+ */
+export async function tieneRelacionesBloqueantes(
+  contratoId: string
+): Promise<{ bloqueada: boolean; motivo: string | null }> {
+  const supabase = await createClient();
+  const { count } = await supabase
+    .from("cargos")
+    .select("id", { count: "exact", head: true })
+    .eq("contrato_id", contratoId);
+
+  if ((count ?? 0) > 0) {
+    return { bloqueada: true, motivo: "tiene cargos (cobros) asociados." };
+  }
+  return { bloqueada: false, motivo: null };
 }
 
 export async function getContrato(id: string): Promise<Contrato | null> {

@@ -1,24 +1,13 @@
-import { ContratoForm } from "@/features/contratos/contrato-form";
+import { ContratoWizard } from "@/features/contratos/contrato-wizard";
 import { crearContrato } from "@/features/contratos/actions";
 import { listPropiedades } from "@/features/propiedades/queries";
+import { etiquetaPropiedad } from "@/lib/propiedad";
 
 export default async function NuevoContratoPage() {
   const propiedades = await listPropiedades();
   const opciones = propiedades
     .filter((p) => p.activo)
-    .map((p) => ({
-      id: p.id,
-      label: `${p.codigo_interno ? `${p.codigo_interno} · ` : ""}${
-        p.direccion ?? "(sin dirección)"
-      }${p.numero ? ` ${p.numero}` : ""}`,
-    }));
+    .map((p) => ({ id: p.id, label: etiquetaPropiedad(p) }));
 
-  return (
-    <div className="flex flex-col gap-6">
-      <h1 className="text-2xl font-semibold tracking-tight text-ink">
-        Nuevo contrato
-      </h1>
-      <ContratoForm action={crearContrato} propiedades={opciones} />
-    </div>
-  );
+  return <ContratoWizard action={crearContrato} propiedades={opciones} />;
 }

@@ -1,19 +1,19 @@
 import { notFound } from "next/navigation";
-import { ContratoForm } from "@/features/contratos/contrato-form";
-import { AsignarArrendatario } from "@/features/contratos/asignar-arrendatario";
+import {
+  getContrato,
+  getArrendatariosDeContrato,
+  tieneRelacionesBloqueantes,
+} from "@/features/contratos/queries";
 import {
   actualizarContrato,
   asignarArrendatario,
   quitarArrendatario,
 } from "@/features/contratos/actions";
-import {
-  getContrato,
-  getArrendatariosDeContrato,
-} from "@/features/contratos/queries";
 import { listPropiedades } from "@/features/propiedades/queries";
 import { listArrendatarios } from "@/features/arrendatarios/queries";
 import { etiquetaPropiedad } from "@/lib/propiedad";
-import { ui } from "@/components/ui";
+import { DetalleContrato } from "@/features/contratos/detalle-contrato";
+import { AsignarArrendatario } from "@/features/contratos/asignar-arrendatario";
 
 function nombreArrendatario(a: {
   tipo_persona: string;
@@ -31,13 +31,17 @@ export default async function DetalleContratoPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const [contrato, vinculados, propiedades, arrendatarios] = await Promise.all([
+  const [contrato, vinculados, propiedades, arrendatarios, relaciones] = await Promise.all([
     getContrato(id),
     getArrendatariosDeContrato(id),
     listPropiedades(),
     listArrendatarios(),
+    tieneRelacionesBloqueantes(id),
   ]);
   if (!contrato) notFound();
+
+  const propiedadActual = propiedades.find((p) => p.id === contrato.propiedad_id);
+  const propiedadLabel = etiquetaPropiedad(propiedadActual);
 
   const opcionesPropiedades = propiedades
     .filter((p) => p.activo || p.id === contrato.propiedad_id)
@@ -49,39 +53,41 @@ export default async function DetalleContratoPage({
     .map((a) => ({ id: a.id, label: `${nombreArrendatario(a)} · ${a.rut}` }));
 
   return (
-    <div className="flex flex-col gap-10">
-      <section className="flex flex-col gap-6">
-        <h1 className="text-2xl font-semibold tracking-tight text-ink">
-          Editar contrato
-        </h1>
-        <ContratoForm
-          action={actualizarContrato.bind(null, id)}
-          contrato={contrato}
-          propiedades={opcionesPropiedades}
-        />
-      </section>
+    <div className="flex flex-col gap-6">
+      <DetalleContrato
+        id={id}
+        contrato={contrato}
+        propiedadLabel={propiedadLabel}
+        propiedades={opcionesPropiedades}
+        actualizarAction={actualizarContrato}
+        eliminacionBloqueada={relaciones}
+      />
 
-      <section className="flex flex-col gap-4">
-        <h2 className="text-lg font-semibold text-ink">Arrendatarios del contrato</h2>
+      <div className="rounded-2xl bg-burgundy p-6">
+        <h2 className="mb-4 text-sm font-semibold text-white">Arrendatarios del contrato</h2>
 
         {vinculados.length > 0 && (
-          <div className={`${ui.card} overflow-hidden`}>
+          <div className="mb-4 overflow-hidden rounded-xl bg-burgundy-strong">
             <table className="w-full">
-              <thead className="border-b border-line bg-stone-50/60">
+              <thead className="border-b border-white/15">
                 <tr>
-                  <th className={ui.th}>Arrendatario</th>
-                  <th className={ui.th}>RUT</th>
-                  <th className={ui.th}></th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-white/60">
+                    Arrendatario
+                  </th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-white/60">
+                    RUT
+                  </th>
+                  <th className="px-4 py-3"></th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-line">
+              <tbody className="divide-y divide-white/15">
                 {vinculados.map((v) => (
                   <tr key={v.vinculo_id}>
-                    <td className={`${ui.td} font-medium`}>{v.nombre}</td>
-                    <td className={`${ui.td} text-muted`}>{v.rut}</td>
-                    <td className={`${ui.td} text-right`}>
+                    <td className="px-4 py-3 text-sm font-medium text-white">{v.nombre}</td>
+                    <td className="px-4 py-3 text-sm text-white/70">{v.rut}</td>
+                    <td className="px-4 py-3 text-right">
                       <form action={quitarArrendatario.bind(null, v.vinculo_id, id)}>
-                        <button type="submit" className="text-sm text-red-600 hover:text-red-700">
+                        <button type="submit" className="text-sm text-red-300 hover:text-red-200">
                           Quitar
                         </button>
                       </form>
@@ -93,14 +99,14 @@ export default async function DetalleContratoPage({
           </div>
         )}
 
-        <div className={`${ui.card} p-4`}>
-          <h3 className="mb-3 text-sm font-semibold text-ink">Asignar arrendatario</h3>
+        <div className="rounded-xl bg-burgundy-strong p-4">
+          <h3 className="mb-3 text-sm font-semibold text-white">Asignar arrendatario</h3>
           <AsignarArrendatario
             action={asignarArrendatario.bind(null, id)}
             opciones={opcionesArrendatarios}
           />
         </div>
-      </section>
+      </div>
     </div>
   );
 }

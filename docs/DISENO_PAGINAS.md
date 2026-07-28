@@ -1,6 +1,6 @@
 # Diseño de páginas — RZK Prop
 
-> **Estado: cerrado sobre Propiedades, ya replicado en Arrendatarios y Propietarios.** Este documento es la fuente de verdad del formato de página (listado, detalle+edición, creación) para todo el sistema. Implementación de referencia: `src/features/propiedades/`, `src/features/arrendatarios/`, `src/features/propietarios/`. **Pendiente: Contratos** (ver sección final — es más complejo por sus relaciones obligatorias con propiedad/arrendatario).
+> **Estado: cerrado y replicado en los 4 módulos activos (Propiedades, Arrendatarios, Propietarios, Contratos).** Este documento es la fuente de verdad del formato de página (listado, detalle+edición, creación) para todo el sistema. Implementación de referencia: `src/features/propiedades/`, `src/features/arrendatarios/`, `src/features/propietarios/`, `src/features/contratos/`.
 
 ## Paleta
 
@@ -91,11 +91,18 @@ Referencia: `src/features/propiedades/propiedad-wizard.tsx` (reemplazó por comp
 - Eliminar: a diferencia de Arrendatarios, aquí sí hay una FK `restrict` real (`liquidaciones.propietario_id`) que bloquea el borrado en la base de datos si el propietario tiene liquidaciones — no depende solo de una validación de aplicación. `propietarios_propiedades` es `cascade` (no bloquea); `documentos`/`gastos` son `set null` (no bloquean, quedan huérfanos).
 - Migración `0019_propietarios_delete.sql`: agrega la política RLS de DELETE que faltaba (mismo gotcha que las anteriores).
 
-## Pendiente: replicar en Contratos
+## Contratos (replicado 2026-07-27)
 
-No es copy-paste literal. Mapeo propuesto para Contratos (a confirmar con Eduardo antes de tocar código):
+Mismo patrón (tarjetas, detalle con edición en línea, wizard de creación), con estas diferencias deliberadas respecto al mapeo original propuesto:
 
-- Tarjeta: número de contrato (arriba, chico) + propiedad/dirección (abajo, grande); disclosure con canon y fechas de inicio/término.
-- **Wizard de creación — decisión ya tomada:** la propiedad y el/los arrendatario(s) se seleccionan por **combobox sobre registros ya existentes** (no se permite crear un arrendatario nuevo sobre la marcha desde el wizard de contrato — si no existe, se crea antes, aparte, en su propia pantalla).
-- Reglas de negocio activas a respetar en el orden de preguntas y validaciones: sincronización contrato↔propiedad (estado de la propiedad cambia según estado del contrato), no permitir vigente si la propiedad ya tiene otro contrato activo — esto probablemente implica que el combobox de propiedad debería excluir o advertir sobre propiedades ya arrendadas activamente, según el estado que se vaya a elegir para el contrato nuevo.
-- Eliminar: falta identificar qué tablas bloquean el borrado de un contrato (cargos/pagos, probablemente vía `on delete restrict` o similar) — repetir el mismo ejercicio de revisión de FKs que se hizo para Propiedades/Arrendatarios/Propietarios antes de escribir la acción de eliminar.
+- Tarjeta: número de contrato (arriba, chico) + propiedad/dirección (abajo, grande); disclosure con fechas de inicio/término y canon. Filtros colapsables por estado y activo (`filtro-contratos.tsx`).
+- Detalle: bloques Propiedad y estado, Fechas, Canon y reajuste (periodicidad solo visible si el reajuste no es "sin_reajuste"), Comisión y administración (comisión/administración monto-o-% solo visibles si aplica), Observaciones. Propiedad se edita con un `<select>` (no `Combobox`) — decisión de alcance: el `Combobox` genérico del proyecto asume que el valor mostrado y el valor guardado son el mismo string (funciona para Región/Comuna/Banco), pero Propiedad necesita id≠label; construir un combobox con búsqueda que preserve el id quedó fuera de esta sesión. Con pocas propiedades reales, el `<select>` nativo es suficiente — revisar si la lista crece mucho.
+- **Arrendatarios del contrato**: a diferencia de Propiedades (que separó la gestión de copropietarios a una ruta `/editar` aparte), en Contratos la tabla de arrendatarios vinculados + el formulario de asignar quedaron **embebidos directamente en `/contratos/[id]`** (mismo panel burdeo, debajo del detalle) — no existe ruta `/contratos/[id]/editar`. Es una sola relación N:M relativamente simple, no justificaba una pantalla aparte.
+- **Wizard de creación**: solo pide datos propios del contrato (propiedad, fechas, canon, reajuste, comisión, administración, observaciones) — **no** pide arrendatarios ahí. Los arrendatarios se asignan después, desde el detalle del contrato recién creado. Esto replica el comportamiento que la pantalla de creación ya tenía antes del rediseño (nunca pidió arrendatario), así que no es una regresión.
+- Eliminar: `cargos.contrato_id` es `on delete restrict` — bloquea el borrado si el contrato tiene cargos (cobros) generados; se valida proactivamente en `tieneRelacionesBloqueantes` antes de ofrecer el botón. `contratos_arrendatarios` es `cascade`, `documentos`/`gastos` son `set null` — ninguno de esos dos bloquea. Migración `0020_contratos_delete.sql` agrega la política RLS de DELETE que faltaba (mismo gotcha que las 3 anteriores).
+
+### Bug encontrado y corregido: el input del wizard no se guardaba en la última pregunta
+
+Al construir el wizard de Contratos se encontró un bug real ya presente en los 3 wizards existentes (Propiedades, Arrendatarios, Propietarios): el input **actualmente visible** (la pregunta que se está respondiendo) nunca tenía atributo `name` — solo los inputs ocultos de las preguntas ya respondidas lo tenían. Un `<input>`/`<select>`/`<textarea>` sin `name` no se incluye en el `FormData` al enviar el formulario. Efecto concreto: **el valor de la última pregunta de cada wizard nunca se guardaba**, sin importar lo que el usuario escribiera ahí (`rut_titular` en Propietarios, `numero` en Arrendatarios, `observaciones` en Propiedades). Pasaba desapercibido porque los 3 campos afectados son opcionales — se veía como "no lo llenó", no como un error.
+
+Corregido en esta sesión agregando `name={p.key}` (o el nombre correspondiente) a cada rama de input visible en los 3 wizards existentes, y construyendo `contrato-wizard.tsx` con `name` desde el inicio. Región/Comuna/Banco no tenían este problema porque usan `Combobox`, que siempre renderiza su propio input oculto con `name` independientemente de si está "visible" o no.

@@ -214,6 +214,7 @@ export function PropiedadWizard({ action }: { action: Action }) {
       case "select":
         return visible ? (
           <select
+            name={p.key}
             value={String(val)}
             onChange={(e) => set(p.key, e.target.value)}
             className={`${ui.input} text-base`}
@@ -264,6 +265,7 @@ export function PropiedadWizard({ action }: { action: Action }) {
         if (p.key === "rol_sii") {
           return (
             <input
+              name={p.key}
               value={String(val)}
               onChange={(e) => set(p.key, formatRol(e.target.value))}
               inputMode="numeric"
@@ -275,6 +277,7 @@ export function PropiedadWizard({ action }: { action: Action }) {
         }
         return (
           <input
+            name={p.key}
             value={String(val)}
             onChange={(e) => set(p.key, e.target.value)}
             className={`${ui.input} text-base`}
@@ -286,6 +289,7 @@ export function PropiedadWizard({ action }: { action: Action }) {
         const esEntero = p.key === "numero";
         return visible ? (
           <input
+            name={p.key}
             type="number"
             inputMode={esEntero ? "numeric" : "decimal"}
             step={esEntero ? "1" : "any"}
@@ -302,6 +306,7 @@ export function PropiedadWizard({ action }: { action: Action }) {
       case "fecha":
         return visible ? (
           <input
+            name={p.key}
             type="date"
             value={String(val)}
             onChange={(e) => set(p.key, e.target.value)}
@@ -315,6 +320,7 @@ export function PropiedadWizard({ action }: { action: Action }) {
       case "textarea":
         return visible ? (
           <textarea
+            name={p.key}
             value={String(val)}
             onChange={(e) => set(p.key, e.target.value)}
             rows={4}
@@ -329,7 +335,9 @@ export function PropiedadWizard({ action }: { action: Action }) {
         return visible ? (
           <label className="flex items-center justify-center gap-2 text-white">
             <input
+              name={p.key}
               type="checkbox"
+              value="on"
               checked={Boolean(val)}
               onChange={(e) => set(p.key, e.target.checked)}
               className="h-5 w-5"
@@ -358,6 +366,7 @@ export function PropiedadWizard({ action }: { action: Action }) {
             </label>
             {tiene && (
               <input
+                name="estacionamientos"
                 type="number"
                 inputMode="numeric"
                 min="1"
@@ -390,6 +399,7 @@ export function PropiedadWizard({ action }: { action: Action }) {
             </label>
             {tiene && (
               <input
+                name="bodegas"
                 type="number"
                 inputMode="numeric"
                 min="1"

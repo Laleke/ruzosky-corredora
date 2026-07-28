@@ -20,7 +20,7 @@ export function AsignarArrendatario({
 
   if (opciones.length === 0) {
     return (
-      <p className="text-sm opacity-60">
+      <p className="text-sm text-white/60">
         No hay arrendatarios activos para asignar. Crea uno primero.
       </p>
     );
@@ -29,7 +29,7 @@ export function AsignarArrendatario({
   return (
     <form action={formAction} className="flex flex-wrap items-end gap-3">
       <label className="flex flex-col gap-1 text-sm">
-        <span className="font-medium">Arrendatario</span>
+        <span className="font-medium text-white">Arrendatario</span>
         <select name="arrendatario_id" required className={ui.input}>
           <option value="">Selecciona…</option>
           {opciones.map((o) => (
@@ -39,11 +39,15 @@ export function AsignarArrendatario({
           ))}
         </select>
       </label>
-      <button type="submit" disabled={pending} className={ui.btnPrimary}>
+      <button
+        type="submit"
+        disabled={pending}
+        className="inline-flex items-center justify-center gap-2 rounded-lg bg-white px-4 py-2 text-sm font-medium text-burgundy shadow-sm transition-colors hover:bg-white/90 disabled:pointer-events-none disabled:opacity-50"
+      >
         {pending ? "Asignando…" : "Asignar"}
       </button>
       {state.error && (
-        <p className="w-full text-sm text-red-600" role="alert">
+        <p className="w-full text-sm text-amber-200" role="alert">
           {state.error}
         </p>
       )}
