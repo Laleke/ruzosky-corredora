@@ -8,6 +8,8 @@ export type DashboardStats = {
   contratosVigentes: number;
   deudaPendiente: number;
   cargosMorosos: number;
+  propietariosActivos: number;
+  arrendatariosActivos: number;
 };
 
 /** Métricas para el dashboard. Conteos y sumas acotados al tenant por RLS. */
@@ -20,6 +22,8 @@ export async function getDashboardStats(): Promise<DashboardStats> {
     propiedadesArrendadas,
     contratosVigentes,
     cargos,
+    propietariosActivos,
+    arrendatariosActivos,
   ] = await Promise.all([
     supabase
       .from("propiedades")
@@ -38,6 +42,14 @@ export async function getDashboardStats(): Promise<DashboardStats> {
       .from("cargos")
       .select("saldo_pendiente, fecha_vencimiento")
       .gt("saldo_pendiente", 0),
+    supabase
+      .from("propietarios")
+      .select("*", { count: "exact", head: true })
+      .eq("activo", true),
+    supabase
+      .from("arrendatarios")
+      .select("*", { count: "exact", head: true })
+      .eq("activo", true),
   ]);
 
   const filas = cargos.data ?? [];
@@ -55,6 +67,8 @@ export async function getDashboardStats(): Promise<DashboardStats> {
     contratosVigentes: contratosVigentes.count ?? 0,
     deudaPendiente,
     cargosMorosos,
+    propietariosActivos: propietariosActivos.count ?? 0,
+    arrendatariosActivos: arrendatariosActivos.count ?? 0,
   };
 }
 

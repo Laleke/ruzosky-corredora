@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { ArrowLeft, Pencil, Trash2 } from "lucide-react";
 import { badge, ui } from "@/components/ui";
 import { Combobox } from "@/components/combobox";
+import { SelectStyled } from "@/components/select-styled";
 import { EmailTexto } from "@/components/email-texto";
 import { NOMBRES_REGIONES, comunasDeRegion } from "@/data/chile";
 import { BANCOS_CHILE } from "@/data/bancos";
@@ -296,17 +297,15 @@ export function DetallePropietario({
           {editando ? (
             <div>
               <dt className="text-xs uppercase tracking-wide text-white/50">Tipo de cuenta</dt>
-              <select
-                name="tipo_cuenta"
-                defaultValue={propietario.tipo_cuenta ?? ""}
-                className={`${ui.input} mt-1`}
-              >
-                {TIPO_CUENTA_OPCIONES.map((o) => (
-                  <option key={o.value} value={o.value}>
-                    {o.label}
-                  </option>
-                ))}
-              </select>
+              <div className="mt-1">
+                <SelectStyled name="tipo_cuenta" defaultValue={propietario.tipo_cuenta ?? ""}>
+                  {TIPO_CUENTA_OPCIONES.map((o) => (
+                    <option key={o.value} value={o.value}>
+                      {o.label}
+                    </option>
+                  ))}
+                </SelectStyled>
+              </div>
             </div>
           ) : (
             <Dato

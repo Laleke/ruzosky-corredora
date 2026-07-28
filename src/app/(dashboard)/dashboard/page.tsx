@@ -5,11 +5,14 @@ import {
   Wallet,
   AlertTriangle,
   ArrowRight,
+  ArrowUpRight,
   ListChecks,
+  Users,
+  UserSquare2,
+  Gauge,
 } from "lucide-react";
 import { getCurrentProfile } from "@/lib/auth";
 import { getDashboardStats, getTareasPendientes } from "@/features/dashboard/queries";
-import { ui } from "@/components/ui";
 
 /** Indicadores de futuro desarrollo: la data o la regla de negocio aún no existen. */
 const TAREAS_PROXIMAMENTE = [
@@ -38,22 +41,26 @@ function Kpi({
   return (
     <Link
       href={href}
-      className={`${ui.card} block p-5 transition hover:border-burgundy/30 hover:shadow-md`}
+      className="group flex flex-col gap-3 rounded-xl bg-burgundy p-5 shadow-sm transition hover:bg-burgundy-strong"
     >
-      <div className="flex items-center justify-between">
-        <span className="text-sm font-medium text-muted">{label}</span>
+      <div className="flex items-start justify-between gap-2">
         <span
-          className={`flex h-9 w-9 items-center justify-center rounded-lg ${
-            alerta ? "bg-amber-50 text-amber-600" : "bg-burgundy-50 text-burgundy"
+          className={`flex h-10 w-10 items-center justify-center rounded-lg ${
+            alerta ? "bg-amber-400/20 text-amber-300" : "bg-white/10 text-white"
           }`}
         >
-          <Icon size={18} />
+          <Icon size={19} />
         </span>
+        <ArrowUpRight
+          size={16}
+          className="text-white/40 transition-colors group-hover:text-white"
+        />
       </div>
-      <p className="mt-3 text-2xl font-semibold tracking-tight text-ink">
-        {valor}
-      </p>
-      {sub && <p className="mt-1 text-xs text-muted">{sub}</p>}
+      <div>
+        <p className="text-2xl font-semibold tracking-tight text-white">{valor}</p>
+        <p className="mt-0.5 text-sm font-medium text-white/70">{label}</p>
+        {sub && <p className="mt-1 text-xs text-white/50">{sub}</p>}
+      </div>
     </Link>
   );
 }
@@ -65,6 +72,10 @@ export default async function DashboardPage() {
     getTareasPendientes(),
   ]);
   const tareasConPendiente = tareas.filter((t) => t.cantidad > 0);
+  const ocupacion =
+    stats.propiedadesTotal > 0
+      ? Math.round((stats.propiedadesArrendadas / stats.propiedadesTotal) * 100)
+      : 0;
 
   return (
     <div className="flex flex-col gap-8">
@@ -86,10 +97,17 @@ export default async function DashboardPage() {
           href="/propiedades"
         />
         <Kpi
+          icon={Gauge}
+          label="Ocupación"
+          valor={`${ocupacion}%`}
+          sub="propiedades arrendadas / total"
+          href="/propiedades?estado=arrendada"
+        />
+        <Kpi
           icon={FileCheck2}
           label="Contratos vigentes"
           valor={String(stats.contratosVigentes)}
-          href="/contratos"
+          href="/contratos?estado=vigente"
         />
         <Kpi
           icon={Wallet}
@@ -105,26 +123,38 @@ export default async function DashboardPage() {
           alerta={stats.cargosMorosos > 0}
           href="/cobros"
         />
+        <Kpi
+          icon={Users}
+          label="Propietarios activos"
+          valor={String(stats.propietariosActivos)}
+          href="/propietarios"
+        />
+        <Kpi
+          icon={UserSquare2}
+          label="Arrendatarios activos"
+          valor={String(stats.arrendatariosActivos)}
+          href="/arrendatarios"
+        />
       </div>
 
-      <div className={`${ui.card} p-6`}>
-        <div className="mb-4 flex items-center gap-2 text-ink">
-          <ListChecks size={18} className="text-burgundy" />
+      <div className="rounded-2xl bg-burgundy p-6">
+        <div className="mb-4 flex items-center gap-2 text-white">
+          <ListChecks size={18} />
           <h2 className="font-semibold">Tareas pendientes</h2>
         </div>
         {tareasConPendiente.length === 0 ? (
-          <p className="text-sm text-muted">No hay tareas pendientes por ahora.</p>
+          <p className="text-sm text-white/60">No hay tareas pendientes por ahora.</p>
         ) : (
-          <ul className="flex flex-col divide-y divide-line">
+          <ul className="flex flex-col divide-y divide-white/15">
             {tareasConPendiente.map((t) => (
               <li key={t.key} className="flex items-center justify-between gap-3 py-2.5">
-                <span className="flex items-center gap-2 text-sm text-ink">
-                  {t.alerta && <AlertTriangle size={15} className="text-amber-600" />}
+                <span className="flex items-center gap-2 text-sm text-white/90">
+                  {t.alerta && <AlertTriangle size={15} className="text-amber-300" />}
                   {t.label}
                 </span>
                 <Link
                   href={t.href}
-                  className="flex items-center gap-1 text-sm font-medium text-burgundy hover:underline"
+                  className="flex items-center gap-1 text-sm font-medium text-white hover:underline"
                 >
                   {t.cantidad}
                   <ArrowRight size={14} />
@@ -134,7 +164,7 @@ export default async function DashboardPage() {
           </ul>
         )}
         {TAREAS_PROXIMAMENTE.length > 0 && (
-          <p className="mt-3 text-xs text-muted">
+          <p className="mt-3 text-xs text-white/50">
             Próximamente: {TAREAS_PROXIMAMENTE.join("; ")}.
           </p>
         )}

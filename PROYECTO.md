@@ -48,6 +48,15 @@ Eduardo confirmó que Propiedades/Arrendatarios/Propietarios quedaron bien y pid
 
 `tsc --noEmit`, `next build` y `npm test` (12/12) verdes tras el cambio.
 
+### Back button del celular, select de Tipo de cuenta, Dashboard ejecutivo (2026-07-27, misma sesión)
+
+Tres pedidos puntuales de Eduardo tras probar en el celular:
+- **Botón atrás (Android) → siempre vuelve a Dashboard**: decisión de producto explícita (no un bug), la app se comporta como una app nativa con "home" en vez de historial de navegador tradicional. Implementado en `src/components/back-to-dashboard.tsx` (monta en `DashboardLayout`, arma una "trampa" de historial por página con `pushState` + `popstate`; en `/dashboard` no hace nada). Efecto secundario aceptado y esperado: si el usuario presiona atrás a mitad de un wizard, se salta la confirmación propia de "Cancelar" del wizard — no hay pérdida de datos porque el borrador sigue en `localStorage`, pero no pasa por esa pantalla de confirmación.
+- **Select de "Tipo de cuenta" se veía distinto a los combobox**: los combobox (Región/Comuna/Banco) usan `Combobox` con buscador; los `<select>` nativos (Tipo de cuenta, Tipo de persona) tenían la flecha nativa del navegador, visualmente distinta. Se creó `src/components/select-styled.tsx` (select nativo + mismo `ui.input` + chevron superpuesto que usa `Combobox`) y se aplicó a Tipo de cuenta (detalle y wizard de Propietarios) — de paso, Tipo de persona en el wizard quedó con el mismo estilo al compartir la misma rama de render.
+- **Dashboard rediseñado** con el tema burdeo nuevo (antes tarjetas blancas `ui.card` sobre el canvas oscuro, inconsistente con el resto de la app ya rediseñada). Tarjetas KPI burdeo, cada una ya era (y sigue siendo) un `Link` a su categoría — se hizo más evidente visualmente con un ícono de flecha. Se agregaron 3 indicadores nuevos a `getDashboardStats()`: **Ocupación %** (propiedades arrendadas/total → `/propiedades?estado=arrendada`), **Propietarios activos** y **Arrendatarios activos**. "Contratos vigentes" ahora enlaza a `/contratos?estado=vigente` (usa el filtro de estado agregado esta sesión).
+
+`tsc --noEmit`, `next build` y `npm test` (12/12) verdes tras el cambio.
+
 También pendientes de ejecutar (dependientes de que Eduardo confirme fechas/datos, no urgentes):
 - `supabase/maintenance/limpiar_datos_prueba_2026-07-24.sql` (antes de cargar datos reales)
 - `supabase/maintenance/cargar_datos_reales_803_1907A.sql` (carga a Eduardo como propietario + las 2 propiedades reales + Jimmy/Paul + contratos directos — tiene 3 campos marcados "AJUSTAR" antes de correr)
