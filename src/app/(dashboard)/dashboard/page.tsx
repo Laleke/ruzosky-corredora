@@ -41,26 +41,26 @@ function Kpi({
   return (
     <Link
       href={href}
-      className="group flex flex-col gap-3 rounded-xl bg-burgundy p-5 shadow-sm transition hover:bg-burgundy-strong"
+      className="group flex items-center gap-3 rounded-xl bg-burgundy p-4 shadow-sm transition hover:bg-burgundy-strong"
     >
-      <div className="flex items-start justify-between gap-2">
-        <span
-          className={`flex h-10 w-10 items-center justify-center rounded-lg ${
-            alerta ? "bg-amber-400/20 text-amber-300" : "bg-white/10 text-white"
-          }`}
-        >
-          <Icon size={19} />
-        </span>
-        <ArrowUpRight
-          size={16}
-          className="text-white/40 transition-colors group-hover:text-white"
-        />
+      <span
+        className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg ${
+          alerta ? "bg-amber-400/20 text-amber-300" : "bg-white/10 text-white"
+        }`}
+      >
+        <Icon size={19} />
+      </span>
+      <div className="min-w-0 flex-1">
+        <div className="flex items-baseline gap-2">
+          <p className="text-xl font-semibold tracking-tight text-white">{valor}</p>
+          <p className="truncate text-sm font-medium text-white/70">{label}</p>
+        </div>
+        {sub && <p className="truncate text-xs text-white/50">{sub}</p>}
       </div>
-      <div>
-        <p className="text-2xl font-semibold tracking-tight text-white">{valor}</p>
-        <p className="mt-0.5 text-sm font-medium text-white/70">{label}</p>
-        {sub && <p className="mt-1 text-xs text-white/50">{sub}</p>}
-      </div>
+      <ArrowUpRight
+        size={16}
+        className="shrink-0 text-white/40 transition-colors group-hover:text-white"
+      />
     </Link>
   );
 }
