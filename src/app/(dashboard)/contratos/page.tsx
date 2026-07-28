@@ -55,10 +55,7 @@ export default async function ContratosPage({
                 <div className="flex items-start justify-between gap-2">
                   <div>
                     <p className="text-xs text-white/60">{c.numero_contrato ?? "—"}</p>
-                    <p className="font-medium text-white">
-                      {c.propiedad_codigo ? `${c.propiedad_codigo} · ` : ""}
-                      {c.propiedad_direccion}
-                    </p>
+                    <p className="font-medium text-white">{c.propiedad_direccion}</p>
                   </div>
                   <span className={badge(est.tone)}>{est.label}</span>
                 </div>
@@ -69,9 +66,10 @@ export default async function ContratosPage({
                       <Info size={14} /> Ver más información
                     </summary>
                     <div className="mt-2 flex flex-col gap-1 text-sm text-white/80">
+                      <span>Arrendatario: {c.arrendatarios_nombres.join(", ") || "—"}</span>
                       <span>Inicio: {c.fecha_inicio}</span>
                       <span>Término: {c.fecha_termino ?? "—"}</span>
-                      <span>{formatoCanon(c.canon_monto, c.canon_moneda)}</span>
+                      <span>Canon: {formatoCanon(c.canon_actual ?? c.canon_monto, c.canon_moneda)}</span>
                     </div>
                   </details>
 

@@ -1,15 +1,11 @@
 import Link from "next/link";
 import {
   Building2,
-  FileCheck2,
   Wallet,
   AlertTriangle,
   ArrowRight,
   ArrowUpRight,
   ListChecks,
-  Users,
-  UserSquare2,
-  Gauge,
 } from "lucide-react";
 import { getCurrentProfile } from "@/lib/auth";
 import { getDashboardStats, getTareasPendientes } from "@/features/dashboard/queries";
@@ -72,10 +68,6 @@ export default async function DashboardPage() {
     getTareasPendientes(),
   ]);
   const tareasConPendiente = tareas.filter((t) => t.cantidad > 0);
-  const ocupacion =
-    stats.propiedadesTotal > 0
-      ? Math.round((stats.propiedadesArrendadas / stats.propiedadesTotal) * 100)
-      : 0;
 
   return (
     <div className="flex flex-col gap-8">
@@ -88,26 +80,13 @@ export default async function DashboardPage() {
         </p>
       </div>
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
         <Kpi
           icon={Building2}
           label="Propiedades"
           valor={String(stats.propiedadesTotal)}
           sub={`${stats.propiedadesArrendadas} arrendadas`}
           href="/propiedades"
-        />
-        <Kpi
-          icon={Gauge}
-          label="Ocupación"
-          valor={`${ocupacion}%`}
-          sub="propiedades arrendadas / total"
-          href="/propiedades?estado=arrendada"
-        />
-        <Kpi
-          icon={FileCheck2}
-          label="Contratos vigentes"
-          valor={String(stats.contratosVigentes)}
-          href="/contratos?estado=vigente"
         />
         <Kpi
           icon={Wallet}
@@ -122,18 +101,6 @@ export default async function DashboardPage() {
           sub="vencidos con saldo"
           alerta={stats.cargosMorosos > 0}
           href="/cobros"
-        />
-        <Kpi
-          icon={Users}
-          label="Propietarios activos"
-          valor={String(stats.propietariosActivos)}
-          href="/propietarios"
-        />
-        <Kpi
-          icon={UserSquare2}
-          label="Arrendatarios activos"
-          valor={String(stats.arrendatariosActivos)}
-          href="/arrendatarios"
         />
       </div>
 

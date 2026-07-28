@@ -7,9 +7,10 @@ export type ContratoInsert =
 /** Contrato con datos resumidos de su propiedad (para listado). */
 export type ContratoConPropiedad = Contrato & {
   propiedad_direccion: string;
-  propiedad_codigo: string | null;
   /** Etiqueta descriptiva unificada (código · calle número · unidad). */
   propiedad_label: string;
+  /** Nombres de los arrendatarios vinculados (para el listado). */
+  arrendatarios_nombres: string[];
 };
 
 /** Arrendatario vinculado a un contrato. */

@@ -12,7 +12,7 @@ type Action = (
   formData: FormData
 ) => Promise<ContratoFormState>;
 
-type TipoPaso = "propiedad" | "select" | "fecha" | "numero" | "checkbox" | "textarea";
+type TipoPaso = "propiedad" | "select" | "fecha" | "numero" | "entero" | "checkbox" | "textarea";
 
 type Paso = {
   key: string;
@@ -94,7 +94,7 @@ export function ContratoWizard({
     {
       key: "periodicidad_reajuste_meses",
       pregunta: "¿Cada cuántos meses se reajusta?",
-      tipo: "numero",
+      tipo: "entero",
       requerido: (v) => v.reajuste_tipo !== "sin_reajuste",
       omitirSi: (v) => v.reajuste_tipo === "sin_reajuste",
     },
@@ -267,13 +267,12 @@ export function ContratoWizard({
       );
     }
 
-    if (p.tipo === "numero") {
+    if (p.tipo === "numero" || p.tipo === "entero") {
       return (
         <input
           name={p.key}
-          type="number"
-          inputMode="decimal"
-          step="any"
+          type="text"
+          inputMode={p.tipo === "entero" ? "numeric" : "decimal"}
           value={String(val)}
           onChange={(e) => set(p.key, e.target.value)}
           className={`${ui.input} text-base`}

@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { ArrowLeft, Pencil, Trash2 } from "lucide-react";
 import { badge, ui } from "@/components/ui";
 import { Combobox } from "@/components/combobox";
+import { FechaInput } from "@/components/fecha-input";
 import { NOMBRES_REGIONES, comunasDeRegion } from "@/data/chile";
 import { eliminarPropiedad, type actualizarPropiedad } from "./actions";
 import type { Propiedad } from "./types";
@@ -68,14 +69,19 @@ function Campo({
     <div>
       <dt className="text-xs uppercase tracking-wide text-white/50">{label}</dt>
       {editando ? (
-        <input
-          name={name}
-          type={type}
-          inputMode={type === "number" ? "decimal" : undefined}
-          step={type === "number" ? "any" : undefined}
-          defaultValue={value ?? ""}
-          className={`${ui.input} mt-1`}
-        />
+        type === "date" ? (
+          <div className="mt-1">
+            <FechaInput name={name} defaultValue={value as string | null} />
+          </div>
+        ) : (
+          <input
+            name={name}
+            type={type === "number" ? "text" : type}
+            inputMode={type === "number" ? "decimal" : undefined}
+            defaultValue={value ?? ""}
+            className={`${ui.input} mt-1`}
+          />
+        )
       ) : (
         <dd className="mt-0.5 text-sm text-white">{displayValue ?? (value || "—")}</dd>
       )}

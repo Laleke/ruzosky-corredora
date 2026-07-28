@@ -12,13 +12,29 @@ export type FiltrosContratos = {
   activo?: string; // "true" | "false" | undefined (todos)
 };
 
+type ArrendatarioResumen = {
+  nombre: string | null;
+  apellido: string | null;
+  razon_social: string | null;
+  tipo_persona: string;
+};
+
+function nombreArrendatario(a: ArrendatarioResumen | null): string {
+  if (!a) return "—";
+  return a.tipo_persona === "persona_juridica"
+    ? a.razon_social ?? "—"
+    : [a.nombre, a.apellido].filter(Boolean).join(" ") || "—";
+}
+
 export async function listContratos(
   filtros: FiltrosContratos = {}
 ): Promise<ContratoConPropiedad[]> {
   const supabase = await createClient();
   let query = supabase
     .from("contratos")
-    .select("*, propiedades(codigo_interno, direccion, numero, departamento)");
+    .select(
+      "*, propiedades(codigo_interno, direccion, numero, departamento), contratos_arrendatarios(arrendatarios(nombre, apellido, razon_social, tipo_persona))"
+    );
 
   if (filtros.estado) query = query.eq("estado", filtros.estado as EstadoContrato);
   if (filtros.activo === "true") query = query.eq("activo", true);
@@ -35,13 +51,16 @@ export async function listContratos(
       numero: string | null;
       departamento: string | null;
     } | null;
+    contratos_arrendatarios: { arrendatarios: ArrendatarioResumen | null }[];
   };
 
   return ((data ?? []) as unknown as Row[]).map((c) => ({
     ...c,
     propiedad_direccion: c.propiedades?.direccion ?? "—",
-    propiedad_codigo: c.propiedades?.codigo_interno ?? null,
     propiedad_label: etiquetaPropiedad(c.propiedades),
+    arrendatarios_nombres: c.contratos_arrendatarios.map((v) =>
+      nombreArrendatario(v.arrendatarios)
+    ),
   }));
 }
 
@@ -94,26 +113,13 @@ export async function getArrendatariosDeContrato(
   type Row = {
     id: string;
     arrendatario_id: string;
-    arrendatarios: {
-      rut: string;
-      nombre: string | null;
-      apellido: string | null;
-      razon_social: string | null;
-      tipo_persona: string;
-    } | null;
+    arrendatarios: (ArrendatarioResumen & { rut: string }) | null;
   };
 
-  return ((data ?? []) as unknown as Row[]).map((r) => {
-    const a = r.arrendatarios;
-    const nombre =
-      a?.tipo_persona === "persona_juridica"
-        ? a?.razon_social ?? "—"
-        : [a?.nombre, a?.apellido].filter(Boolean).join(" ") || "—";
-    return {
-      vinculo_id: r.id,
-      arrendatario_id: r.arrendatario_id,
-      nombre,
-      rut: a?.rut ?? "—",
-    };
-  });
+  return ((data ?? []) as unknown as Row[]).map((r) => ({
+    vinculo_id: r.id,
+    arrendatario_id: r.arrendatario_id,
+    nombre: nombreArrendatario(r.arrendatarios),
+    rut: r.arrendatarios?.rut ?? "—",
+  }));
 }

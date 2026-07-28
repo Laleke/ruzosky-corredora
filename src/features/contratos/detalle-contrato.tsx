@@ -60,17 +60,17 @@ function Campo({
   name: string;
   value?: string | number | null;
   displayValue?: React.ReactNode;
-  type?: "text" | "number" | "date";
+  type?: "text" | "number" | "entero" | "date";
 }) {
+  const esNumerico = type === "number" || type === "entero";
   return (
     <div>
       <dt className="text-xs uppercase tracking-wide text-white/50">{label}</dt>
       {editando ? (
         <input
           name={name}
-          type={type}
-          inputMode={type === "number" ? "decimal" : undefined}
-          step={type === "number" ? "any" : undefined}
+          type={esNumerico ? "text" : type}
+          inputMode={esNumerico ? (type === "entero" ? "numeric" : "decimal") : undefined}
           defaultValue={value ?? ""}
           className={`${ui.input} mt-1`}
         />
@@ -224,11 +224,19 @@ export function DetalleContrato({
         <Bloque titulo="Canon y reajuste">
           <Campo
             editando={editando}
-            label="Canon"
+            label="Canon contrato (original)"
             name="canon_monto"
             type="number"
             value={contrato.canon_monto}
             displayValue={dinero(contrato.canon_monto, contrato.canon_moneda)}
+          />
+          <Campo
+            editando={editando}
+            label="Canon actual (transferencia)"
+            name="canon_actual"
+            type="number"
+            value={contrato.canon_actual ?? contrato.canon_monto}
+            displayValue={dinero(contrato.canon_actual ?? contrato.canon_monto, contrato.canon_moneda)}
           />
           {editando ? (
             <div>
@@ -268,7 +276,7 @@ export function DetalleContrato({
               editando={editando}
               label="Periodicidad (meses)"
               name="periodicidad_reajuste_meses"
-              type="number"
+              type="entero"
               value={contrato.periodicidad_reajuste_meses}
             />
           )}

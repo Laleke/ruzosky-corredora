@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentProfile } from "@/lib/auth";
+import { parseDecimal } from "@/lib/numero";
 import type { ContratoInsert } from "./types";
 import type {
   Database,
@@ -36,10 +37,7 @@ function entero(formData: FormData, campo: string): number | null {
 }
 
 function decimal(formData: FormData, campo: string): number | null {
-  const v = texto(formData, campo);
-  if (v === null) return null;
-  const n = Number(v.replace(",", "."));
-  return Number.isFinite(n) ? n : null;
+  return parseDecimal(texto(formData, campo));
 }
 
 /** ¿Existe otro contrato activo (vigente/renovado) en la propiedad? */
@@ -125,6 +123,8 @@ function parse(
   if (canon_monto === null || canon_monto <= 0) {
     return { error: "El canon debe ser mayor a 0." };
   }
+  // Monto vigente hoy (tras reajustes); si no se edita, sigue al canon original.
+  const canon_actual = decimal(formData, "canon_actual") ?? canon_monto;
 
   const canon_moneda =
     String(formData.get("canon_moneda") ?? "CLP") === "UF" ? "UF" : "CLP";
@@ -185,6 +185,7 @@ function parse(
       fecha_inicio,
       fecha_termino: texto(formData, "fecha_termino"),
       canon_monto,
+      canon_actual,
       canon_moneda: canon_moneda as Moneda,
       reajuste_tipo,
       periodicidad_reajuste_meses,

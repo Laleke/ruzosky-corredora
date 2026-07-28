@@ -5,11 +5,8 @@ import { listContratosSinArriendo } from "@/features/cobros/queries";
 export type DashboardStats = {
   propiedadesTotal: number;
   propiedadesArrendadas: number;
-  contratosVigentes: number;
   deudaPendiente: number;
   cargosMorosos: number;
-  propietariosActivos: number;
-  arrendatariosActivos: number;
 };
 
 /** Métricas para el dashboard. Conteos y sumas acotados al tenant por RLS. */
@@ -17,14 +14,7 @@ export async function getDashboardStats(): Promise<DashboardStats> {
   const supabase = await createClient();
   const hoy = new Date().toISOString().slice(0, 10);
 
-  const [
-    propiedadesTotal,
-    propiedadesArrendadas,
-    contratosVigentes,
-    cargos,
-    propietariosActivos,
-    arrendatariosActivos,
-  ] = await Promise.all([
+  const [propiedadesTotal, propiedadesArrendadas, cargos] = await Promise.all([
     supabase
       .from("propiedades")
       .select("*", { count: "exact", head: true })
@@ -34,22 +24,9 @@ export async function getDashboardStats(): Promise<DashboardStats> {
       .select("*", { count: "exact", head: true })
       .eq("estado", "arrendada"),
     supabase
-      .from("contratos")
-      .select("*", { count: "exact", head: true })
-      .in("estado", ["vigente", "renovado"])
-      .eq("activo", true),
-    supabase
       .from("cargos")
       .select("saldo_pendiente, fecha_vencimiento")
       .gt("saldo_pendiente", 0),
-    supabase
-      .from("propietarios")
-      .select("*", { count: "exact", head: true })
-      .eq("activo", true),
-    supabase
-      .from("arrendatarios")
-      .select("*", { count: "exact", head: true })
-      .eq("activo", true),
   ]);
 
   const filas = cargos.data ?? [];
@@ -64,11 +41,8 @@ export async function getDashboardStats(): Promise<DashboardStats> {
   return {
     propiedadesTotal: propiedadesTotal.count ?? 0,
     propiedadesArrendadas: propiedadesArrendadas.count ?? 0,
-    contratosVigentes: contratosVigentes.count ?? 0,
     deudaPendiente,
     cargosMorosos,
-    propietariosActivos: propietariosActivos.count ?? 0,
-    arrendatariosActivos: arrendatariosActivos.count ?? 0,
   };
 }
 

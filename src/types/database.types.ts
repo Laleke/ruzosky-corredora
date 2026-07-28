@@ -393,6 +393,7 @@ export type Database = {
           fecha_inicio: string;
           fecha_termino: string | null;
           canon_monto: number;
+          canon_actual: number | null;
           canon_moneda: Moneda;
           reajuste_tipo: ReajusteTipo;
           periodicidad_reajuste_meses: number | null;
@@ -417,6 +418,7 @@ export type Database = {
           fecha_inicio: string;
           fecha_termino?: string | null;
           canon_monto: number;
+          canon_actual?: number | null;
           canon_moneda?: Moneda;
           reajuste_tipo?: ReajusteTipo;
           periodicidad_reajuste_meses?: number | null;
@@ -441,6 +443,7 @@ export type Database = {
           fecha_inicio?: string;
           fecha_termino?: string | null;
           canon_monto?: number;
+          canon_actual?: number | null;
           canon_moneda?: Moneda;
           reajuste_tipo?: ReajusteTipo;
           periodicidad_reajuste_meses?: number | null;

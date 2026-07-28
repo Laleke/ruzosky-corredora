@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentProfile } from "@/lib/auth";
+import { parseDecimal } from "@/lib/numero";
 import type { PropiedadInsert } from "./types";
 import type {
   Database,
@@ -39,10 +40,7 @@ function entero(formData: FormData, campo: string): number | null {
 }
 
 function decimal(formData: FormData, campo: string): number | null {
-  const v = texto(formData, campo);
-  if (v === null) return null;
-  const n = Number(v.replace(",", "."));
-  return Number.isFinite(n) ? n : null;
+  return parseDecimal(texto(formData, campo));
 }
 
 /** Iniciales de comuna: primeras letras de las 2 palabras significativas, o 2 letras. */

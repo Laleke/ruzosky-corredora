@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Check } from "lucide-react";
 import { actualizarParticipacion } from "./actions";
+import { parseDecimal } from "@/lib/numero";
 
 export function EditarParticipacion({
   vinculoId,
@@ -18,11 +19,11 @@ export function EditarParticipacion({
   const [pct, setPct] = useState(String(valor));
   const [pending, setPending] = useState(false);
 
-  const cambiado = Number(pct) !== Number(valor);
+  const cambiado = (parseDecimal(pct) ?? 0) !== Number(valor);
 
   async function guardar() {
     setPending(true);
-    const res = await actualizarParticipacion(vinculoId, propiedadId, Number(pct));
+    const res = await actualizarParticipacion(vinculoId, propiedadId, parseDecimal(pct) ?? 0);
     setPending(false);
     if (res.error) alert(res.error);
     else router.refresh();
@@ -31,14 +32,13 @@ export function EditarParticipacion({
   return (
     <span className="flex items-center gap-1.5">
       <input
-        type="number"
-        min="0"
-        max="100"
+        type="text"
+        inputMode="decimal"
         value={pct}
         onChange={(e) => setPct(e.target.value)}
         onBlur={() => {
-          const n = Number(pct);
-          if (Number.isFinite(n)) setPct(String(n));
+          const n = parseDecimal(pct);
+          if (n !== null) setPct(String(n));
         }}
         className="w-16 rounded-lg border border-line bg-white px-2 py-1 text-right text-sm text-ink outline-none focus:border-burgundy"
       />

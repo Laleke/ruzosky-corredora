@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { ArrowLeft, ArrowRight, Check } from "lucide-react";
 import { ui } from "@/components/ui";
 import { Combobox } from "@/components/combobox";
+import { FechaInput } from "@/components/fecha-input";
 import { NOMBRES_REGIONES, comunasDeRegion } from "@/data/chile";
 import type { PropiedadFormState } from "./actions";
 
@@ -290,9 +291,8 @@ export function PropiedadWizard({ action }: { action: Action }) {
         return visible ? (
           <input
             name={p.key}
-            type="number"
+            type="text"
             inputMode={esEntero ? "numeric" : "decimal"}
-            step={esEntero ? "1" : "any"}
             value={String(val)}
             onChange={(e) => set(p.key, e.target.value)}
             className={`${ui.input} text-base`}
@@ -305,13 +305,10 @@ export function PropiedadWizard({ action }: { action: Action }) {
 
       case "fecha":
         return visible ? (
-          <input
+          <FechaInput
             name={p.key}
-            type="date"
             value={String(val)}
-            onChange={(e) => set(p.key, e.target.value)}
-            className={`${ui.input} text-base`}
-            autoFocus
+            onChange={(v) => set(p.key, v)}
           />
         ) : (
           <input type="hidden" name={p.key} value={String(val)} />
