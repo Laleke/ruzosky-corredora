@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { ArrowLeft, Pencil, Trash2 } from "lucide-react";
 import { badge, ui } from "@/components/ui";
 import { Combobox } from "@/components/combobox";
-import { SelectStyled } from "@/components/select-styled";
+import { SelectCombo } from "@/components/select-combo";
 import { EmailTexto } from "@/components/email-texto";
 import { NOMBRES_REGIONES, comunasDeRegion } from "@/data/chile";
 import { BANCOS_CHILE } from "@/data/bancos";
@@ -126,6 +126,7 @@ export function DetallePropietario({
   const [region, setRegion] = useState(propietario.region ?? "");
   const [comuna, setComuna] = useState(propietario.comuna ?? "");
   const [banco, setBanco] = useState(propietario.banco ?? "");
+  const [tipoCuenta, setTipoCuenta] = useState(propietario.tipo_cuenta ?? "");
   const comunas = useMemo(() => comunasDeRegion(region), [region]);
   const esNatural = tipoPersona === "persona_natural";
 
@@ -298,13 +299,13 @@ export function DetallePropietario({
             <div>
               <dt className="text-xs uppercase tracking-wide text-white/50">Tipo de cuenta</dt>
               <div className="mt-1">
-                <SelectStyled name="tipo_cuenta" defaultValue={propietario.tipo_cuenta ?? ""}>
-                  {TIPO_CUENTA_OPCIONES.map((o) => (
-                    <option key={o.value} value={o.value}>
-                      {o.label}
-                    </option>
-                  ))}
-                </SelectStyled>
+                <SelectCombo
+                  name="tipo_cuenta"
+                  opciones={TIPO_CUENTA_OPCIONES.filter((o) => o.value !== "")}
+                  value={tipoCuenta ?? ""}
+                  onChange={setTipoCuenta}
+                  placeholder="Selecciona o escribe…"
+                />
               </div>
             </div>
           ) : (

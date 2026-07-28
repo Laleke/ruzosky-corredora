@@ -7,6 +7,7 @@ import { ArrowLeft, ArrowRight, Check } from "lucide-react";
 import { ui } from "@/components/ui";
 import { Combobox } from "@/components/combobox";
 import { SelectStyled } from "@/components/select-styled";
+import { SelectCombo } from "@/components/select-combo";
 import { NOMBRES_REGIONES, comunasDeRegion } from "@/data/chile";
 import { BANCOS_CHILE } from "@/data/bancos";
 import { formatearRut } from "@/lib/rut";
@@ -18,7 +19,17 @@ type Action = (
   formData: FormData
 ) => Promise<PropietarioFormState>;
 
-type TipoPaso = "select" | "texto" | "region" | "comuna" | "banco" | "rut" | "telefono" | "email" | "numero_cuenta";
+type TipoPaso =
+  | "select"
+  | "texto"
+  | "region"
+  | "comuna"
+  | "banco"
+  | "cuenta"
+  | "rut"
+  | "telefono"
+  | "email"
+  | "numero_cuenta";
 
 type Paso = {
   key: string;
@@ -100,8 +111,7 @@ const PASOS: Paso[] = [
   {
     key: "tipo_cuenta",
     pregunta: "¿Qué tipo de cuenta es?",
-    tipo: "select",
-    opciones: TIPO_CUENTA_OPCIONES,
+    tipo: "cuenta",
   },
   { key: "numero_cuenta", pregunta: "¿Cuál es el número de cuenta?", tipo: "numero_cuenta" },
   { key: "titular_cuenta", pregunta: "¿A nombre de quién está la cuenta (titular)?", tipo: "texto" },
@@ -250,6 +260,17 @@ export function PropietarioWizard({ action }: { action: Action }) {
           options={BANCOS_CHILE}
           value={val}
           onChange={(v) => set("banco", v)}
+          placeholder="Selecciona o escribe…"
+        />
+      );
+    }
+    if (p.tipo === "cuenta") {
+      return (
+        <SelectCombo
+          name="tipo_cuenta"
+          opciones={TIPO_CUENTA_OPCIONES.filter((o) => o.value !== "")}
+          value={val}
+          onChange={(v) => set("tipo_cuenta", v)}
           placeholder="Selecciona o escribe…"
         />
       );
