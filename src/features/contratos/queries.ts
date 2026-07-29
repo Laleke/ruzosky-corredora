@@ -123,3 +123,46 @@ export async function getArrendatariosDeContrato(
     rut: r.arrendatarios?.rut ?? "—",
   }));
 }
+
+export type ContratoReajustePendiente = {
+  id: string;
+  propiedad_direccion: string;
+  fecha_proximo_reajuste: string;
+  reajuste_tipo: string;
+};
+
+/**
+ * Contratos activos cuya fecha_proximo_reajuste ya llegó (o pasó). Se
+ * revisan a mano — nunca se aplica el reajuste solo, por si hay un arreglo
+ * informal con el arrendatario que difiera del cálculo.
+ */
+export async function listContratosConReajustePendiente(): Promise<
+  ContratoReajustePendiente[]
+> {
+  const supabase = await createClient();
+  const hoy = new Date().toISOString().slice(0, 10);
+
+  const { data, error } = await supabase
+    .from("contratos")
+    .select("id, fecha_proximo_reajuste, reajuste_tipo, propiedades(direccion)")
+    .in("estado", ["vigente", "renovado"])
+    .eq("activo", true)
+    .not("fecha_proximo_reajuste", "is", null)
+    .lte("fecha_proximo_reajuste", hoy);
+
+  if (error) throw new Error(error.message);
+
+  type Row = {
+    id: string;
+    fecha_proximo_reajuste: string;
+    reajuste_tipo: string;
+    propiedades: { direccion: string | null } | null;
+  };
+
+  return ((data ?? []) as unknown as Row[]).map((c) => ({
+    id: c.id,
+    propiedad_direccion: c.propiedades?.direccion ?? "—",
+    fecha_proximo_reajuste: c.fecha_proximo_reajuste,
+    reajuste_tipo: c.reajuste_tipo,
+  }));
+}

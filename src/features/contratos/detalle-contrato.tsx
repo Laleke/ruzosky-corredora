@@ -3,9 +3,14 @@
 import { useState } from "react";
 import { useActionState } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Pencil, Trash2 } from "lucide-react";
+import { ArrowLeft, Clock, Pencil, RefreshCw, Trash2 } from "lucide-react";
 import { badge, ui } from "@/components/ui";
-import { eliminarContrato, type actualizarContrato } from "./actions";
+import {
+  eliminarContrato,
+  aplicarReajusteUF,
+  postergarReajuste,
+  type actualizarContrato,
+} from "./actions";
 import type { Contrato } from "./types";
 
 const ESTADO_OPCIONES: { value: string; label: string; tone: Parameters<typeof badge>[0] }[] = [
@@ -119,6 +124,29 @@ export function DetalleContrato({
   const [eliminando, setEliminando] = useState(false);
   const [errorEliminar, setErrorEliminar] = useState<string | null>(null);
 
+  const [recalculando, setRecalculando] = useState(false);
+  const [errorRecalculo, setErrorRecalculo] = useState<string | null>(null);
+  const [mesesPostergar, setMesesPostergar] = useState("1");
+  const [postergando, setPostergando] = useState(false);
+
+  async function onAplicarReajuste() {
+    setRecalculando(true);
+    setErrorRecalculo(null);
+    const res = await aplicarReajusteUF(id, { error: null });
+    setRecalculando(false);
+    if (res.error) setErrorRecalculo(res.error);
+    else router.refresh();
+  }
+
+  async function onPostergar() {
+    setPostergando(true);
+    setErrorRecalculo(null);
+    const res = await postergarReajuste(id, Number(mesesPostergar), { error: null });
+    setPostergando(false);
+    if (res.error) setErrorRecalculo(res.error);
+    else router.refresh();
+  }
+
   async function onConfirmarEliminar() {
     setEliminando(true);
     setErrorEliminar(null);
@@ -133,6 +161,10 @@ export function DetalleContrato({
   }
 
   const estadoTone = ESTADO_TONE[contrato.estado] ?? "neutral";
+  const reajustePendiente = Boolean(
+    contrato.fecha_proximo_reajuste &&
+      contrato.fecha_proximo_reajuste <= new Date().toISOString().slice(0, 10)
+  );
 
   return (
     <div className="rounded-2xl bg-burgundy p-6">
@@ -238,6 +270,16 @@ export function DetalleContrato({
             value={contrato.canon_actual ?? contrato.canon_monto}
             displayValue={dinero(contrato.canon_actual ?? contrato.canon_monto, contrato.canon_moneda)}
           />
+          {(editando ? reajusteTipo === "UF" : contrato.canon_uf_base !== null) && (
+            <Campo
+              editando={editando}
+              label="Canon fijo en UF"
+              name="canon_uf_base"
+              type="number"
+              value={contrato.canon_uf_base}
+              displayValue={contrato.canon_uf_base ? `UF ${contrato.canon_uf_base}` : "—"}
+            />
+          )}
           {editando ? (
             <div>
               <dt className="text-xs uppercase tracking-wide text-white/50">Moneda</dt>
@@ -280,7 +322,70 @@ export function DetalleContrato({
               value={contrato.periodicidad_reajuste_meses}
             />
           )}
+          {(editando ? reajusteTipo !== "sin_reajuste" : !!contrato.fecha_proximo_reajuste) && (
+            <Campo
+              editando={editando}
+              label="Próximo reajuste (fecha)"
+              name="fecha_proximo_reajuste"
+              type="date"
+              value={contrato.fecha_proximo_reajuste}
+            />
+          )}
         </Bloque>
+
+        {!editando && contrato.reajuste_tipo !== "sin_reajuste" && (
+          <div className="rounded-xl bg-burgundy-strong p-5">
+            {reajustePendiente ? (
+              <p className="mb-3 flex items-center gap-2 text-sm font-medium text-amber-300">
+                <Clock size={15} />
+                Reajuste pendiente de revisar desde el {contrato.fecha_proximo_reajuste}. No se
+                aplicó solo — puede haber un arreglo con el arrendatario.
+              </p>
+            ) : (
+              contrato.fecha_proximo_reajuste && (
+                <p className="mb-3 text-sm text-white/70">
+                  Próximo reajuste a revisar: {contrato.fecha_proximo_reajuste}.
+                </p>
+              )
+            )}
+            <div className="flex flex-wrap items-center gap-3">
+              {contrato.reajuste_tipo === "UF" && contrato.canon_uf_base !== null && (
+                <button
+                  type="button"
+                  onClick={onAplicarReajuste}
+                  disabled={recalculando}
+                  className="inline-flex items-center gap-2 rounded-lg bg-white px-3 py-1.5 text-sm font-medium text-burgundy shadow-sm transition-colors hover:bg-white/90 disabled:pointer-events-none disabled:opacity-50"
+                >
+                  <RefreshCw size={14} className={recalculando ? "animate-spin" : ""} />
+                  {recalculando ? "Aplicando…" : "Aplicar reajuste (UF)"}
+                </button>
+              )}
+              <div className="flex items-center gap-2">
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  value={mesesPostergar}
+                  onChange={(e) => setMesesPostergar(e.target.value)}
+                  className={`${ui.input} w-16`}
+                  aria-label="Meses a postergar"
+                />
+                <button
+                  type="button"
+                  onClick={onPostergar}
+                  disabled={postergando}
+                  className="inline-flex items-center gap-2 rounded-lg bg-white/10 px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-white/20 disabled:pointer-events-none disabled:opacity-50"
+                >
+                  {postergando ? "Postergando…" : "Postergar reajuste"}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+        {errorRecalculo && (
+          <p className="rounded-lg bg-red-600/20 px-3 py-2 text-sm text-white" role="alert">
+            {errorRecalculo}
+          </p>
+        )}
 
         <Bloque titulo="Comisión y administración">
           {editando ? (

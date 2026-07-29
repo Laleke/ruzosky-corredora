@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { AlertTriangle } from "lucide-react";
 import { listCargos, listContratosSinArriendo } from "@/features/cobros/queries";
+import { listContratosConReajustePendiente } from "@/features/contratos/queries";
 import { GenerarArriendos } from "@/features/cobros/generar-arriendos";
 import { getOpcionesRelacion } from "@/features/documentos/queries";
 import { PageHeader } from "@/components/page-header";
@@ -69,10 +70,11 @@ export default async function CobrosPage({
   };
 
   const periodoActual = new Date().toISOString().slice(0, 7);
-  const [cargos, opciones, sinArriendo] = await Promise.all([
+  const [cargos, opciones, sinArriendo, reajustesPendientes] = await Promise.all([
     listCargos(filtros),
     getOpcionesRelacion(),
     listContratosSinArriendo(`${periodoActual}-01`),
+    listContratosConReajustePendiente(),
   ]);
   const hoy = new Date().toISOString().slice(0, 10);
   const deudaTotal = cargos.reduce((acc, c) => acc + Number(c.saldo_pendiente), 0);
@@ -153,6 +155,31 @@ export default async function CobrosPage({
           </Link>
         </div>
       </form>
+
+      {reajustesPendientes.length > 0 && (
+        <div className={`${ui.card} mb-5 border-amber-200 bg-amber-50 p-5`}>
+          <div className="mb-3 flex items-center gap-2 text-amber-800">
+            <AlertTriangle size={18} />
+            <h2 className="text-sm font-semibold">
+              {reajustesPendientes.length} contrato{reajustesPendientes.length === 1 ? "" : "s"} con
+              reajuste pendiente de revisar — antes de generar, confirma si corresponde aplicarlo o
+              postergarlo
+            </h2>
+          </div>
+          <ul className="flex flex-col divide-y divide-amber-200/70 text-sm text-ink">
+            {reajustesPendientes.map((c) => (
+              <li key={c.id} className="flex items-center justify-between gap-3 py-2">
+                <span>
+                  {c.propiedad_direccion} · corresponde desde {c.fecha_proximo_reajuste}
+                </span>
+                <Link href={`/contratos/${c.id}`} className={ui.linkAction}>
+                  Revisar
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
 
       {sinArriendo.length > 0 && (
         <div className={`${ui.card} mb-5 border-amber-200 bg-amber-50 p-5`}>

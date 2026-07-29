@@ -81,7 +81,7 @@ export async function generarArriendosDelMes(
 
   const { data: contratos } = await supabase
     .from("contratos")
-    .select("id, canon_monto")
+    .select("id, canon_monto, canon_actual")
     .in("estado", ["vigente", "renovado"])
     .eq("activo", true);
 
@@ -89,17 +89,20 @@ export async function generarArriendosDelMes(
     return { error: null, mensaje: "No hay contratos activos para generar." };
   }
 
-  const filas = contratos.map((c) => ({
-    empresa_id: profile.empresa_id,
-    contrato_id: c.id,
-    periodo,
-    tipo_cargo: "arriendo" as TipoCargo,
-    fecha_emision: hoy(),
-    fecha_vencimiento: vencimiento,
-    monto: Number(c.canon_monto),
-    saldo_pendiente: Number(c.canon_monto),
-    estado: "pendiente" as const,
-  }));
+  const filas = contratos.map((c) => {
+    const monto = Number(c.canon_actual ?? c.canon_monto);
+    return {
+      empresa_id: profile.empresa_id,
+      contrato_id: c.id,
+      periodo,
+      tipo_cargo: "arriendo" as TipoCargo,
+      fecha_emision: hoy(),
+      fecha_vencimiento: vencimiento,
+      monto,
+      saldo_pendiente: monto,
+      estado: "pendiente" as const,
+    };
+  });
 
   // ignoreDuplicates: no recrea cargos ya generados para ese contrato/mes.
   const { error } = await supabase

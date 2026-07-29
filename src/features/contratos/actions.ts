@@ -6,6 +6,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentProfile } from "@/lib/auth";
 import { parseDecimal } from "@/lib/numero";
+import { calcularCanonActualUF } from "@/lib/uf";
 import type { ContratoInsert } from "./types";
 import type {
   Database,
@@ -125,6 +126,8 @@ function parse(
   }
   // Monto vigente hoy (tras reajustes); si no se edita, sigue al canon original.
   const canon_actual = decimal(formData, "canon_actual") ?? canon_monto;
+  // Canon fijo en UF (opcional): habilita el recálculo automático trimestral.
+  const canon_uf_base = decimal(formData, "canon_uf_base");
 
   const canon_moneda =
     String(formData.get("canon_moneda") ?? "CLP") === "UF" ? "UF" : "CLP";
@@ -186,9 +189,11 @@ function parse(
       fecha_termino: texto(formData, "fecha_termino"),
       canon_monto,
       canon_actual,
+      canon_uf_base,
       canon_moneda: canon_moneda as Moneda,
       reajuste_tipo,
       periodicidad_reajuste_meses,
+      fecha_proximo_reajuste: texto(formData, "fecha_proximo_reajuste"),
       tipo_comision,
       comision_monto,
       cobra_administracion,
@@ -288,6 +293,118 @@ export async function actualizarContrato(
   revalidatePath("/contratos");
   revalidatePath("/propiedades");
   redirect("/contratos");
+}
+
+function sumarMeses(fecha: Date, meses: number): Date {
+  const d = new Date(fecha);
+  d.setMonth(d.getMonth() + meses);
+  return d;
+}
+
+function aFechaISO(d: Date): string {
+  return d.toISOString().slice(0, 10);
+}
+
+/**
+ * Aplica el reajuste pendiente: calcula canon_actual = canon_uf_base × UF del
+ * corte trimestral vigente (consultando mindicador.cl) y avanza
+ * fecha_proximo_reajuste según la periodicidad del contrato. Nunca se aplica
+ * solo — siempre a decisión explícita del admin (puede haber un arreglo
+ * informal con el arrendatario que difiera del cálculo).
+ */
+export async function aplicarReajusteUF(
+  id: string,
+  _prev: ContratoFormState
+): Promise<ContratoFormState> {
+  const profile = await getCurrentProfile();
+  if (!profile || profile.rol !== "admin") return { error: "No autorizado." };
+
+  const supabase = await createClient();
+  const { data: contrato } = await supabase
+    .from("contratos")
+    .select("reajuste_tipo, canon_uf_base, periodicidad_reajuste_meses, fecha_proximo_reajuste")
+    .eq("id", id)
+    .single();
+
+  if (!contrato) return { error: "Contrato no encontrado." };
+  if (contrato.reajuste_tipo !== "UF" || !contrato.canon_uf_base) {
+    return { error: "Este contrato no tiene un canon base en UF configurado." };
+  }
+
+  let canon_actual: number;
+  try {
+    canon_actual = await calcularCanonActualUF(contrato.canon_uf_base, new Date());
+  } catch {
+    return {
+      error: "No se pudo obtener el valor de la UF (mindicador.cl no disponible). Intenta más tarde.",
+    };
+  }
+
+  const fecha_proximo_reajuste = contrato.periodicidad_reajuste_meses
+    ? aFechaISO(
+        sumarMeses(
+          contrato.fecha_proximo_reajuste ? new Date(contrato.fecha_proximo_reajuste) : new Date(),
+          contrato.periodicidad_reajuste_meses
+        )
+      )
+    : null;
+
+  const { error } = await supabase
+    .from("contratos")
+    .update({ canon_actual, fecha_proximo_reajuste })
+    .eq("id", id);
+
+  if (error) return { error: "No se pudo guardar el canon recalculado." };
+
+  revalidatePath("/contratos");
+  revalidatePath(`/contratos/${id}`);
+  revalidatePath("/dashboard");
+  revalidatePath("/cobros");
+  return { error: null };
+}
+
+/**
+ * Posterga el reajuste N meses sin tocar el canon — para cuando hay un
+ * arreglo informal con el arrendatario que difiere lo calculado.
+ */
+export async function postergarReajuste(
+  id: string,
+  meses: number,
+  _prev: ContratoFormState
+): Promise<ContratoFormState> {
+  const profile = await getCurrentProfile();
+  if (!profile || profile.rol !== "admin") return { error: "No autorizado." };
+
+  if (!Number.isFinite(meses) || meses <= 0) {
+    return { error: "Indica cuántos meses postergar (mayor a 0)." };
+  }
+
+  const supabase = await createClient();
+  const { data: contrato } = await supabase
+    .from("contratos")
+    .select("fecha_proximo_reajuste")
+    .eq("id", id)
+    .single();
+
+  if (!contrato) return { error: "Contrato no encontrado." };
+
+  const base = contrato.fecha_proximo_reajuste
+    ? new Date(contrato.fecha_proximo_reajuste)
+    : new Date();
+  const fecha_proximo_reajuste = aFechaISO(sumarMeses(base, meses));
+
+  const { error } = await supabase
+    .from("contratos")
+    .update({ fecha_proximo_reajuste })
+    .eq("id", id);
+
+  if (error) return { error: "No se pudo postergar el reajuste." };
+
+  revalidatePath("/contratos");
+  revalidatePath(`/contratos/${id}`);
+  revalidatePath("/dashboard");
+  revalidatePath("/cobros");
+  return { error: null };
 }
 
 export async function cambiarActivoContrato(id: string, activo: boolean) {

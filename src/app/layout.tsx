@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
+import { PwaUpdateBanner } from "@/components/pwa-update-banner";
 import "./globals.css";
 
 const inter = Inter({
@@ -38,7 +39,9 @@ export default function RootLayout({
 }) {
   return (
     <html lang="es" className={inter.variable}>
-      <body>{children}</body>
+      <body>
+        <PwaUpdateBanner>{children}</PwaUpdateBanner>
+      </body>
     </html>
   );
 }

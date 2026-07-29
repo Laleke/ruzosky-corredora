@@ -394,9 +394,11 @@ export type Database = {
           fecha_termino: string | null;
           canon_monto: number;
           canon_actual: number | null;
+          canon_uf_base: number | null;
           canon_moneda: Moneda;
           reajuste_tipo: ReajusteTipo;
           periodicidad_reajuste_meses: number | null;
+          fecha_proximo_reajuste: string | null;
           tipo_comision: TipoComision | null;
           comision_monto: number | null;
           cobra_administracion: boolean;
@@ -419,9 +421,11 @@ export type Database = {
           fecha_termino?: string | null;
           canon_monto: number;
           canon_actual?: number | null;
+          canon_uf_base?: number | null;
           canon_moneda?: Moneda;
           reajuste_tipo?: ReajusteTipo;
           periodicidad_reajuste_meses?: number | null;
+          fecha_proximo_reajuste?: string | null;
           tipo_comision?: TipoComision | null;
           comision_monto?: number | null;
           cobra_administracion?: boolean;
@@ -444,9 +448,11 @@ export type Database = {
           fecha_termino?: string | null;
           canon_monto?: number;
           canon_actual?: number | null;
+          canon_uf_base?: number | null;
           canon_moneda?: Moneda;
           reajuste_tipo?: ReajusteTipo;
           periodicidad_reajuste_meses?: number | null;
+          fecha_proximo_reajuste?: string | null;
           tipo_comision?: TipoComision | null;
           comision_monto?: number | null;
           cobra_administracion?: boolean;

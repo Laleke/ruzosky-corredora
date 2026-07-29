@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { listPendientesLiquidar } from "@/features/liquidaciones/queries";
 import { listContratosSinArriendo } from "@/features/cobros/queries";
+import { listContratosConReajustePendiente } from "@/features/contratos/queries";
 
 export type DashboardStats = {
   propiedadesTotal: number;
@@ -69,6 +70,7 @@ export async function getTareasPendientes(): Promise<TareaPendiente[]> {
     gastosPorLiquidar,
     comprobantesPendientes,
     contratosPorVencer,
+    contratosConReajustePendiente,
   ] = await Promise.all([
     listPendientesLiquidar(`${periodoActual}-01`),
     listContratosSinArriendo(`${periodoActual}-01`),
@@ -90,6 +92,7 @@ export async function getTareasPendientes(): Promise<TareaPendiente[]> {
       .eq("activo", true)
       .gte("fecha_termino", hoy)
       .lte("fecha_termino", en30dias),
+    listContratosConReajustePendiente(),
   ]);
 
   return [
@@ -127,6 +130,13 @@ export async function getTareasPendientes(): Promise<TareaPendiente[]> {
       cantidad: contratosPorVencer.count ?? 0,
       href: "/contratos",
       alerta: (contratosPorVencer.count ?? 0) > 0,
+    },
+    {
+      key: "reajustes",
+      label: "Contratos con reajuste pendiente de revisar",
+      cantidad: contratosConReajustePendiente.length,
+      href: "/contratos",
+      alerta: contratosConReajustePendiente.length > 0,
     },
   ];
 }

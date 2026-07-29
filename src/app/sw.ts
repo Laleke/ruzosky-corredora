@@ -13,10 +13,18 @@ declare const self: ServiceWorkerGlobalScope;
 
 const serwist = new Serwist({
   precacheEntries: self.__SW_MANIFEST,
-  skipWaiting: true,
+  // false: el SW nuevo espera la orden del cliente (banner "Actualizar")
+  // en vez de tomar control en silencio con la pestaña ya abierta.
+  skipWaiting: false,
   clientsClaim: true,
   navigationPreload: true,
   runtimeCaching: defaultCache,
 });
 
 serwist.addEventListeners();
+
+self.addEventListener("message", (event) => {
+  if (event.data?.type === "SKIP_WAITING") {
+    self.skipWaiting();
+  }
+});
