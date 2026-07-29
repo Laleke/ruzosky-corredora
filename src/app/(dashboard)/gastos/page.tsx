@@ -1,10 +1,9 @@
 import Link from "next/link";
 import { listGastos } from "@/features/gastos/queries";
 import { getOpcionesRelacion } from "@/features/documentos/queries";
+import { FiltroGastos } from "@/features/gastos/filtro-gastos";
 import {
-  CATEGORIAS_GASTO,
   CATEGORIA_GASTO_LABEL,
-  ESTADOS_GASTO,
   ESTADO_GASTO,
   clp,
 } from "@/features/gastos/constants";
@@ -56,69 +55,13 @@ export default async function GastosPage({
         accion={{ href: "/gastos/nuevo", label: "Registrar gasto" }}
       />
 
-      <form
-        method="get"
-        className="mb-5 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4"
-      >
-        <label className="flex flex-col gap-1 text-sm sm:col-span-2">
-          <span className="font-medium">Buscar</span>
-          <input
-            name="q"
-            defaultValue={sp.q ?? ""}
-            placeholder="Descripción…"
-            className={ui.input}
-          />
-        </label>
-        <label className="flex flex-col gap-1 text-sm">
-          <span className="font-medium">Categoría</span>
-          <select name="categoria" defaultValue={sp.categoria ?? ""} className={ui.input}>
-            <option value="">Todas</option>
-            {CATEGORIAS_GASTO.map((c) => (
-              <option key={c.value} value={c.value}>
-                {c.label}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label className="flex flex-col gap-1 text-sm">
-          <span className="font-medium">Estado</span>
-          <select name="estado" defaultValue={sp.estado ?? ""} className={ui.input}>
-            <option value="">Todos</option>
-            {ESTADOS_GASTO.map((e) => (
-              <option key={e.value} value={e.value}>
-                {e.label}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label className="flex flex-col gap-1 text-sm">
-          <span className="font-medium">Propiedad</span>
-          <select name="propiedad" defaultValue={sp.propiedad ?? ""} className={ui.input}>
-            <option value="">Todas</option>
-            {opciones.propiedades.map((o) => (
-              <option key={o.id} value={o.id}>
-                {o.label}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label className="flex flex-col gap-1 text-sm">
-          <span className="font-medium">Desde</span>
-          <input type="date" name="desde" defaultValue={sp.desde ?? ""} className={ui.input} />
-        </label>
-        <label className="flex flex-col gap-1 text-sm">
-          <span className="font-medium">Hasta</span>
-          <input type="date" name="hasta" defaultValue={sp.hasta ?? ""} className={ui.input} />
-        </label>
-        <div className="flex items-end gap-2">
-          <button type="submit" className={ui.btnSecondary}>
-            Filtrar
-          </button>
-          <Link href="/gastos" className={ui.btnGhost}>
-            Limpiar
-          </Link>
-        </div>
-      </form>
+      <FiltroGastos
+        valores={sp}
+        propiedades={opciones.propiedades}
+        hayFiltros={Boolean(
+          sp.q || sp.categoria || sp.estado || sp.propiedad || sp.desde || sp.hasta
+        )}
+      />
 
       {gastos.length === 0 ? (
         <div className={`${ui.card} p-10 text-center text-sm text-muted`}>

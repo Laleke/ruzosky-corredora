@@ -4,6 +4,7 @@ import { listPropietarios } from "@/features/propietarios/queries";
 import { calcularLiquidacion, existeLiquidacion } from "@/features/liquidaciones/queries";
 import { generarLiquidacion } from "@/features/liquidaciones/actions";
 import { ConfirmarForm } from "@/features/liquidaciones/confirmar-form";
+import { SeleccionLiquidacionWizard } from "@/features/liquidaciones/seleccion-wizard";
 import { CATEGORIA_GASTO_LABEL } from "@/features/gastos/constants";
 import { ui } from "@/components/ui";
 
@@ -53,55 +54,20 @@ export default async function NuevaLiquidacionPage({
         <Link href="/liquidaciones" className="text-sm text-muted hover:text-ink">
           ← Volver a liquidaciones
         </Link>
-        <h1 className="mt-2 text-2xl font-semibold tracking-tight text-ink">
-          Nueva liquidación
-        </h1>
       </div>
 
-      {/* Paso 1 y 2: propietario + período */}
-      <form
-        method="get"
-        action="/liquidaciones/nueva"
-        className={`${ui.card} flex flex-wrap items-end gap-3 p-5`}
-      >
-        <label className="flex flex-col gap-1 text-sm">
-          <span className="font-medium">Propietario</span>
-          <select
-            name="propietario"
-            defaultValue={propietarioId}
-            required
-            className={`${ui.input} min-w-64`}
-          >
-            <option value="">Selecciona…</option>
-            {propietarios.map((p) => (
-              <option key={p.id} value={p.id}>
-                {p.label}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label className="flex flex-col gap-1 text-sm">
-          <span className="font-medium">Período</span>
-          <input
-            name="periodo"
-            type="month"
-            defaultValue={periodo}
-            required
-            className={ui.input}
-          />
-        </label>
-        <button type="submit" className={ui.btnSecondary}>
-          Ver vista previa
-        </button>
-      </form>
+      {!haySeleccion && <SeleccionLiquidacionWizard propietarios={propietarios} />}
 
-      {/* Paso 3: vista previa */}
+      {/* Vista previa (objetos sin cambios) */}
       {haySeleccion && preview && (
         <div className="flex flex-col gap-5">
-          <div className={`${ui.card} p-5`}>
+          <div className={`${ui.card} flex items-center justify-between gap-3 p-5`}>
             <p className="text-sm text-muted">
               {propLabel} · período <strong className="text-ink">{periodo}</strong>
             </p>
+            <Link href="/liquidaciones/nueva" className={ui.linkAction}>
+              Cambiar propietario/período
+            </Link>
           </div>
 
           {preview.ingresos.length === 0 &&

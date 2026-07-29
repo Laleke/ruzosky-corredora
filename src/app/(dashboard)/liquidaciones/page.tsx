@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { AlertTriangle } from "lucide-react";
 import { listLiquidaciones, listPendientesLiquidar } from "@/features/liquidaciones/queries";
+import { FiltroLiquidaciones } from "@/features/liquidaciones/filtro-liquidaciones";
 import { listPropietarios } from "@/features/propietarios/queries";
 import { PageHeader } from "@/components/page-header";
 import { ui, badge } from "@/components/ui";
@@ -78,27 +79,11 @@ export default async function LiquidacionesPage({
         </div>
       )}
 
-      <form method="get" className="mb-5 flex flex-wrap items-end gap-3">
-        <label className="flex flex-col gap-1 text-sm">
-          <span className="font-medium">Propietario</span>
-          <select name="propietario" defaultValue={sp.propietario ?? ""} className={ui.input}>
-            <option value="">Todos</option>
-            {opciones.map((o) => (
-              <option key={o.id} value={o.id}>{o.label}</option>
-            ))}
-          </select>
-        </label>
-        <label className="flex flex-col gap-1 text-sm">
-          <span className="font-medium">Estado</span>
-          <select name="estado" defaultValue={sp.estado ?? ""} className={ui.input}>
-            <option value="">Todos</option>
-            <option value="pendiente">Pendiente</option>
-            <option value="pagada">Pagada</option>
-            <option value="anulada">Anulada</option>
-          </select>
-        </label>
-        <button type="submit" className={ui.btnSecondary}>Filtrar</button>
-      </form>
+      <FiltroLiquidaciones
+        valores={sp}
+        propietarios={opciones}
+        hayFiltros={Boolean(sp.propietario || sp.estado)}
+      />
 
       {liquidaciones.length === 0 ? (
         <div className={`${ui.card} p-10 text-center text-sm text-muted`}>

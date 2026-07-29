@@ -1,4 +1,4 @@
-import { CargoForm } from "@/features/cobros/cargo-form";
+import { CargoWizard } from "@/features/cobros/cargo-wizard";
 import {
   getOpcionesRelacion,
   getContextoVigentePorPropiedad,
@@ -10,12 +10,5 @@ export default async function NuevoCargoPage() {
     getContextoVigentePorPropiedad(),
   ]);
 
-  return (
-    <div className="flex flex-col gap-6">
-      <h1 className="text-2xl font-semibold tracking-tight text-ink">
-        Nuevo cargo
-      </h1>
-      <CargoForm propiedades={opciones.propiedades} contexto={contexto} />
-    </div>
-  );
+  return <CargoWizard propiedades={opciones.propiedades} contexto={contexto} />;
 }

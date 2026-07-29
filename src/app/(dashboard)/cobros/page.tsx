@@ -3,6 +3,7 @@ import { AlertTriangle } from "lucide-react";
 import { listCargos, listContratosSinArriendo } from "@/features/cobros/queries";
 import { listContratosConReajustePendiente } from "@/features/contratos/queries";
 import { GenerarArriendos } from "@/features/cobros/generar-arriendos";
+import { FiltroCobros } from "@/features/cobros/filtro-cobros";
 import { getOpcionesRelacion } from "@/features/documentos/queries";
 import { PageHeader } from "@/components/page-header";
 import { ui, badge } from "@/components/ui";
@@ -16,13 +17,6 @@ type SP = {
   venceDesde?: string;
   venceHasta?: string;
 };
-
-const ESTADOS_CARGO = [
-  { value: "pendiente", label: "Pendiente" },
-  { value: "parcial", label: "Parcial" },
-  { value: "pagado", label: "Pagado" },
-  { value: "vencido", label: "Vencido" },
-];
 
 const TIPO_LABEL: Record<string, string> = {
   arriendo: "Arriendo",
@@ -78,6 +72,9 @@ export default async function CobrosPage({
   ]);
   const hoy = new Date().toISOString().slice(0, 10);
   const deudaTotal = cargos.reduce((acc, c) => acc + Number(c.saldo_pendiente), 0);
+  const hayFiltros = Boolean(
+    sp.propiedad || sp.arrendatario || sp.estado || sp.periodo || sp.venceDesde || sp.venceHasta
+  );
 
   return (
     <div>
@@ -87,74 +84,12 @@ export default async function CobrosPage({
         accion={{ href: "/cobros/nuevo", label: "Nuevo cargo" }}
       />
 
-      <form
-        method="get"
-        className="mb-5 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4"
-      >
-        <label className="flex flex-col gap-1 text-sm">
-          <span className="font-medium">Propiedad</span>
-          <select name="propiedad" defaultValue={sp.propiedad ?? ""} className={ui.input}>
-            <option value="">Todas</option>
-            {opciones.propiedades.map((o) => (
-              <option key={o.id} value={o.id}>
-                {o.label}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label className="flex flex-col gap-1 text-sm">
-          <span className="font-medium">Arrendatario</span>
-          <select name="arrendatario" defaultValue={sp.arrendatario ?? ""} className={ui.input}>
-            <option value="">Todos</option>
-            {opciones.arrendatarios.map((o) => (
-              <option key={o.id} value={o.id}>
-                {o.label}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label className="flex flex-col gap-1 text-sm">
-          <span className="font-medium">Estado</span>
-          <select name="estado" defaultValue={sp.estado ?? ""} className={ui.input}>
-            <option value="">Todos</option>
-            {ESTADOS_CARGO.map((e) => (
-              <option key={e.value} value={e.value}>
-                {e.label}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label className="flex flex-col gap-1 text-sm">
-          <span className="font-medium">Período</span>
-          <input type="month" name="periodo" defaultValue={sp.periodo ?? ""} className={ui.input} />
-        </label>
-        <label className="flex flex-col gap-1 text-sm">
-          <span className="font-medium">Vence desde</span>
-          <input
-            type="date"
-            name="venceDesde"
-            defaultValue={sp.venceDesde ?? ""}
-            className={ui.input}
-          />
-        </label>
-        <label className="flex flex-col gap-1 text-sm">
-          <span className="font-medium">Vence hasta</span>
-          <input
-            type="date"
-            name="venceHasta"
-            defaultValue={sp.venceHasta ?? ""}
-            className={ui.input}
-          />
-        </label>
-        <div className="flex items-end gap-2">
-          <button type="submit" className={ui.btnSecondary}>
-            Filtrar
-          </button>
-          <Link href="/cobros" className={ui.btnGhost}>
-            Limpiar
-          </Link>
-        </div>
-      </form>
+      <FiltroCobros
+        valores={sp}
+        propiedades={opciones.propiedades}
+        arrendatarios={opciones.arrendatarios}
+        hayFiltros={hayFiltros}
+      />
 
       {reajustesPendientes.length > 0 && (
         <div className={`${ui.card} mb-5 border-amber-200 bg-amber-50 p-5`}>

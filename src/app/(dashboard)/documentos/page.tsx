@@ -5,11 +5,11 @@ import {
   getOpcionesRelacion,
 } from "@/features/documentos/queries";
 import {
-  CATEGORIAS,
   CATEGORIA_LABEL,
   CATEGORIA_TONE,
   formatearTamano,
 } from "@/features/documentos/constants";
+import { FiltroDocumentos } from "@/features/documentos/filtro-documentos";
 import { AccionesArchivo } from "@/features/documentos/acciones";
 import { PageHeader } from "@/components/page-header";
 import { ui, badge } from "@/components/ui";
@@ -56,80 +56,15 @@ export default async function DocumentosPage({
         accion={{ href: "/documentos/nuevo", label: "Subir documento" }}
       />
 
-      <form
-        method="get"
-        className="mb-5 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4"
-      >
-        <label className="flex flex-col gap-1 text-sm sm:col-span-2">
-          <span className="font-medium">Buscar</span>
-          <input
-            name="q"
-            defaultValue={sp.q ?? ""}
-            placeholder="Nombre u observaciones…"
-            className={ui.input}
-          />
-        </label>
-        <label className="flex flex-col gap-1 text-sm">
-          <span className="font-medium">Categoría</span>
-          <select name="categoria" defaultValue={sp.categoria ?? ""} className={ui.input}>
-            <option value="">Todas</option>
-            {CATEGORIAS.map((c) => (
-              <option key={c.value} value={c.value}>
-                {c.label}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label className="flex flex-col gap-1 text-sm">
-          <span className="font-medium">Propiedad</span>
-          <select name="propiedad" defaultValue={sp.propiedad ?? ""} className={ui.input}>
-            <option value="">Todas</option>
-            {opciones.propiedades.map((o) => (
-              <option key={o.id} value={o.id}>
-                {o.label}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label className="flex flex-col gap-1 text-sm">
-          <span className="font-medium">Propietario</span>
-          <select name="propietario" defaultValue={sp.propietario ?? ""} className={ui.input}>
-            <option value="">Todos</option>
-            {opciones.propietarios.map((o) => (
-              <option key={o.id} value={o.id}>
-                {o.label}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label className="flex flex-col gap-1 text-sm">
-          <span className="font-medium">Arrendatario</span>
-          <select name="arrendatario" defaultValue={sp.arrendatario ?? ""} className={ui.input}>
-            <option value="">Todos</option>
-            {opciones.arrendatarios.map((o) => (
-              <option key={o.id} value={o.id}>
-                {o.label}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label className="flex flex-col gap-1 text-sm">
-          <span className="font-medium">Desde</span>
-          <input type="date" name="desde" defaultValue={sp.desde ?? ""} className={ui.input} />
-        </label>
-        <label className="flex flex-col gap-1 text-sm">
-          <span className="font-medium">Hasta</span>
-          <input type="date" name="hasta" defaultValue={sp.hasta ?? ""} className={ui.input} />
-        </label>
-        <div className="flex items-end gap-2">
-          <button type="submit" className={ui.btnSecondary}>
-            Filtrar
-          </button>
-          <Link href="/documentos" className={ui.btnGhost}>
-            Limpiar
-          </Link>
-        </div>
-      </form>
+      <FiltroDocumentos
+        valores={sp}
+        propiedades={opciones.propiedades}
+        propietarios={opciones.propietarios}
+        arrendatarios={opciones.arrendatarios}
+        hayFiltros={Boolean(
+          sp.q || sp.categoria || sp.propiedad || sp.propietario || sp.arrendatario || sp.desde || sp.hasta
+        )}
+      />
 
       {documentos.length === 0 ? (
         <div className={`${ui.card} p-10 text-center text-sm text-muted`}>

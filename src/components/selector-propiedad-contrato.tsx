@@ -29,6 +29,7 @@ export function SelectorPropiedadContrato({
   /** Muestra el arrendatario derivado (info). En Gastos se oculta (irrelevante). */
   mostrarArrendatario?: boolean;
 }) {
+  const labelCls = ui.label;
   const [prop, setProp] = useState(propiedadDefault);
   const [contratoSel, setContratoSel] = useState(() => {
     const cs = contexto[propiedadDefault] ?? [];
@@ -47,7 +48,7 @@ export function SelectorPropiedadContrato({
   return (
     <>
       <div className="flex flex-col gap-1.5">
-        <label className={ui.label}>Propiedad *</label>
+        <label className={labelCls}>Propiedad *</label>
         <select
           value={prop}
           onChange={(e) => onProp(e.target.value)}
@@ -65,7 +66,7 @@ export function SelectorPropiedadContrato({
       {/* Contrato: solo se pide si hay más de un contrato vigente. */}
       {contratos.length > 1 && (
         <div className="flex flex-col gap-1.5">
-          <label className={ui.label}>Contrato *</label>
+          <label className={labelCls}>Contrato *</label>
           <select
             value={contratoSel}
             onChange={(e) => setContratoSel(e.target.value)}
@@ -85,7 +86,7 @@ export function SelectorPropiedadContrato({
       {/* Arrendatario: solo lectura, derivado del contrato. */}
       {mostrarArrendatario && (
         <div className="flex flex-col gap-1.5">
-          <label className={ui.label}>Arrendatario</label>
+          <label className={labelCls}>Arrendatario</label>
           <div className="rounded-lg border border-line bg-stone-50 px-3 py-2 text-sm text-ink">
             {arr?.arrendatario ??
               (prop
