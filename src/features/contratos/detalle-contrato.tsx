@@ -5,6 +5,7 @@ import { useActionState } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, Clock, Pencil, RefreshCw, Trash2 } from "lucide-react";
 import { badge, ui } from "@/components/ui";
+import { formatearFecha } from "@/lib/fecha";
 import {
   eliminarContrato,
   aplicarReajusteUF,
@@ -80,7 +81,9 @@ function Campo({
           className={`${ui.input} mt-1`}
         />
       ) : (
-        <dd className="mt-0.5 text-sm text-white">{displayValue ?? (value || "—")}</dd>
+        <dd className="mt-0.5 text-sm text-white">
+          {displayValue ?? (type === "date" ? formatearFecha(value as string | null) : value || "—")}
+        </dd>
       )}
     </div>
   );
@@ -338,13 +341,13 @@ export function DetalleContrato({
             {reajustePendiente ? (
               <p className="mb-3 flex items-center gap-2 text-sm font-medium text-amber-300">
                 <Clock size={15} />
-                Reajuste pendiente de revisar desde el {contrato.fecha_proximo_reajuste}. No se
+                Reajuste pendiente de revisar desde el {formatearFecha(contrato.fecha_proximo_reajuste)}. No se
                 aplicó solo — puede haber un arreglo con el arrendatario.
               </p>
             ) : (
               contrato.fecha_proximo_reajuste && (
                 <p className="mb-3 text-sm text-white/70">
-                  Próximo reajuste a revisar: {contrato.fecha_proximo_reajuste}.
+                  Próximo reajuste a revisar: {formatearFecha(contrato.fecha_proximo_reajuste)}.
                 </p>
               )
             )}

@@ -12,6 +12,7 @@ import {
 } from "@/features/liquidaciones/acciones-detalle";
 import { CATEGORIA_GASTO_LABEL } from "@/features/gastos/constants";
 import { ui, badge } from "@/components/ui";
+import { formatearFecha, formatearPeriodo } from "@/lib/fecha";
 
 const ESTADO: Record<string, { label: string; tone: Parameters<typeof badge>[0] }> = {
   pendiente: { label: "Pendiente", tone: "warning" },
@@ -57,7 +58,7 @@ export default async function DetalleLiquidacionPage({
       label: g.descripcion,
       sub: `Gasto: ${
         CATEGORIA_GASTO_LABEL[g.categoria as keyof typeof CATEGORIA_GASTO_LABEL] ?? g.categoria
-      } · ${g.fecha}`,
+      } · ${formatearFecha(g.fecha)}`,
       monto: g.monto,
     })),
   ];
@@ -77,8 +78,8 @@ export default async function DetalleLiquidacionPage({
             {liq.numero ?? "Liquidación"}
           </h1>
           <p className="mt-1 text-sm text-muted">
-            Período {liq.periodo.slice(0, 7)} · {liq.propietario_nombre} · generada{" "}
-            {liq.fecha_generacion}
+            Período {formatearPeriodo(liq.periodo)} · {liq.propietario_nombre} · generada{" "}
+            {formatearFecha(liq.fecha_generacion)}
           </p>
           <span className={`mt-2 inline-flex ${badge(est.tone)}`}>{est.label}</span>
         </div>
@@ -164,7 +165,7 @@ export default async function DetalleLiquidacionPage({
         <div className={`${ui.card} p-5 text-sm`}>
           <p className="font-medium text-ink">Pago registrado</p>
           <p className="mt-1 text-muted">
-            Fecha de transferencia: {liq.fecha_pago ?? "—"}
+            Fecha de transferencia: {formatearFecha(liq.fecha_pago)}
             {liq.pago_observacion ? ` · ${liq.pago_observacion}` : ""}
           </p>
         </div>

@@ -6,6 +6,7 @@ import { PageHeader } from "@/components/page-header";
 import { ToggleSwitch } from "@/components/toggle-switch";
 import { FiltroContratos } from "@/features/contratos/filtro-contratos";
 import { ui, badge } from "@/components/ui";
+import { formatearFecha } from "@/lib/fecha";
 
 const ESTADO: Record<string, { label: string; tone: Parameters<typeof badge>[0] }> = {
   borrador: { label: "Borrador", tone: "neutral" },
@@ -67,8 +68,8 @@ export default async function ContratosPage({
                     </summary>
                     <div className="mt-2 flex flex-col gap-1 text-sm text-white/80">
                       <span>Arrendatario: {c.arrendatarios_nombres.join(", ") || "—"}</span>
-                      <span>Inicio: {c.fecha_inicio}</span>
-                      <span>Término: {c.fecha_termino ?? "—"}</span>
+                      <span>Inicio: {formatearFecha(c.fecha_inicio)}</span>
+                      <span>Término: {formatearFecha(c.fecha_termino)}</span>
                       <span>Canon: {formatoCanon(c.canon_actual ?? c.canon_monto, c.canon_moneda)}</span>
                     </div>
                   </details>

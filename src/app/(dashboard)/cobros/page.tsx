@@ -7,7 +7,8 @@ import { FiltroCobros } from "@/features/cobros/filtro-cobros";
 import { getOpcionesRelacion } from "@/features/documentos/queries";
 import { PageHeader } from "@/components/page-header";
 import { ui, badge } from "@/components/ui";
-import type { FiltrosCargos } from "@/features/cobros/types";
+import { formatearFecha, formatearPeriodo } from "@/lib/fecha";
+import type { FiltrosCargos, CargoConContexto } from "@/features/cobros/types";
 
 type SP = {
   propiedad?: string;
@@ -106,7 +107,7 @@ export default async function CobrosPage({
             {reajustesPendientes.map((c) => (
               <li key={c.id} className="flex items-center justify-between gap-3 py-2">
                 <span>
-                  {c.propiedad_direccion} · corresponde desde {c.fecha_proximo_reajuste}
+                  {c.propiedad_direccion} · corresponde desde {formatearFecha(c.fecha_proximo_reajuste)}
                 </span>
                 <Link href={`/contratos/${c.id}`} className="font-medium text-white/80 hover:text-white">
                   Revisar
@@ -123,7 +124,7 @@ export default async function CobrosPage({
             <AlertTriangle size={18} />
             <h2 className="text-sm font-semibold">
               {sinArriendo.length} contrato{sinArriendo.length === 1 ? "" : "s"} sin arriendo
-              generado · {periodoActual}
+              generado · {formatearPeriodo(periodoActual)}
             </h2>
           </div>
 
@@ -151,18 +152,12 @@ export default async function CobrosPage({
         </div>
       )}
 
-      <div className="mb-6 grid grid-cols-1 gap-4 lg:grid-cols-3">
-        <div className="rounded-xl bg-burgundy p-5 lg:col-span-2">
+      {sinArriendo.length > 0 && (
+        <div className="mb-6 rounded-xl bg-burgundy p-5">
           <h2 className="mb-3 text-sm font-semibold text-white">Generación asistida</h2>
           <GenerarArriendos periodoDefault={periodoActual} />
         </div>
-        <div className="flex flex-col justify-center rounded-xl bg-burgundy p-5">
-          <span className="text-sm font-medium text-white/70">Deuda pendiente total</span>
-          <span className="mt-1 text-2xl font-semibold tracking-tight text-white">
-            {monto(deudaTotal)}
-          </span>
-        </div>
-      </div>
+      )}
 
       {cargos.length === 0 ? (
         <div className={`${ui.card} p-10 text-center text-sm text-muted`}>
@@ -171,52 +166,79 @@ export default async function CobrosPage({
             : "Aún no hay cargos. Genera los del mes o crea uno."}
         </div>
       ) : (
-        <div className={ui.cardGrid}>
-          {cargos.map((c) => {
-            const est = estadoMostrar(c.estado, Number(c.saldo_pendiente), c.fecha_vencimiento, hoy);
+        <div className="flex flex-col gap-4">
+          {agruparPorPeriodo(cargos).map(([periodo, items]) => {
+            const deudaPeriodo = items.reduce((acc, c) => acc + Number(c.saldo_pendiente), 0);
             return (
-              <div key={c.id} className={ui.listCard}>
-                <div className="flex items-start justify-between gap-2">
-                  <div>
-                    <p className="text-xs text-white/60">
-                      {c.periodo.slice(0, 7)} · {TIPO_LABEL[c.tipo_cargo] ?? c.tipo_cargo}
-                    </p>
-                    <p className="font-medium text-white">
-                      {c.numero_contrato ? `${c.numero_contrato} · ` : ""}
-                      {c.propiedad_direccion}
-                    </p>
-                  </div>
-                  <span className={badge(est.tone)}>{est.label}</span>
-                </div>
+              <details key={periodo} className="rounded-xl bg-burgundy overflow-hidden">
+                <summary className="flex cursor-pointer list-none items-center justify-between p-5 [&::-webkit-details-marker]:hidden">
+                  <span className="font-semibold text-white">Deuda pendiente</span>
+                  <span className="flex items-center gap-2 text-white/70">
+                    {monto(deudaPeriodo)} · {formatearPeriodo(periodo)}
+                  </span>
+                </summary>
+                <div className="flex flex-col divide-y divide-white/10 px-5 pb-5">
+                  {items.map((c) => {
+                    const est = estadoMostrar(c.estado, Number(c.saldo_pendiente), c.fecha_vencimiento, hoy);
+                    return (
+                      <div key={c.id} className="flex flex-col gap-3 py-4 first:pt-0">
+                        <div className="flex items-start justify-between gap-2">
+                          <div>
+                            <p className="text-xs text-white/60">
+                              {TIPO_LABEL[c.tipo_cargo] ?? c.tipo_cargo}
+                            </p>
+                            <p className="font-medium text-white">
+                              {c.numero_contrato ? `${c.numero_contrato} · ` : ""}
+                              {c.propiedad_direccion}
+                            </p>
+                          </div>
+                          <span className={badge(est.tone)}>{est.label}</span>
+                        </div>
 
-                <div className="flex items-center justify-between gap-2">
-                  <details className="min-w-0 flex-1">
-                    <summary className={ui.listCardDisclosure}>
-                      <Info size={14} /> Ver más información
-                    </summary>
-                    <div className="mt-2 flex flex-col gap-1 text-sm text-white/80">
-                      <span>Monto: {monto(c.monto)}</span>
-                      <span>Saldo: {monto(c.saldo_pendiente)}</span>
-                      {c.fecha_vencimiento && <span>Vence: {c.fecha_vencimiento}</span>}
-                    </div>
-                  </details>
+                        <div className="flex items-center justify-between gap-2">
+                          <details className="min-w-0 flex-1">
+                            <summary className={ui.listCardDisclosure}>
+                              <Info size={14} /> Ver más información
+                            </summary>
+                            <div className="mt-2 flex flex-col gap-1 text-sm text-white/80">
+                              <span>Monto: {monto(c.monto)}</span>
+                              <span>Saldo: {monto(c.saldo_pendiente)}</span>
+                              {c.fecha_vencimiento && <span>Vence: {formatearFecha(c.fecha_vencimiento)}</span>}
+                            </div>
+                          </details>
 
-                  <div className="flex shrink-0 items-center gap-2">
-                    <Link
-                      href={`/cobros/${c.id}`}
-                      aria-label="Ver detalle"
-                      title="Ver detalle"
-                      className={ui.listCardIconBtn}
-                    >
-                      <Eye size={16} />
-                    </Link>
-                  </div>
+                          <div className="flex shrink-0 items-center gap-2">
+                            <Link
+                              href={`/cobros/${c.id}`}
+                              aria-label="Ver detalle"
+                              title="Ver detalle"
+                              className={ui.listCardIconBtn}
+                            >
+                              <Eye size={16} />
+                            </Link>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
-              </div>
+              </details>
             );
           })}
         </div>
       )}
     </div>
   );
+}
+
+/** Agrupa cargos por período (mes/año), más reciente primero. */
+function agruparPorPeriodo(cargos: CargoConContexto[]): [string, CargoConContexto[]][] {
+  const grupos = new Map<string, CargoConContexto[]>();
+  for (const c of cargos) {
+    const key = c.periodo.slice(0, 7);
+    const lista = grupos.get(key);
+    if (lista) lista.push(c);
+    else grupos.set(key, [c]);
+  }
+  return [...grupos.entries()].sort(([a], [b]) => b.localeCompare(a));
 }

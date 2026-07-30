@@ -12,8 +12,14 @@ type DB = SupabaseClient<Database>;
  * de que empezara. No aplica a Liquidaciones (que revisan lo ya cobrado).
  */
 export function periodoArriendoVigente(hoy: Date = new Date()): string {
-  const siguiente = new Date(hoy.getFullYear(), hoy.getMonth() + 1, 1);
-  return siguiente.toISOString().slice(0, 7);
+  // Aritmética de meses pura (sin pasar por toISOString/UTC): construir la
+  // fecha del 1° del mes siguiente y convertirla a ISO puede retroceder un
+  // día (y por lo tanto un mes) si el proceso corre en una zona horaria con
+  // offset negativo respecto a UTC — justo lo que pasó acá.
+  const totalMeses = hoy.getFullYear() * 12 + hoy.getMonth() + 1;
+  const anio = Math.floor(totalMeses / 12);
+  const mes = (totalMeses % 12) + 1;
+  return `${anio}-${String(mes).padStart(2, "0")}`;
 }
 
 /**

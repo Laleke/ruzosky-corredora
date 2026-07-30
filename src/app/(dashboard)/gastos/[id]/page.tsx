@@ -6,6 +6,7 @@ import { CATEGORIA_GASTO_LABEL, ESTADO_GASTO, clp } from "@/features/gastos/cons
 import { GastoAcciones, VerComprobanteBtn } from "@/features/gastos/acciones";
 import { getCurrentProfile } from "@/lib/auth";
 import { ui, badge } from "@/components/ui";
+import { formatearFecha } from "@/lib/fecha";
 
 function Dato({ label, valor }: { label: string; valor: string | null }) {
   return (
@@ -58,7 +59,7 @@ export default async function GastoDetallePage({
 
       <div className={`${ui.card} mb-6 p-6`}>
         <dl className="grid grid-cols-2 gap-x-6 gap-y-4 sm:grid-cols-3">
-          <Dato label="Fecha" valor={gasto.fecha} />
+          <Dato label="Fecha" valor={formatearFecha(gasto.fecha)} />
           <Dato label="Categoría" valor={CATEGORIA_GASTO_LABEL[gasto.categoria]} />
           <Dato label="Propiedad" valor={gasto.propiedad_label} />
           <Dato

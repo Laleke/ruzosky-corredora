@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Filter, X } from "lucide-react";
 import { ui } from "@/components/ui";
+import { ComboboxOpcion } from "@/components/combobox-opcion";
 import { CATEGORIAS } from "./constants";
 
 type Opcion = { id: string; label: string };
@@ -92,51 +93,33 @@ export function FiltroDocumentos({
           </label>
           <label className="flex flex-col gap-1 text-sm">
             <span className="font-medium text-canvas-fg">Propiedad</span>
-            <select
+            <ComboboxOpcion
               name="propiedad"
+              options={propiedades}
               value={campos.propiedad}
-              onChange={(e) => set("propiedad", e.target.value)}
-              className={ui.input}
-            >
-              <option value="">Todas</option>
-              {propiedades.map((o) => (
-                <option key={o.id} value={o.id}>
-                  {o.label}
-                </option>
-              ))}
-            </select>
+              onChange={(v) => set("propiedad", v)}
+              placeholder="Todas"
+            />
           </label>
           <label className="flex flex-col gap-1 text-sm">
             <span className="font-medium text-canvas-fg">Propietario</span>
-            <select
+            <ComboboxOpcion
               name="propietario"
+              options={propietarios}
               value={campos.propietario}
-              onChange={(e) => set("propietario", e.target.value)}
-              className={ui.input}
-            >
-              <option value="">Todos</option>
-              {propietarios.map((o) => (
-                <option key={o.id} value={o.id}>
-                  {o.label}
-                </option>
-              ))}
-            </select>
+              onChange={(v) => set("propietario", v)}
+              placeholder="Todos"
+            />
           </label>
           <label className="flex flex-col gap-1 text-sm">
             <span className="font-medium text-canvas-fg">Arrendatario</span>
-            <select
+            <ComboboxOpcion
               name="arrendatario"
+              options={arrendatarios}
               value={campos.arrendatario}
-              onChange={(e) => set("arrendatario", e.target.value)}
-              className={ui.input}
-            >
-              <option value="">Todos</option>
-              {arrendatarios.map((o) => (
-                <option key={o.id} value={o.id}>
-                  {o.label}
-                </option>
-              ))}
-            </select>
+              onChange={(v) => set("arrendatario", v)}
+              placeholder="Todos"
+            />
           </label>
           <label className="flex flex-col gap-1 text-sm">
             <span className="font-medium text-canvas-fg">Desde</span>

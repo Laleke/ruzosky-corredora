@@ -18,6 +18,7 @@ import {
 } from "@/features/documentos/acciones";
 import { getCurrentProfile } from "@/lib/auth";
 import { ui, badge } from "@/components/ui";
+import { formatearFecha } from "@/lib/fecha";
 
 function Dato({ label, valor }: { label: string; valor: string | null }) {
   return (
@@ -72,8 +73,8 @@ export default async function DocumentoDetallePage({
       {/* Metadatos */}
       <div className={`${ui.card} mb-6 p-6`}>
         <dl className="grid grid-cols-2 gap-x-6 gap-y-4 sm:grid-cols-3">
-          <Dato label="Fecha documento" valor={doc.fecha_documento} />
-          <Dato label="Fecha de subida" valor={doc.created_at.slice(0, 10)} />
+          <Dato label="Fecha documento" valor={formatearFecha(doc.fecha_documento)} />
+          <Dato label="Fecha de subida" valor={formatearFecha(doc.created_at)} />
           <Dato label="Propiedad" valor={doc.propiedad_label} />
           <Dato label="Contrato" valor={doc.contrato_numero} />
           <Dato label="Propietario" valor={doc.propietario_nombre} />
@@ -122,7 +123,7 @@ export default async function DocumentoDetallePage({
                     {formatearTamano(v.tamano_bytes)}
                   </td>
                   <td className={`${ui.td} text-muted`}>
-                    {v.created_at.slice(0, 10)}
+                    {formatearFecha(v.created_at)}
                   </td>
                   <td className={`${ui.td} text-muted`}>
                     {v.subido_por_email ?? "—"}

@@ -10,6 +10,7 @@ import {
 } from "@/features/gastos/constants";
 import { PageHeader } from "@/components/page-header";
 import { ui, badge } from "@/components/ui";
+import { formatearFecha } from "@/lib/fecha";
 import type { CategoriaGasto, EstadoGasto } from "@/types/database.types";
 import type { FiltrosGastos } from "@/features/gastos/types";
 
@@ -82,7 +83,7 @@ export default async function GastosPage({
                   <div className="flex items-start justify-between gap-2">
                     <div>
                       <p className="text-xs text-white/60">
-                        {g.fecha} · {CATEGORIA_GASTO_LABEL[g.categoria]}
+                        {formatearFecha(g.fecha)} · {CATEGORIA_GASTO_LABEL[g.categoria]}
                       </p>
                       <p className="flex items-center gap-2 font-medium text-white">
                         {g.descripcion}

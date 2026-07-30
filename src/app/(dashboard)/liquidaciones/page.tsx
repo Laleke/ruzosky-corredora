@@ -5,6 +5,7 @@ import { FiltroLiquidaciones } from "@/features/liquidaciones/filtro-liquidacion
 import { listPropietarios } from "@/features/propietarios/queries";
 import { PageHeader } from "@/components/page-header";
 import { ui, badge } from "@/components/ui";
+import { formatearFecha, formatearPeriodo } from "@/lib/fecha";
 
 const ESTADO: Record<string, { label: string; tone: Parameters<typeof badge>[0] }> = {
   pendiente: { label: "Pendiente", tone: "warning" },
@@ -54,7 +55,7 @@ export default async function LiquidacionesPage({
             <AlertTriangle size={18} />
             <h2 className="text-sm font-semibold">
               {pendientes.length} liquidación{pendientes.length === 1 ? "" : "es"} pendiente
-              {pendientes.length === 1 ? "" : "s"} de generar · {periodoActual}
+              {pendientes.length === 1 ? "" : "s"} de generar · {formatearPeriodo(periodoActual)}
             </h2>
           </div>
           <ul className="flex flex-col divide-y divide-white/15">
@@ -97,7 +98,7 @@ export default async function LiquidacionesPage({
               <div key={l.id} className={ui.listCard}>
                 <div className="flex items-start justify-between gap-2">
                   <div>
-                    <p className="text-xs text-white/60">{l.numero ?? "—"} · {l.periodo.slice(0, 7)}</p>
+                    <p className="text-xs text-white/60">{l.numero ?? "—"} · {formatearPeriodo(l.periodo)}</p>
                     <p className="font-medium text-white">{l.propietario_nombre}</p>
                   </div>
                   <span className={badge(est.tone)}>{est.label}</span>
@@ -110,7 +111,7 @@ export default async function LiquidacionesPage({
                     </summary>
                     <div className="mt-2 flex flex-col gap-1 text-sm text-white/80">
                       <span>Total: {clp(l.total_liquidacion)}</span>
-                      {l.fecha_generacion && <span>Generada: {l.fecha_generacion}</span>}
+                      {l.fecha_generacion && <span>Generada: {formatearFecha(l.fecha_generacion)}</span>}
                     </div>
                   </details>
 

@@ -13,6 +13,7 @@ import { FiltroDocumentos } from "@/features/documentos/filtro-documentos";
 import { AccionesArchivo } from "@/features/documentos/acciones";
 import { PageHeader } from "@/components/page-header";
 import { ui, badge } from "@/components/ui";
+import { formatearFecha } from "@/lib/fecha";
 import type { CategoriaDocumento } from "@/types/database.types";
 import type { FiltrosDocumentos } from "@/features/documentos/types";
 
@@ -77,7 +78,7 @@ export default async function DocumentosPage({
               <div className="flex items-start justify-between gap-2">
                 <div className="min-w-0">
                   <p className="text-xs text-white/60">
-                    {d.fecha_documento ?? d.created_at.slice(0, 10)} · {formatearTamano(d.version_tamano_bytes)}
+                    {formatearFecha(d.fecha_documento ?? d.created_at)} · {formatearTamano(d.version_tamano_bytes)}
                   </p>
                   <p className="flex items-center gap-1.5 font-medium text-white">
                     <FileText size={15} className="shrink-0 text-white/60" />

@@ -7,6 +7,7 @@ import { ArrowLeft, Pencil, Trash2 } from "lucide-react";
 import { badge, ui } from "@/components/ui";
 import { Combobox } from "@/components/combobox";
 import { FechaInput } from "@/components/fecha-input";
+import { formatearFecha } from "@/lib/fecha";
 import { NOMBRES_REGIONES, comunasDeRegion } from "@/data/chile";
 import { eliminarPropiedad, type actualizarPropiedad } from "./actions";
 import type { Propiedad } from "./types";
@@ -83,7 +84,9 @@ function Campo({
           />
         )
       ) : (
-        <dd className="mt-0.5 text-sm text-white">{displayValue ?? (value || "—")}</dd>
+        <dd className="mt-0.5 text-sm text-white">
+          {displayValue ?? (type === "date" ? formatearFecha(value as string | null) : value || "—")}
+        </dd>
       )}
     </div>
   );

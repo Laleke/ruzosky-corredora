@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Filter, X } from "lucide-react";
 import { ui } from "@/components/ui";
+import { ComboboxOpcion } from "@/components/combobox-opcion";
 
 const ESTADO_OPCIONES = [
   { value: "pendiente", label: "Pendiente" },
@@ -51,19 +52,13 @@ export function FiltroLiquidaciones({
         >
           <label className="flex flex-col gap-1 text-sm">
             <span className="font-medium text-canvas-fg">Propietario</span>
-            <select
+            <ComboboxOpcion
               name="propietario"
+              options={propietarios}
               value={campos.propietario}
-              onChange={(e) => set("propietario", e.target.value)}
-              className={ui.input}
-            >
-              <option value="">Todos</option>
-              {propietarios.map((o) => (
-                <option key={o.id} value={o.id}>
-                  {o.label}
-                </option>
-              ))}
-            </select>
+              onChange={(v) => set("propietario", v)}
+              placeholder="Todos"
+            />
           </label>
           <label className="flex flex-col gap-1 text-sm">
             <span className="font-medium text-canvas-fg">Estado</span>

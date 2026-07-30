@@ -1,12 +1,10 @@
 import { notFound } from "next/navigation";
-import { RegistrarPago } from "@/features/cobros/registrar-pago";
-import {
-  registrarPago,
-  eliminarPago,
-  eliminarCargo,
-} from "@/features/cobros/actions";
+import Link from "next/link";
+import { Plus } from "lucide-react";
+import { eliminarPago, eliminarCargo } from "@/features/cobros/actions";
 import { getCargo, getPagosDeCargo } from "@/features/cobros/queries";
 import { BotonVolver } from "@/components/boton-volver";
+import { formatearFecha, formatearPeriodo } from "@/lib/fecha";
 
 const TIPO_LABEL: Record<string, string> = {
   arriendo: "Arriendo",
@@ -47,7 +45,7 @@ export default async function DetalleCargoPage({
         <div className="flex items-start justify-between gap-3">
           <div>
             <h1 className="text-xl font-semibold tracking-tight text-white">
-              {TIPO_LABEL[cargo.tipo_cargo] ?? cargo.tipo_cargo} · {cargo.periodo.slice(0, 7)}
+              {TIPO_LABEL[cargo.tipo_cargo] ?? cargo.tipo_cargo} · {formatearPeriodo(cargo.periodo)}
             </h1>
             <p className="mt-1 text-sm text-white/70">
               {cargo.numero_contrato ? `Contrato ${cargo.numero_contrato} · ` : ""}
@@ -74,13 +72,28 @@ export default async function DetalleCargoPage({
           </div>
           <div className="rounded-lg bg-burgundy-strong px-4 py-3">
             <p className="text-xs text-white/60">Vence</p>
-            <p className="text-lg font-semibold text-white">{cargo.fecha_vencimiento ?? "—"}</p>
+            <p className="text-lg font-semibold text-white">{formatearFecha(cargo.fecha_vencimiento)}</p>
           </div>
         </div>
       </section>
 
       <section className="flex flex-col gap-4">
-        <h2 className="text-lg font-semibold text-canvas-fg">Pagos</h2>
+        <div className="flex items-center gap-2.5">
+          <h2 className="text-lg font-semibold text-canvas-fg">Pagos</h2>
+          {saldo > 0 && (
+            <Link
+              href={`/cobros/${id}/pagos/nuevo`}
+              aria-label="Registrar pago"
+              title="Registrar pago"
+              className="flex h-7 w-7 items-center justify-center rounded-full bg-burgundy text-white transition-colors hover:bg-burgundy-strong"
+            >
+              <Plus size={16} strokeWidth={2.5} />
+            </Link>
+          )}
+        </div>
+
+        {saldo <= 0 && <p className="text-sm text-canvas-muted">Cargo pagado por completo.</p>}
+
         {pagos.length > 0 && (
           <div className="rounded-xl bg-burgundy overflow-hidden">
             <table className="w-full">
@@ -96,7 +109,7 @@ export default async function DetalleCargoPage({
               <tbody className="divide-y divide-white/10">
                 {pagos.map((p) => (
                   <tr key={p.id}>
-                    <td className={`${tdOscuro} text-white/70`}>{p.fecha_pago}</td>
+                    <td className={`${tdOscuro} text-white/70`}>{formatearFecha(p.fecha_pago)}</td>
                     <td className={`${tdOscuro} font-medium`}>{monto(p.monto_pagado)}</td>
                     <td className={`${tdOscuro} text-white/70`}>{p.medio_pago ?? "—"}</td>
                     <td className={`${tdOscuro} text-white/70`}>{p.referencia ?? "—"}</td>
@@ -116,11 +129,6 @@ export default async function DetalleCargoPage({
             </table>
           </div>
         )}
-
-        <div className="rounded-xl bg-burgundy p-5">
-          <h3 className="mb-3 text-sm font-semibold text-white">Registrar pago</h3>
-          <RegistrarPago action={registrarPago.bind(null, id)} saldoPendiente={saldo} />
-        </div>
       </section>
     </div>
   );

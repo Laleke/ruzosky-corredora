@@ -7,6 +7,7 @@ import { ConfirmarForm } from "@/features/liquidaciones/confirmar-form";
 import { SeleccionLiquidacionWizard } from "@/features/liquidaciones/seleccion-wizard";
 import { CATEGORIA_GASTO_LABEL } from "@/features/gastos/constants";
 import { ui } from "@/components/ui";
+import { formatearFecha, formatearPeriodo } from "@/lib/fecha";
 
 function nombre(p: {
   tipo_persona: string;
@@ -63,7 +64,7 @@ export default async function NuevaLiquidacionPage({
         <div className="flex flex-col gap-5">
           <div className={`${ui.card} flex items-center justify-between gap-3 p-5`}>
             <p className="text-sm text-muted">
-              {propLabel} · período <strong className="text-ink">{periodo}</strong>
+              {propLabel} · período <strong className="text-ink">{formatearPeriodo(periodo)}</strong>
             </p>
             <Link href="/liquidaciones/nueva" className={ui.linkAction}>
               Cambiar propietario/período
@@ -120,7 +121,7 @@ export default async function NuevaLiquidacionPage({
                             {CATEGORIA_GASTO_LABEL[
                               g.categoria as keyof typeof CATEGORIA_GASTO_LABEL
                             ] ?? g.categoria}{" "}
-                            · {g.fecha}
+                            · {formatearFecha(g.fecha)}
                           </span>
                         </td>
                         <td className={`${ui.td} text-right font-medium`}>
@@ -159,7 +160,7 @@ export default async function NuevaLiquidacionPage({
                 </h2>
                 {yaExiste ? (
                   <p className="rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-800">
-                    Ya existe una liquidación para {propLabel} en el período {periodo}.
+                    Ya existe una liquidación para {propLabel} en el período {formatearPeriodo(periodo)}.
                     No se puede generar otra hasta anular la existente.
                   </p>
                 ) : (
