@@ -1,6 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { listPendientesLiquidar } from "@/features/liquidaciones/queries";
-import { listContratosSinArriendo } from "@/features/cobros/queries";
+import { listContratosSinArriendo, periodoArriendoVigente } from "@/features/cobros/queries";
 import { listContratosConReajustePendiente } from "@/features/contratos/queries";
 
 export type DashboardStats = {
@@ -59,6 +59,8 @@ export type TareaPendiente = {
 export async function getTareasPendientes(): Promise<TareaPendiente[]> {
   const supabase = await createClient();
   const periodoActual = new Date().toISOString().slice(0, 7);
+  // El arriendo se paga por adelantado: se avisa por el período siguiente, no el actual.
+  const periodoArriendo = periodoArriendoVigente();
   const hoy = new Date().toISOString().slice(0, 10);
   const en30dias = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
     .toISOString()
@@ -73,7 +75,7 @@ export async function getTareasPendientes(): Promise<TareaPendiente[]> {
     contratosConReajustePendiente,
   ] = await Promise.all([
     listPendientesLiquidar(`${periodoActual}-01`),
-    listContratosSinArriendo(`${periodoActual}-01`),
+    listContratosSinArriendo(`${periodoArriendo}-01`),
     supabase
       .from("gastos")
       .select("*", { count: "exact", head: true })

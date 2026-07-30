@@ -240,9 +240,11 @@ export function CargoWizard({
       </div>
 
       {confirmandoCancelar && (
-        <div className="fixed inset-x-0 top-0 z-50 flex justify-center p-4">
-          <div className="flex flex-col items-center gap-2 rounded-xl bg-burgundy-strong p-4 shadow-lg">
-            <p className="text-sm text-white">Se perderá el avance de este cargo. ¿Cancelar de todas formas?</p>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
+          <div className="flex w-full max-w-sm flex-col items-center gap-3 rounded-xl bg-burgundy-strong p-5 shadow-lg">
+            <p className="text-center text-sm text-white">
+              Se perderá el avance de este cargo. ¿Cancelar de todas formas?
+            </p>
             <div className="flex gap-2">
               <button
                 type="button"
@@ -364,7 +366,6 @@ function SelectorPropiedadContratoWizard({
           value={valores.propiedad_id}
           onChange={onProp}
           placeholder="Selecciona o escribe…"
-          autoFocus
         />
       </div>
 

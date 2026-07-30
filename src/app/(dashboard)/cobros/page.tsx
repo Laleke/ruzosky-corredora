@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { AlertTriangle, Eye, Info } from "lucide-react";
-import { listCargos, listContratosSinArriendo } from "@/features/cobros/queries";
+import { listCargos, listContratosSinArriendo, periodoArriendoVigente } from "@/features/cobros/queries";
 import { listContratosConReajustePendiente } from "@/features/contratos/queries";
 import { GenerarArriendos } from "@/features/cobros/generar-arriendos";
 import { FiltroCobros } from "@/features/cobros/filtro-cobros";
@@ -63,7 +63,8 @@ export default async function CobrosPage({
     venceHasta: sp.venceHasta,
   };
 
-  const periodoActual = new Date().toISOString().slice(0, 7);
+  // El arriendo se paga por adelantado: el período a generar es el próximo, no el actual.
+  const periodoActual = periodoArriendoVigente();
   const [cargos, opciones, sinArriendo, reajustesPendientes] = await Promise.all([
     listCargos(filtros),
     getOpcionesRelacion(),
@@ -125,10 +126,25 @@ export default async function CobrosPage({
               generado · {periodoActual}
             </h2>
           </div>
+
+          <div className="mb-3 grid grid-cols-2 gap-4">
+            <div>
+              <p className="text-xs text-white/60">Propiedades</p>
+              <p className="font-semibold text-white">{sinArriendo.length} Activas</p>
+            </div>
+            <div>
+              <p className="text-xs text-white/60">Deuda Pendiente</p>
+              <p className="font-semibold text-white">
+                {monto(sinArriendo.reduce((acc, c) => acc + c.monto, 0))}
+              </p>
+            </div>
+          </div>
+
           <ul className="flex flex-col divide-y divide-white/15 text-sm text-white">
             {sinArriendo.map((c) => (
-              <li key={c.contratoId} className="py-2">
-                {c.label}
+              <li key={c.contratoId} className="flex items-center justify-between gap-3 py-2">
+                <span>{c.label}</span>
+                <span className="text-white/70">{monto(c.monto)}</span>
               </li>
             ))}
           </ul>

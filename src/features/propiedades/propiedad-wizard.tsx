@@ -430,26 +430,30 @@ export function PropiedadWizard({ action }: { action: Action }) {
       </div>
 
       {confirmandoCancelar && (
-        <div className="flex flex-col items-center gap-2 rounded-xl bg-white/10 p-4">
-          <p className="text-sm text-white">Se perderá el avance de esta propiedad. ¿Cancelar de todas formas?</p>
-          <div className="flex gap-2">
-            <button
-              type="button"
-              onClick={() => {
-                limpiarBorrador();
-                router.push("/propiedades");
-              }}
-              className="inline-flex items-center gap-1.5 rounded-lg bg-white px-4 py-2 text-sm font-medium text-burgundy shadow-sm transition-colors hover:bg-white/90"
-            >
-              Sí, cancelar
-            </button>
-            <button
-              type="button"
-              onClick={() => setConfirmandoCancelar(false)}
-              className="inline-flex items-center gap-1.5 rounded-lg bg-white/10 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-white/20"
-            >
-              No
-            </button>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
+          <div className="flex w-full max-w-sm flex-col items-center gap-3 rounded-xl bg-burgundy-strong p-5 shadow-lg">
+            <p className="text-center text-sm text-white">
+              Se perderá el avance de esta propiedad. ¿Cancelar de todas formas?
+            </p>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  limpiarBorrador();
+                  router.push("/propiedades");
+                }}
+                className="inline-flex items-center gap-1.5 rounded-lg bg-white px-4 py-2 text-sm font-medium text-burgundy shadow-sm transition-colors hover:bg-white/90"
+              >
+                Sí, cancelar
+              </button>
+              <button
+                type="button"
+                onClick={() => setConfirmandoCancelar(false)}
+                className="inline-flex items-center gap-1.5 rounded-lg bg-white/10 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-white/20"
+              >
+                No
+              </button>
+            </div>
           </div>
         </div>
       )}

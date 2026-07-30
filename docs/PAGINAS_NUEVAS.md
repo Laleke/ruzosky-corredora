@@ -51,34 +51,42 @@ fondo blanco igual al de Región/Comuna en Propiedades (`Combobox`,
   buscador se justifica cuando la lista puede crecer (Propiedades,
   Propietarios), no para sub-listas acotadas por selección previa.
 
-## 3. Wizard de creación: mensaje de "Cancelar" como overlay arriba de la pantalla
+## 3. Wizard de creación: "Cancelar" como overlay centrado (patrón único, igual en los 8 wizards)
 
-El wizard de una pregunta a la vez sigue el patrón de
-`DISENO_PAGINAS.md` (progreso, Atrás/Siguiente, borrador en
-`localStorage`), **con un ajuste**: la tarjeta de confirmación "Se perderá
-el avance. ¿Cancelar de todas formas?" ya no se renderiza inline dentro del
-panel burdeo (empujando el contenido hacia abajo) — va en un overlay fijo
-arriba de la pantalla completa:
+**Todo** wizard de una pregunta a la vez — nuevo o de los 4 originales —
+usa el mismo overlay para la confirmación de "Cancelar": centrado en toda
+la pantalla, con fondo oscurecido, igual que Propietarios (referencia
+real, `propietario-wizard.tsx`):
 
 ```tsx
 {confirmandoCancelar && (
-  <div className="fixed inset-x-0 top-0 z-50 flex justify-center p-4">
-    <div className="flex flex-col items-center gap-2 rounded-xl bg-burgundy-strong p-4 shadow-lg">
-      {/* mensaje + botones Sí, cancelar / No */}
+  <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
+    <div className="flex w-full max-w-sm flex-col items-center gap-3 rounded-xl bg-burgundy-strong p-5 shadow-lg">
+      <p className="text-center text-sm text-white">
+        Se perderá el avance de {/* entidad */}. ¿Cancelar de todas formas?
+      </p>
+      {/* botones Sí, cancelar / No */}
     </div>
   </div>
 )}
 ```
 
-Referencia real: `src/features/cobros/cargo-wizard.tsx`,
-`src/features/gastos/gasto-wizard.tsx`,
-`src/features/documentos/documento-wizard.tsx`.
+**No** un banner anclado arriba de la pantalla (`fixed inset-x-0 top-0`,
+sin oscurecer el fondo) — esa variante se probó y se descartó; no calzaba
+con el patrón ya validado en Propiedades/Arrendatarios/Propietarios/Contratos.
+Aplicado en los 8 wizards (los 4 originales + `cargo-wizard.tsx`,
+`gasto-wizard.tsx`, `documento-wizard.tsx`, `seleccion-wizard.tsx` de
+Liquidaciones — este último sin borrador en `localStorage`, pero con el
+mismo botón y overlay).
 
-> Pendiente: los 4 wizards originales (Propiedades, Arrendatarios,
-> Propietarios, Contratos) todavía usan el overlay inline antiguo — no se
-> tocaron en esta migración para no arriesgar un flujo ya validado. Si se
-> vuelve a tocar alguno de esos wizards, aplicar este mismo patrón ahí
-> también para que los 8 wizards queden consistentes.
+## 3b. Autofoco: nunca en un paso tipo combobox
+
+`autoFocus` en el input activo del wizard es correcto para texto/número/
+fecha/select, pero **no** para un paso que usa `Combobox`/`ComboboxOpcion`
+— el foco automático dispara `onFocus` y abre el listado desplegado de
+inmediato al entrar al paso, sin que el usuario haya hecho nada, y se ve
+mal. Omitir `autoFocus` específicamente en esos pasos (dejar que el
+usuario haga clic para abrirlo).
 
 ## 4. Componentes compartidos con variante clara/oscura
 
@@ -115,3 +123,15 @@ elegir los parámetros de entrada, tarjetas para listar registros), pero el
 cálculo/objeto de negocio en sí **no se reescribe** — ver
 `seleccion-wizard.tsx` (solo arma la URL con propietario+período) vs.
 `liquidaciones/nueva/page.tsx` (preview y confirmación intactos).
+
+## 7. Pantallas de detalle simples (sin edición en línea): mismo burdeo + `BotonVolver`
+
+Cobros/Documentos/Gastos tienen pantallas de detalle que **no** editan el
+registro campo por campo (cargo/documento inmutables tras crearse) — igual
+así van en panel(es) `bg-burgundy`/`bg-burgundy-strong`, texto blanco,
+tablas internas (pagos, versiones) en la misma paleta oscura (`thOscuro`/
+`tdOscuro` locales, no `ui.th`/`ui.td` que son para tablas en `ui.card`
+blanco). "Volver" usa el componente compartido `src/components/boton-volver.tsx`
+(`BotonVolver`, con `router.back()`) en vez de un `<Link>` a una ruta fija
+— necesario porque estas pantallas son Server Components y el botón debe
+ser un Client Component aparte. Referencia real: `cobros/[id]/page.tsx`.

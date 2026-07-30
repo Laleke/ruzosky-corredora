@@ -6,6 +6,17 @@ import type { Cargo, CargoConContexto, FiltrosCargos, Pago } from "./types";
 type DB = SupabaseClient<Database>;
 
 /**
+ * El arriendo se paga por adelantado: el período que corresponde tener
+ * generado (y por el que se avisa si falta) es siempre el mes SIGUIENTE
+ * al actual, no el mes calendario en curso — ese ya debió cobrarse antes
+ * de que empezara. No aplica a Liquidaciones (que revisan lo ya cobrado).
+ */
+export function periodoArriendoVigente(hoy: Date = new Date()): string {
+  const siguiente = new Date(hoy.getFullYear(), hoy.getMonth() + 1, 1);
+  return siguiente.toISOString().slice(0, 7);
+}
+
+/**
  * Propiedad y arrendatario no son columnas directas de `cargos` (viven en el
  * contrato); se resuelven al conjunto de contratos que cumplen el criterio.
  * null = sin filtro; [] = criterio sin contratos (resultado vacío).
@@ -87,11 +98,14 @@ export async function listCargos(
   return filas;
 }
 
-export type ContratoSinArriendo = { contratoId: string; label: string };
+export type ContratoSinArriendo = { contratoId: string; label: string; monto: number };
 
 /**
  * Contratos vigentes/renovados que aún no tienen un cargo de arriendo
  * generado para el período dado. Base del indicador "cobros pendientes".
+ * `monto` es el canon vigente (canon_actual, o el original si no hay
+ * reajuste) — la deuda que se generará cuando se cree el cargo, todavía no
+ * existe como cargo real.
  */
 export async function listContratosSinArriendo(
   periodo: string
@@ -100,7 +114,7 @@ export async function listContratosSinArriendo(
   const { data: contratos } = await supabase
     .from("contratos")
     .select(
-      "id, numero_contrato, propiedades(codigo_interno, direccion, numero, departamento)"
+      "id, numero_contrato, canon_monto, canon_actual, propiedades(codigo_interno, direccion, numero, departamento)"
     )
     .in("estado", ["vigente", "renovado"])
     .eq("activo", true);
@@ -116,6 +130,8 @@ export async function listContratosSinArriendo(
   type Row = {
     id: string;
     numero_contrato: string | null;
+    canon_monto: number;
+    canon_actual: number | null;
     propiedades: {
       codigo_interno: string | null;
       direccion: string | null;
@@ -133,6 +149,7 @@ export async function listContratosSinArriendo(
       return {
         contratoId: c.id,
         label: [calle, unidad].filter(Boolean).join(" · ") || "—",
+        monto: Number(c.canon_actual ?? c.canon_monto),
       };
     });
 }

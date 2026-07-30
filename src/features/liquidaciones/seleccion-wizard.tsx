@@ -23,6 +23,7 @@ export function SeleccionLiquidacionWizard({ propietarios }: { propietarios: Opc
   const [propietario, setPropietario] = useState("");
   const [periodo, setPeriodo] = useState("");
   const [errorPaso, setErrorPaso] = useState<string | null>(null);
+  const [confirmandoCancelar, setConfirmandoCancelar] = useState(false);
 
   const actual = PASOS[paso];
   const esUltimo = paso === PASOS.length - 1;
@@ -79,7 +80,6 @@ export function SeleccionLiquidacionWizard({ propietarios }: { propietarios: Opc
                 setErrorPaso(null);
               }}
               placeholder="Selecciona o escribe…"
-              autoFocus
             />
           ) : (
             <input
@@ -98,6 +98,13 @@ export function SeleccionLiquidacionWizard({ propietarios }: { propietarios: Opc
         {errorPaso && <p className="text-sm text-amber-200">{errorPaso}</p>}
 
         <div className="flex flex-wrap items-center justify-center gap-3">
+          <button
+            type="button"
+            onClick={() => setConfirmandoCancelar(true)}
+            className="inline-flex items-center gap-1.5 rounded-lg bg-white/10 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-white/20"
+          >
+            Cancelar
+          </button>
           {paso > 0 && (
             <button
               type="button"
@@ -116,6 +123,32 @@ export function SeleccionLiquidacionWizard({ propietarios }: { propietarios: Opc
           </button>
         </div>
       </div>
+
+      {confirmandoCancelar && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
+          <div className="flex w-full max-w-sm flex-col items-center gap-3 rounded-xl bg-burgundy-strong p-5 shadow-lg">
+            <p className="text-center text-sm text-white">
+              Se perderá lo ingresado. ¿Cancelar de todas formas?
+            </p>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={() => router.push("/liquidaciones")}
+                className="inline-flex items-center gap-1.5 rounded-lg bg-white px-4 py-2 text-sm font-medium text-burgundy shadow-sm transition-colors hover:bg-white/90"
+              >
+                Sí, cancelar
+              </button>
+              <button
+                type="button"
+                onClick={() => setConfirmandoCancelar(false)}
+                className="inline-flex items-center gap-1.5 rounded-lg bg-white/10 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-white/20"
+              >
+                No
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
