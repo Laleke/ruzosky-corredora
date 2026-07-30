@@ -17,12 +17,18 @@ export async function signIn(
   }
 
   const supabase = await createClient();
-  const { error } = await supabase.auth.signInWithPassword({ email, password });
+  const { data, error } = await supabase.auth.signInWithPassword({ email, password });
 
-  if (error) {
+  if (error || !data.user) {
     // Mensaje genérico: no revelar si el email existe o no.
     return { error: "Credenciales inválidas." };
   }
 
-  redirect("/dashboard");
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("rol")
+    .eq("id", data.user.id)
+    .single();
+
+  redirect(profile?.rol === "admin" ? "/dashboard" : "/portal");
 }

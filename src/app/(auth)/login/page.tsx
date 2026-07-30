@@ -7,7 +7,14 @@ export default async function LoginPage() {
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (user) redirect("/dashboard");
+  if (user) {
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("rol")
+      .eq("id", user.id)
+      .single();
+    redirect(profile?.rol === "admin" ? "/dashboard" : "/portal");
+  }
 
   return (
     <main className="grid min-h-screen lg:grid-cols-2">

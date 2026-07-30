@@ -10,6 +10,7 @@ export default async function DashboardLayout({
 }) {
   const profile = await getCurrentProfile();
   if (!profile) redirect("/login");
+  if (profile.rol !== "admin") redirect("/portal");
 
   return (
     <div className="min-h-screen">

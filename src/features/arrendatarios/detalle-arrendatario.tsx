@@ -10,6 +10,7 @@ import { EmailTexto } from "@/components/email-texto";
 import { NOMBRES_REGIONES, comunasDeRegion } from "@/data/chile";
 import { formatearRut } from "@/lib/rut";
 import { formatearTelefono, esEmailValido } from "@/lib/contacto";
+import { InvitarPortal } from "@/features/portal/invitar-portal";
 import { eliminarArrendatario, type actualizarArrendatario } from "./actions";
 import type { Arrendatario } from "./types";
 
@@ -261,6 +262,19 @@ export function DetalleArrendatario({
           <Campo editando={editando} label="Calle" name="direccion" value={arrendatario.direccion} />
           <Campo editando={editando} label="Número" name="numero" value={arrendatario.numero} />
         </Bloque>
+
+        {!editando && (
+          <Bloque titulo="Portal del arrendatario">
+            <div className="col-span-full">
+              <InvitarPortal
+                entidad="arrendatario"
+                entidadId={id}
+                emailDefault={arrendatario.email}
+                estadoInvitacion={arrendatario.estado_invitacion}
+              />
+            </div>
+          </Bloque>
+        )}
 
         {state.error && (
           <p className="rounded-lg bg-red-600/20 px-3 py-2 text-sm text-white" role="alert">

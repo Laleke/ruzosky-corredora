@@ -13,16 +13,16 @@ import { usePathname, useRouter } from "next/navigation";
  * Se arma una trampa de historial por página: al presionar atrás, en vez de
  * retroceder al historial real, se redirige al nivel calculado.
  */
-export function BackToDashboard() {
+export function BackToDashboard({ home = "/dashboard" }: { home?: string }) {
   const pathname = usePathname();
   const router = useRouter();
 
   useEffect(() => {
-    if (pathname === "/dashboard") return;
+    if (pathname === home) return;
 
     const segments = pathname.split("/").filter(Boolean);
     const target =
-      segments.length <= 1 ? "/dashboard" : "/" + segments.slice(0, -1).join("/");
+      segments.length <= 1 ? home : "/" + segments.slice(0, -1).join("/");
 
     window.history.pushState(null, "", window.location.href);
     const onPopState = () => {
@@ -30,7 +30,7 @@ export function BackToDashboard() {
     };
     window.addEventListener("popstate", onPopState);
     return () => window.removeEventListener("popstate", onPopState);
-  }, [pathname, router]);
+  }, [pathname, router, home]);
 
   return null;
 }

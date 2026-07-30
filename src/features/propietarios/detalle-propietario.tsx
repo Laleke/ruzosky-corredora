@@ -12,6 +12,7 @@ import { NOMBRES_REGIONES, comunasDeRegion } from "@/data/chile";
 import { BANCOS_CHILE } from "@/data/bancos";
 import { formatearRut } from "@/lib/rut";
 import { formatearTelefono, formatearNumeroCuenta, esEmailValido } from "@/lib/contacto";
+import { InvitarPortal } from "@/features/portal/invitar-portal";
 import { eliminarPropietario, type actualizarPropietario } from "./actions";
 import type { Propietario } from "./types";
 
@@ -335,6 +336,19 @@ export function DetallePropietario({
             tipo="rut"
           />
         </Bloque>
+
+        {!editando && (
+          <Bloque titulo="Portal del propietario">
+            <div className="col-span-full">
+              <InvitarPortal
+                entidad="propietario"
+                entidadId={id}
+                emailDefault={propietario.email}
+                estadoInvitacion={propietario.estado_invitacion}
+              />
+            </div>
+          </Bloque>
+        )}
 
         {state.error && (
           <p className="rounded-lg bg-red-600/20 px-3 py-2 text-sm text-white" role="alert">

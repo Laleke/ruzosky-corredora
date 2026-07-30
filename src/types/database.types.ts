@@ -1,902 +1,1412 @@
-/**
- * Tipos de la base de datos Supabase.
- *
- * Definidos a mano según la migración `0001_tenancy_auth.sql`.
- * Una vez conectado el proyecto, regenerar con `npm run types:gen`
- * (sobrescribe este archivo con el esquema real).
- */
 export type Json =
   | string
   | number
   | boolean
   | null
   | { [key: string]: Json | undefined }
-  | Json[];
-
-export type RolUsuario = "admin" | "propietario" | "arrendatario";
-export type TipoPersona = "persona_natural" | "persona_juridica";
-export type TipoCuentaBancaria = "corriente" | "vista" | "ahorro" | "rut";
-export type TipoPropiedad =
-  | "departamento"
-  | "casa"
-  | "oficina"
-  | "local_comercial"
-  | "bodega"
-  | "estacionamiento"
-  | "terreno"
-  | "otro";
-export type EstadoPropiedad =
-  | "disponible"
-  | "reservada"
-  | "arrendada"
-  | "mantencion"
-  | "inactiva";
-export type Moneda = "CLP" | "UF";
-export type ReajusteTipo = "sin_reajuste" | "IPC" | "UF";
-export type TipoComision = "porcentaje" | "monto_fijo";
-export type EstadoContrato =
-  | "borrador"
-  | "vigente"
-  | "vencido"
-  | "terminado"
-  | "renovado";
-export type TipoCargo =
-  | "arriendo"
-  | "gasto_comun"
-  | "administracion"
-  | "luz"
-  | "agua"
-  | "internet"
-  | "multa"
-  | "ajuste"
-  | "otro";
-export type EstadoCargo = "pendiente" | "parcial" | "pagado" | "vencido";
-export type MedioPago =
-  | "transferencia"
-  | "efectivo"
-  | "cheque"
-  | "tarjeta"
-  | "otro";
-export type EstadoLiquidacion = "pendiente" | "pagada" | "anulada";
-export type TipoDetalleLiquidacion = "ingreso" | "descuento";
-export type CategoriaGasto =
-  | "mantencion"
-  | "reparacion"
-  | "servicios"
-  | "gastos_comunes"
-  | "contribuciones"
-  | "seguro"
-  | "comision"
-  | "legal"
-  | "administracion"
-  | "otro";
-export type EstadoGasto = "pendiente" | "pagado" | "anulado";
-export type ResponsableGasto = "propietario" | "arrendatario" | "corredora";
-export type CategoriaDocumento =
-  | "contrato"
-  | "anexo"
-  | "inventario"
-  | "acta_entrega"
-  | "acta_recepcion"
-  | "liquidacion"
-  | "comprobante_pago"
-  | "factura"
-  | "boleta"
-  | "gasto"
-  | "mantencion"
-  | "otro";
+  | Json[]
 
 export type Database = {
+  // Allows to automatically instantiate createClient with right options
+  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
+  __InternalSupabase: {
+    PostgrestVersion: "14.5"
+  }
   public: {
     Tables: {
-      empresas: {
-        Row: {
-          id: string;
-          nombre: string;
-          rut: string | null;
-          activa: boolean;
-          created_at: string;
-        };
-        Insert: {
-          id?: string;
-          nombre: string;
-          rut?: string | null;
-          activa?: boolean;
-          created_at?: string;
-        };
-        Update: {
-          id?: string;
-          nombre?: string;
-          rut?: string | null;
-          activa?: boolean;
-          created_at?: string;
-        };
-        Relationships: [];
-      };
-      profiles: {
-        Row: {
-          id: string;
-          empresa_id: string;
-          nombre: string | null;
-          email: string | null;
-          rol: RolUsuario;
-          created_at: string;
-        };
-        Insert: {
-          id: string;
-          empresa_id: string;
-          nombre?: string | null;
-          email?: string | null;
-          rol?: RolUsuario;
-          created_at?: string;
-        };
-        Update: {
-          id?: string;
-          empresa_id?: string;
-          nombre?: string | null;
-          email?: string | null;
-          rol?: RolUsuario;
-          created_at?: string;
-        };
-        Relationships: [];
-      };
-      propietarios: {
-        Row: {
-          id: string;
-          empresa_id: string;
-          tipo_persona: TipoPersona;
-          rut: string;
-          nombre: string | null;
-          apellido: string | null;
-          razon_social: string | null;
-          email: string | null;
-          telefono: string | null;
-          direccion: string | null;
-          comuna: string | null;
-          region: string | null;
-          numero: string | null;
-          banco: string | null;
-          tipo_cuenta: TipoCuentaBancaria | null;
-          numero_cuenta: string | null;
-          titular_cuenta: string | null;
-          rut_titular: string | null;
-          activo: boolean;
-          created_at: string;
-          updated_at: string;
-        };
-        Insert: {
-          id?: string;
-          empresa_id: string;
-          tipo_persona?: TipoPersona;
-          rut: string;
-          nombre?: string | null;
-          apellido?: string | null;
-          razon_social?: string | null;
-          email?: string | null;
-          telefono?: string | null;
-          direccion?: string | null;
-          comuna?: string | null;
-          region?: string | null;
-          numero?: string | null;
-          banco?: string | null;
-          tipo_cuenta?: TipoCuentaBancaria | null;
-          numero_cuenta?: string | null;
-          titular_cuenta?: string | null;
-          rut_titular?: string | null;
-          activo?: boolean;
-          created_at?: string;
-          updated_at?: string;
-        };
-        Update: {
-          id?: string;
-          empresa_id?: string;
-          tipo_persona?: TipoPersona;
-          rut?: string;
-          nombre?: string | null;
-          apellido?: string | null;
-          razon_social?: string | null;
-          email?: string | null;
-          telefono?: string | null;
-          direccion?: string | null;
-          comuna?: string | null;
-          region?: string | null;
-          numero?: string | null;
-          banco?: string | null;
-          tipo_cuenta?: TipoCuentaBancaria | null;
-          numero_cuenta?: string | null;
-          titular_cuenta?: string | null;
-          rut_titular?: string | null;
-          activo?: boolean;
-          created_at?: string;
-          updated_at?: string;
-        };
-        Relationships: [];
-      };
       arrendatarios: {
         Row: {
-          id: string;
-          empresa_id: string;
-          tipo_persona: TipoPersona;
-          rut: string;
-          nombre: string | null;
-          apellido: string | null;
-          razon_social: string | null;
-          email: string | null;
-          telefono: string | null;
-          direccion: string | null;
-          comuna: string | null;
-          region: string | null;
-          numero: string | null;
-          activo: boolean;
-          created_at: string;
-          updated_at: string;
-        };
+          activo: boolean
+          apellido: string | null
+          comuna: string | null
+          created_at: string
+          direccion: string | null
+          email: string | null
+          empresa_id: string
+          estado_invitacion: Database["public"]["Enums"]["estado_invitacion"]
+          id: string
+          invitado_en: string | null
+          invitado_por: string | null
+          nombre: string | null
+          numero: string | null
+          profile_id: string | null
+          razon_social: string | null
+          region: string | null
+          rut: string
+          telefono: string | null
+          tipo_persona: Database["public"]["Enums"]["tipo_persona"]
+          updated_at: string
+        }
         Insert: {
-          id?: string;
-          empresa_id: string;
-          tipo_persona?: TipoPersona;
-          rut: string;
-          nombre?: string | null;
-          apellido?: string | null;
-          razon_social?: string | null;
-          email?: string | null;
-          telefono?: string | null;
-          direccion?: string | null;
-          comuna?: string | null;
-          region?: string | null;
-          numero?: string | null;
-          activo?: boolean;
-          created_at?: string;
-          updated_at?: string;
-        };
+          activo?: boolean
+          apellido?: string | null
+          comuna?: string | null
+          created_at?: string
+          direccion?: string | null
+          email?: string | null
+          empresa_id: string
+          estado_invitacion?: Database["public"]["Enums"]["estado_invitacion"]
+          id?: string
+          invitado_en?: string | null
+          invitado_por?: string | null
+          nombre?: string | null
+          numero?: string | null
+          profile_id?: string | null
+          razon_social?: string | null
+          region?: string | null
+          rut: string
+          telefono?: string | null
+          tipo_persona?: Database["public"]["Enums"]["tipo_persona"]
+          updated_at?: string
+        }
         Update: {
-          id?: string;
-          empresa_id?: string;
-          tipo_persona?: TipoPersona;
-          rut?: string;
-          nombre?: string | null;
-          apellido?: string | null;
-          razon_social?: string | null;
-          email?: string | null;
-          telefono?: string | null;
-          direccion?: string | null;
-          comuna?: string | null;
-          region?: string | null;
-          numero?: string | null;
-          activo?: boolean;
-          created_at?: string;
-          updated_at?: string;
-        };
-        Relationships: [];
-      };
-      propiedades: {
-        Row: {
-          id: string;
-          empresa_id: string;
-          codigo_interno: string | null;
-          tipo: TipoPropiedad;
-          direccion: string | null;
-          numero: string | null;
-          departamento: string | null;
-          comuna: string | null;
-          region: string | null;
-          rol_sii: string | null;
-          dormitorios: number | null;
-          banos: number | null;
-          superficie_util_m2: number | null;
-          superficie_total_m2: number | null;
-          estacionamientos: number | null;
-          bodegas: number | null;
-          estado: EstadoPropiedad;
-          moneda: Moneda;
-          valor_referencial_arriendo: number | null;
-          gasto_comun_estimado: number | null;
-          fecha_adquisicion: string | null;
-          observaciones: string | null;
-          publicada: boolean;
-          activo: boolean;
-          created_at: string;
-          updated_at: string;
-        };
-        Insert: {
-          id?: string;
-          empresa_id: string;
-          codigo_interno?: string | null;
-          tipo?: TipoPropiedad;
-          direccion?: string | null;
-          numero?: string | null;
-          departamento?: string | null;
-          comuna?: string | null;
-          region?: string | null;
-          rol_sii?: string | null;
-          dormitorios?: number | null;
-          banos?: number | null;
-          superficie_util_m2?: number | null;
-          superficie_total_m2?: number | null;
-          estacionamientos?: number | null;
-          bodegas?: number | null;
-          estado?: EstadoPropiedad;
-          moneda?: Moneda;
-          valor_referencial_arriendo?: number | null;
-          gasto_comun_estimado?: number | null;
-          fecha_adquisicion?: string | null;
-          observaciones?: string | null;
-          publicada?: boolean;
-          activo?: boolean;
-          created_at?: string;
-          updated_at?: string;
-        };
-        Update: {
-          id?: string;
-          empresa_id?: string;
-          codigo_interno?: string | null;
-          tipo?: TipoPropiedad;
-          direccion?: string | null;
-          numero?: string | null;
-          departamento?: string | null;
-          comuna?: string | null;
-          region?: string | null;
-          rol_sii?: string | null;
-          dormitorios?: number | null;
-          banos?: number | null;
-          superficie_util_m2?: number | null;
-          superficie_total_m2?: number | null;
-          estacionamientos?: number | null;
-          bodegas?: number | null;
-          estado?: EstadoPropiedad;
-          moneda?: Moneda;
-          valor_referencial_arriendo?: number | null;
-          gasto_comun_estimado?: number | null;
-          fecha_adquisicion?: string | null;
-          observaciones?: string | null;
-          publicada?: boolean;
-          activo?: boolean;
-          created_at?: string;
-          updated_at?: string;
-        };
-        Relationships: [];
-      };
-      propietarios_propiedades: {
-        Row: {
-          id: string;
-          empresa_id: string;
-          propietario_id: string;
-          propiedad_id: string;
-          porcentaje_participacion: number;
-          created_at: string;
-        };
-        Insert: {
-          id?: string;
-          empresa_id: string;
-          propietario_id: string;
-          propiedad_id: string;
-          porcentaje_participacion?: number;
-          created_at?: string;
-        };
-        Update: {
-          id?: string;
-          empresa_id?: string;
-          propietario_id?: string;
-          propiedad_id?: string;
-          porcentaje_participacion?: number;
-          created_at?: string;
-        };
-        Relationships: [];
-      };
-      contratos: {
-        Row: {
-          id: string;
-          empresa_id: string;
-          numero_contrato: string | null;
-          propiedad_id: string;
-          fecha_firma: string | null;
-          fecha_inicio: string;
-          fecha_termino: string | null;
-          canon_monto: number;
-          canon_actual: number | null;
-          canon_uf_base: number | null;
-          canon_moneda: Moneda;
-          reajuste_tipo: ReajusteTipo;
-          periodicidad_reajuste_meses: number | null;
-          fecha_proximo_reajuste: string | null;
-          tipo_comision: TipoComision | null;
-          comision_monto: number | null;
-          cobra_administracion: boolean;
-          administracion_monto: number | null;
-          administracion_porcentaje: number | null;
-          estado: EstadoContrato;
-          observaciones: string | null;
-          corretaje_liquidado: boolean;
-          activo: boolean;
-          created_at: string;
-          updated_at: string;
-        };
-        Insert: {
-          id?: string;
-          empresa_id: string;
-          numero_contrato?: string | null;
-          propiedad_id: string;
-          fecha_firma?: string | null;
-          fecha_inicio: string;
-          fecha_termino?: string | null;
-          canon_monto: number;
-          canon_actual?: number | null;
-          canon_uf_base?: number | null;
-          canon_moneda?: Moneda;
-          reajuste_tipo?: ReajusteTipo;
-          periodicidad_reajuste_meses?: number | null;
-          fecha_proximo_reajuste?: string | null;
-          tipo_comision?: TipoComision | null;
-          comision_monto?: number | null;
-          cobra_administracion?: boolean;
-          administracion_monto?: number | null;
-          administracion_porcentaje?: number | null;
-          estado?: EstadoContrato;
-          observaciones?: string | null;
-          corretaje_liquidado?: boolean;
-          activo?: boolean;
-          created_at?: string;
-          updated_at?: string;
-        };
-        Update: {
-          id?: string;
-          empresa_id?: string;
-          numero_contrato?: string | null;
-          propiedad_id?: string;
-          fecha_firma?: string | null;
-          fecha_inicio?: string;
-          fecha_termino?: string | null;
-          canon_monto?: number;
-          canon_actual?: number | null;
-          canon_uf_base?: number | null;
-          canon_moneda?: Moneda;
-          reajuste_tipo?: ReajusteTipo;
-          periodicidad_reajuste_meses?: number | null;
-          fecha_proximo_reajuste?: string | null;
-          tipo_comision?: TipoComision | null;
-          comision_monto?: number | null;
-          cobra_administracion?: boolean;
-          administracion_monto?: number | null;
-          administracion_porcentaje?: number | null;
-          estado?: EstadoContrato;
-          observaciones?: string | null;
-          corretaje_liquidado?: boolean;
-          activo?: boolean;
-          created_at?: string;
-          updated_at?: string;
-        };
-        Relationships: [];
-      };
-      contratos_arrendatarios: {
-        Row: {
-          id: string;
-          empresa_id: string;
-          contrato_id: string;
-          arrendatario_id: string;
-          created_at: string;
-        };
-        Insert: {
-          id?: string;
-          empresa_id: string;
-          contrato_id: string;
-          arrendatario_id: string;
-          created_at?: string;
-        };
-        Update: {
-          id?: string;
-          empresa_id?: string;
-          contrato_id?: string;
-          arrendatario_id?: string;
-          created_at?: string;
-        };
-        Relationships: [];
-      };
-      cargos: {
-        Row: {
-          id: string;
-          empresa_id: string;
-          contrato_id: string;
-          periodo: string;
-          tipo_cargo: TipoCargo;
-          fecha_emision: string;
-          fecha_vencimiento: string | null;
-          monto: number;
-          estado: EstadoCargo;
-          saldo_pendiente: number;
-          observaciones: string | null;
-          created_at: string;
-          updated_at: string;
-        };
-        Insert: {
-          id?: string;
-          empresa_id: string;
-          contrato_id: string;
-          periodo: string;
-          tipo_cargo?: TipoCargo;
-          fecha_emision: string;
-          fecha_vencimiento?: string | null;
-          monto: number;
-          estado?: EstadoCargo;
-          saldo_pendiente: number;
-          observaciones?: string | null;
-          created_at?: string;
-          updated_at?: string;
-        };
-        Update: {
-          id?: string;
-          empresa_id?: string;
-          contrato_id?: string;
-          periodo?: string;
-          tipo_cargo?: TipoCargo;
-          fecha_emision?: string;
-          fecha_vencimiento?: string | null;
-          monto?: number;
-          estado?: EstadoCargo;
-          saldo_pendiente?: number;
-          observaciones?: string | null;
-          created_at?: string;
-          updated_at?: string;
-        };
-        Relationships: [];
-      };
-      pagos: {
-        Row: {
-          id: string;
-          empresa_id: string;
-          cargo_id: string;
-          fecha_pago: string;
-          monto_pagado: number;
-          medio_pago: MedioPago | null;
-          referencia: string | null;
-          observaciones: string | null;
-          created_at: string;
-        };
-        Insert: {
-          id?: string;
-          empresa_id: string;
-          cargo_id: string;
-          fecha_pago: string;
-          monto_pagado: number;
-          medio_pago?: MedioPago | null;
-          referencia?: string | null;
-          observaciones?: string | null;
-          created_at?: string;
-        };
-        Update: {
-          id?: string;
-          empresa_id?: string;
-          cargo_id?: string;
-          fecha_pago?: string;
-          monto_pagado?: number;
-          medio_pago?: MedioPago | null;
-          referencia?: string | null;
-          observaciones?: string | null;
-          created_at?: string;
-        };
-        Relationships: [];
-      };
-      liquidaciones: {
-        Row: {
-          id: string;
-          empresa_id: string;
-          propietario_id: string;
-          periodo: string;
-          fecha_generacion: string;
-          subtotal_ingresos: number;
-          subtotal_descuentos: number;
-          total_liquidacion: number;
-          estado: EstadoLiquidacion;
-          observaciones: string | null;
-          fecha_pago: string | null;
-          pago_observacion: string | null;
-          comprobante_url: string | null;
-          numero: string | null;
-          created_at: string;
-          updated_at: string;
-        };
-        Insert: {
-          id?: string;
-          empresa_id: string;
-          propietario_id: string;
-          periodo: string;
-          fecha_generacion: string;
-          subtotal_ingresos?: number;
-          subtotal_descuentos?: number;
-          total_liquidacion?: number;
-          estado?: EstadoLiquidacion;
-          observaciones?: string | null;
-          fecha_pago?: string | null;
-          pago_observacion?: string | null;
-          comprobante_url?: string | null;
-          numero?: string | null;
-          created_at?: string;
-          updated_at?: string;
-        };
-        Update: {
-          id?: string;
-          empresa_id?: string;
-          propietario_id?: string;
-          periodo?: string;
-          fecha_generacion?: string;
-          subtotal_ingresos?: number;
-          subtotal_descuentos?: number;
-          total_liquidacion?: number;
-          estado?: EstadoLiquidacion;
-          observaciones?: string | null;
-          fecha_pago?: string | null;
-          pago_observacion?: string | null;
-          comprobante_url?: string | null;
-          numero?: string | null;
-          created_at?: string;
-          updated_at?: string;
-        };
-        Relationships: [];
-      };
-      liquidacion_detalles: {
-        Row: {
-          id: string;
-          empresa_id: string;
-          liquidacion_id: string;
-          tipo: TipoDetalleLiquidacion;
-          concepto: string;
-          referencia_tipo: string | null;
-          referencia_id: string | null;
-          observacion: string | null;
-          monto: number;
-          created_at: string;
-        };
-        Insert: {
-          id?: string;
-          empresa_id: string;
-          liquidacion_id: string;
-          tipo: TipoDetalleLiquidacion;
-          concepto: string;
-          referencia_tipo?: string | null;
-          referencia_id?: string | null;
-          observacion?: string | null;
-          monto: number;
-          created_at?: string;
-        };
-        Update: {
-          id?: string;
-          empresa_id?: string;
-          liquidacion_id?: string;
-          tipo?: TipoDetalleLiquidacion;
-          concepto?: string;
-          referencia_tipo?: string | null;
-          referencia_id?: string | null;
-          observacion?: string | null;
-          monto?: number;
-          created_at?: string;
-        };
-        Relationships: [];
-      };
+          activo?: boolean
+          apellido?: string | null
+          comuna?: string | null
+          created_at?: string
+          direccion?: string | null
+          email?: string | null
+          empresa_id?: string
+          estado_invitacion?: Database["public"]["Enums"]["estado_invitacion"]
+          id?: string
+          invitado_en?: string | null
+          invitado_por?: string | null
+          nombre?: string | null
+          numero?: string | null
+          profile_id?: string | null
+          razon_social?: string | null
+          region?: string | null
+          rut?: string
+          telefono?: string | null
+          tipo_persona?: Database["public"]["Enums"]["tipo_persona"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "arrendatarios_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "arrendatarios_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       auditoria: {
         Row: {
-          id: string;
-          empresa_id: string;
-          usuario_id: string | null;
-          usuario_email: string | null;
-          accion: string;
-          entidad_tipo: string;
-          entidad_id: string | null;
-          datos: Json | null;
-          created_at: string;
-        };
+          accion: string
+          created_at: string
+          datos: Json | null
+          empresa_id: string
+          entidad_id: string | null
+          entidad_tipo: string
+          id: string
+          usuario_email: string | null
+          usuario_id: string | null
+        }
         Insert: {
-          id?: string;
-          empresa_id: string;
-          usuario_id?: string | null;
-          usuario_email?: string | null;
-          accion: string;
-          entidad_tipo: string;
-          entidad_id?: string | null;
-          datos?: Json | null;
-          created_at?: string;
-        };
+          accion: string
+          created_at?: string
+          datos?: Json | null
+          empresa_id: string
+          entidad_id?: string | null
+          entidad_tipo: string
+          id?: string
+          usuario_email?: string | null
+          usuario_id?: string | null
+        }
         Update: {
-          id?: string;
-          empresa_id?: string;
-          usuario_id?: string | null;
-          usuario_email?: string | null;
-          accion?: string;
-          entidad_tipo?: string;
-          entidad_id?: string | null;
-          datos?: Json | null;
-          created_at?: string;
-        };
-        Relationships: [];
-      };
-      documentos: {
+          accion?: string
+          created_at?: string
+          datos?: Json | null
+          empresa_id?: string
+          entidad_id?: string | null
+          entidad_tipo?: string
+          id?: string
+          usuario_email?: string | null
+          usuario_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "auditoria_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      cargos: {
         Row: {
-          id: string;
-          empresa_id: string;
-          nombre: string;
-          categoria: CategoriaDocumento;
-          propietario_id: string | null;
-          arrendatario_id: string | null;
-          propiedad_id: string | null;
-          contrato_id: string | null;
-          observaciones: string | null;
-          fecha_documento: string | null;
-          version_actual: number;
-          subido_por: string | null;
-          subido_por_email: string | null;
-          created_at: string;
-          updated_at: string;
-        };
+          contrato_id: string
+          created_at: string
+          empresa_id: string
+          estado: Database["public"]["Enums"]["estado_cargo"]
+          fecha_emision: string
+          fecha_vencimiento: string | null
+          id: string
+          monto: number
+          observaciones: string | null
+          periodo: string
+          saldo_pendiente: number
+          tipo_cargo: Database["public"]["Enums"]["tipo_cargo"]
+          updated_at: string
+        }
         Insert: {
-          id?: string;
-          empresa_id: string;
-          nombre: string;
-          categoria: CategoriaDocumento;
-          propietario_id?: string | null;
-          arrendatario_id?: string | null;
-          propiedad_id?: string | null;
-          contrato_id?: string | null;
-          observaciones?: string | null;
-          fecha_documento?: string | null;
-          version_actual?: number;
-          subido_por?: string | null;
-          subido_por_email?: string | null;
-          created_at?: string;
-          updated_at?: string;
-        };
+          contrato_id: string
+          created_at?: string
+          empresa_id: string
+          estado?: Database["public"]["Enums"]["estado_cargo"]
+          fecha_emision: string
+          fecha_vencimiento?: string | null
+          id?: string
+          monto: number
+          observaciones?: string | null
+          periodo: string
+          saldo_pendiente: number
+          tipo_cargo?: Database["public"]["Enums"]["tipo_cargo"]
+          updated_at?: string
+        }
         Update: {
-          id?: string;
-          empresa_id?: string;
-          nombre?: string;
-          categoria?: CategoriaDocumento;
-          propietario_id?: string | null;
-          arrendatario_id?: string | null;
-          propiedad_id?: string | null;
-          contrato_id?: string | null;
-          observaciones?: string | null;
-          fecha_documento?: string | null;
-          version_actual?: number;
-          subido_por?: string | null;
-          subido_por_email?: string | null;
-          created_at?: string;
-          updated_at?: string;
-        };
-        Relationships: [];
-      };
+          contrato_id?: string
+          created_at?: string
+          empresa_id?: string
+          estado?: Database["public"]["Enums"]["estado_cargo"]
+          fecha_emision?: string
+          fecha_vencimiento?: string | null
+          id?: string
+          monto?: number
+          observaciones?: string | null
+          periodo?: string
+          saldo_pendiente?: number
+          tipo_cargo?: Database["public"]["Enums"]["tipo_cargo"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cargos_contrato_id_fkey"
+            columns: ["contrato_id"]
+            isOneToOne: false
+            referencedRelation: "contratos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cargos_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      contratos: {
+        Row: {
+          activo: boolean
+          administracion_monto: number | null
+          administracion_porcentaje: number | null
+          canon_actual: number | null
+          canon_moneda: Database["public"]["Enums"]["moneda"]
+          canon_monto: number
+          canon_uf_base: number | null
+          cobra_administracion: boolean
+          comision_monto: number | null
+          corretaje_liquidado: boolean
+          created_at: string
+          empresa_id: string
+          estado: Database["public"]["Enums"]["estado_contrato"]
+          fecha_firma: string | null
+          fecha_inicio: string
+          fecha_proximo_reajuste: string | null
+          fecha_termino: string | null
+          id: string
+          numero_contrato: string | null
+          observaciones: string | null
+          periodicidad_reajuste_meses: number | null
+          propiedad_id: string
+          reajuste_tipo: Database["public"]["Enums"]["reajuste_tipo"]
+          tipo_comision: Database["public"]["Enums"]["tipo_comision"] | null
+          updated_at: string
+        }
+        Insert: {
+          activo?: boolean
+          administracion_monto?: number | null
+          administracion_porcentaje?: number | null
+          canon_actual?: number | null
+          canon_moneda?: Database["public"]["Enums"]["moneda"]
+          canon_monto: number
+          canon_uf_base?: number | null
+          cobra_administracion?: boolean
+          comision_monto?: number | null
+          corretaje_liquidado?: boolean
+          created_at?: string
+          empresa_id: string
+          estado?: Database["public"]["Enums"]["estado_contrato"]
+          fecha_firma?: string | null
+          fecha_inicio: string
+          fecha_proximo_reajuste?: string | null
+          fecha_termino?: string | null
+          id?: string
+          numero_contrato?: string | null
+          observaciones?: string | null
+          periodicidad_reajuste_meses?: number | null
+          propiedad_id: string
+          reajuste_tipo?: Database["public"]["Enums"]["reajuste_tipo"]
+          tipo_comision?: Database["public"]["Enums"]["tipo_comision"] | null
+          updated_at?: string
+        }
+        Update: {
+          activo?: boolean
+          administracion_monto?: number | null
+          administracion_porcentaje?: number | null
+          canon_actual?: number | null
+          canon_moneda?: Database["public"]["Enums"]["moneda"]
+          canon_monto?: number
+          canon_uf_base?: number | null
+          cobra_administracion?: boolean
+          comision_monto?: number | null
+          corretaje_liquidado?: boolean
+          created_at?: string
+          empresa_id?: string
+          estado?: Database["public"]["Enums"]["estado_contrato"]
+          fecha_firma?: string | null
+          fecha_inicio?: string
+          fecha_proximo_reajuste?: string | null
+          fecha_termino?: string | null
+          id?: string
+          numero_contrato?: string | null
+          observaciones?: string | null
+          periodicidad_reajuste_meses?: number | null
+          propiedad_id?: string
+          reajuste_tipo?: Database["public"]["Enums"]["reajuste_tipo"]
+          tipo_comision?: Database["public"]["Enums"]["tipo_comision"] | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contratos_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contratos_propiedad_id_fkey"
+            columns: ["propiedad_id"]
+            isOneToOne: false
+            referencedRelation: "propiedades"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      contratos_arrendatarios: {
+        Row: {
+          arrendatario_id: string
+          contrato_id: string
+          created_at: string
+          empresa_id: string
+          id: string
+        }
+        Insert: {
+          arrendatario_id: string
+          contrato_id: string
+          created_at?: string
+          empresa_id: string
+          id?: string
+        }
+        Update: {
+          arrendatario_id?: string
+          contrato_id?: string
+          created_at?: string
+          empresa_id?: string
+          id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contratos_arrendatarios_arrendatario_id_fkey"
+            columns: ["arrendatario_id"]
+            isOneToOne: false
+            referencedRelation: "arrendatarios"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contratos_arrendatarios_contrato_id_fkey"
+            columns: ["contrato_id"]
+            isOneToOne: false
+            referencedRelation: "contratos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contratos_arrendatarios_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       documento_versiones: {
         Row: {
-          id: string;
-          empresa_id: string;
-          documento_id: string;
-          version: number;
-          storage_path: string;
-          nombre_archivo: string;
-          tamano_bytes: number;
-          mime_type: string | null;
-          subido_por: string | null;
-          subido_por_email: string | null;
-          created_at: string;
-        };
+          created_at: string
+          documento_id: string
+          empresa_id: string
+          id: string
+          mime_type: string | null
+          nombre_archivo: string
+          storage_path: string
+          subido_por: string | null
+          subido_por_email: string | null
+          tamano_bytes: number
+          version: number
+        }
         Insert: {
-          id?: string;
-          empresa_id: string;
-          documento_id: string;
-          version: number;
-          storage_path: string;
-          nombre_archivo: string;
-          tamano_bytes?: number;
-          mime_type?: string | null;
-          subido_por?: string | null;
-          subido_por_email?: string | null;
-          created_at?: string;
-        };
+          created_at?: string
+          documento_id: string
+          empresa_id: string
+          id?: string
+          mime_type?: string | null
+          nombre_archivo: string
+          storage_path: string
+          subido_por?: string | null
+          subido_por_email?: string | null
+          tamano_bytes?: number
+          version: number
+        }
         Update: {
-          id?: string;
-          empresa_id?: string;
-          documento_id?: string;
-          version?: number;
-          storage_path?: string;
-          nombre_archivo?: string;
-          tamano_bytes?: number;
-          mime_type?: string | null;
-          subido_por?: string | null;
-          subido_por_email?: string | null;
-          created_at?: string;
-        };
-        Relationships: [];
-      };
+          created_at?: string
+          documento_id?: string
+          empresa_id?: string
+          id?: string
+          mime_type?: string | null
+          nombre_archivo?: string
+          storage_path?: string
+          subido_por?: string | null
+          subido_por_email?: string | null
+          tamano_bytes?: number
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "documento_versiones_documento_id_fkey"
+            columns: ["documento_id"]
+            isOneToOne: false
+            referencedRelation: "documentos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "documento_versiones_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      documentos: {
+        Row: {
+          arrendatario_id: string | null
+          categoria: Database["public"]["Enums"]["categoria_documento"]
+          contrato_id: string | null
+          created_at: string
+          empresa_id: string
+          fecha_documento: string | null
+          id: string
+          nombre: string
+          observaciones: string | null
+          propiedad_id: string | null
+          propietario_id: string | null
+          subido_por: string | null
+          subido_por_email: string | null
+          updated_at: string
+          version_actual: number
+        }
+        Insert: {
+          arrendatario_id?: string | null
+          categoria: Database["public"]["Enums"]["categoria_documento"]
+          contrato_id?: string | null
+          created_at?: string
+          empresa_id: string
+          fecha_documento?: string | null
+          id?: string
+          nombre: string
+          observaciones?: string | null
+          propiedad_id?: string | null
+          propietario_id?: string | null
+          subido_por?: string | null
+          subido_por_email?: string | null
+          updated_at?: string
+          version_actual?: number
+        }
+        Update: {
+          arrendatario_id?: string | null
+          categoria?: Database["public"]["Enums"]["categoria_documento"]
+          contrato_id?: string | null
+          created_at?: string
+          empresa_id?: string
+          fecha_documento?: string | null
+          id?: string
+          nombre?: string
+          observaciones?: string | null
+          propiedad_id?: string | null
+          propietario_id?: string | null
+          subido_por?: string | null
+          subido_por_email?: string | null
+          updated_at?: string
+          version_actual?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "documentos_arrendatario_id_fkey"
+            columns: ["arrendatario_id"]
+            isOneToOne: false
+            referencedRelation: "arrendatarios"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "documentos_contrato_id_fkey"
+            columns: ["contrato_id"]
+            isOneToOne: false
+            referencedRelation: "contratos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "documentos_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "documentos_propiedad_id_fkey"
+            columns: ["propiedad_id"]
+            isOneToOne: false
+            referencedRelation: "propiedades"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "documentos_propietario_id_fkey"
+            columns: ["propietario_id"]
+            isOneToOne: false
+            referencedRelation: "propietarios"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      empresas: {
+        Row: {
+          activa: boolean
+          created_at: string
+          id: string
+          nombre: string
+          rut: string | null
+        }
+        Insert: {
+          activa?: boolean
+          created_at?: string
+          id?: string
+          nombre: string
+          rut?: string | null
+        }
+        Update: {
+          activa?: boolean
+          created_at?: string
+          id?: string
+          nombre?: string
+          rut?: string | null
+        }
+        Relationships: []
+      }
       gastos: {
         Row: {
-          id: string;
-          empresa_id: string;
-          propiedad_id: string;
-          contrato_id: string | null;
-          propietario_id: string | null;
-          arrendatario_id: string | null;
-          liquidacion_id: string | null;
-          documento_id: string | null;
-          categoria: CategoriaGasto;
-          descripcion: string;
-          monto: number;
-          fecha: string;
-          estado: EstadoGasto;
-          responsable_pago: ResponsableGasto;
-          descontar_de_liquidacion: boolean;
-          observaciones: string | null;
-          creado_por: string | null;
-          creado_por_email: string | null;
-          created_at: string;
-          updated_at: string;
-        };
+          arrendatario_id: string | null
+          categoria: Database["public"]["Enums"]["categoria_gasto"]
+          contrato_id: string | null
+          creado_por: string | null
+          creado_por_email: string | null
+          created_at: string
+          descontar_de_liquidacion: boolean
+          descripcion: string
+          documento_id: string | null
+          empresa_id: string
+          estado: Database["public"]["Enums"]["estado_gasto"]
+          fecha: string
+          id: string
+          liquidacion_id: string | null
+          monto: number
+          observaciones: string | null
+          propiedad_id: string
+          propietario_id: string | null
+          responsable_pago: Database["public"]["Enums"]["responsable_gasto"]
+          updated_at: string
+        }
         Insert: {
-          id?: string;
-          empresa_id: string;
-          propiedad_id: string;
-          contrato_id?: string | null;
-          propietario_id?: string | null;
-          arrendatario_id?: string | null;
-          liquidacion_id?: string | null;
-          documento_id?: string | null;
-          categoria: CategoriaGasto;
-          descripcion: string;
-          monto: number;
-          fecha: string;
-          estado?: EstadoGasto;
-          responsable_pago: ResponsableGasto;
-          descontar_de_liquidacion?: boolean;
-          observaciones?: string | null;
-          creado_por?: string | null;
-          creado_por_email?: string | null;
-          created_at?: string;
-          updated_at?: string;
-        };
+          arrendatario_id?: string | null
+          categoria: Database["public"]["Enums"]["categoria_gasto"]
+          contrato_id?: string | null
+          creado_por?: string | null
+          creado_por_email?: string | null
+          created_at?: string
+          descontar_de_liquidacion?: boolean
+          descripcion: string
+          documento_id?: string | null
+          empresa_id: string
+          estado?: Database["public"]["Enums"]["estado_gasto"]
+          fecha: string
+          id?: string
+          liquidacion_id?: string | null
+          monto: number
+          observaciones?: string | null
+          propiedad_id: string
+          propietario_id?: string | null
+          responsable_pago: Database["public"]["Enums"]["responsable_gasto"]
+          updated_at?: string
+        }
         Update: {
-          id?: string;
-          empresa_id?: string;
-          propiedad_id?: string;
-          contrato_id?: string | null;
-          propietario_id?: string | null;
-          arrendatario_id?: string | null;
-          liquidacion_id?: string | null;
-          documento_id?: string | null;
-          categoria?: CategoriaGasto;
-          descripcion?: string;
-          monto?: number;
-          fecha?: string;
-          estado?: EstadoGasto;
-          responsable_pago?: ResponsableGasto;
-          descontar_de_liquidacion?: boolean;
-          observaciones?: string | null;
-          creado_por?: string | null;
-          creado_por_email?: string | null;
-          created_at?: string;
-          updated_at?: string;
-        };
-        Relationships: [];
-      };
-    };
-    Views: Record<string, never>;
+          arrendatario_id?: string | null
+          categoria?: Database["public"]["Enums"]["categoria_gasto"]
+          contrato_id?: string | null
+          creado_por?: string | null
+          creado_por_email?: string | null
+          created_at?: string
+          descontar_de_liquidacion?: boolean
+          descripcion?: string
+          documento_id?: string | null
+          empresa_id?: string
+          estado?: Database["public"]["Enums"]["estado_gasto"]
+          fecha?: string
+          id?: string
+          liquidacion_id?: string | null
+          monto?: number
+          observaciones?: string | null
+          propiedad_id?: string
+          propietario_id?: string | null
+          responsable_pago?: Database["public"]["Enums"]["responsable_gasto"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "gastos_arrendatario_id_fkey"
+            columns: ["arrendatario_id"]
+            isOneToOne: false
+            referencedRelation: "arrendatarios"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "gastos_contrato_id_fkey"
+            columns: ["contrato_id"]
+            isOneToOne: false
+            referencedRelation: "contratos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "gastos_documento_id_fkey"
+            columns: ["documento_id"]
+            isOneToOne: false
+            referencedRelation: "documentos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "gastos_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "gastos_liquidacion_id_fkey"
+            columns: ["liquidacion_id"]
+            isOneToOne: false
+            referencedRelation: "liquidaciones"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "gastos_propiedad_id_fkey"
+            columns: ["propiedad_id"]
+            isOneToOne: false
+            referencedRelation: "propiedades"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "gastos_propietario_id_fkey"
+            columns: ["propietario_id"]
+            isOneToOne: false
+            referencedRelation: "propietarios"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      liquidacion_detalles: {
+        Row: {
+          concepto: string
+          created_at: string
+          empresa_id: string
+          id: string
+          liquidacion_id: string
+          monto: number
+          observacion: string | null
+          referencia_id: string | null
+          referencia_tipo: string | null
+          tipo: Database["public"]["Enums"]["tipo_detalle_liquidacion"]
+        }
+        Insert: {
+          concepto: string
+          created_at?: string
+          empresa_id: string
+          id?: string
+          liquidacion_id: string
+          monto: number
+          observacion?: string | null
+          referencia_id?: string | null
+          referencia_tipo?: string | null
+          tipo: Database["public"]["Enums"]["tipo_detalle_liquidacion"]
+        }
+        Update: {
+          concepto?: string
+          created_at?: string
+          empresa_id?: string
+          id?: string
+          liquidacion_id?: string
+          monto?: number
+          observacion?: string | null
+          referencia_id?: string | null
+          referencia_tipo?: string | null
+          tipo?: Database["public"]["Enums"]["tipo_detalle_liquidacion"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "liquidacion_detalles_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "liquidacion_detalles_liquidacion_id_fkey"
+            columns: ["liquidacion_id"]
+            isOneToOne: false
+            referencedRelation: "liquidaciones"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      liquidaciones: {
+        Row: {
+          comprobante_url: string | null
+          created_at: string
+          empresa_id: string
+          estado: Database["public"]["Enums"]["estado_liquidacion"]
+          fecha_generacion: string
+          fecha_pago: string | null
+          id: string
+          numero: string | null
+          observaciones: string | null
+          pago_observacion: string | null
+          periodo: string
+          propietario_id: string
+          subtotal_descuentos: number
+          subtotal_ingresos: number
+          total_liquidacion: number
+          updated_at: string
+        }
+        Insert: {
+          comprobante_url?: string | null
+          created_at?: string
+          empresa_id: string
+          estado?: Database["public"]["Enums"]["estado_liquidacion"]
+          fecha_generacion: string
+          fecha_pago?: string | null
+          id?: string
+          numero?: string | null
+          observaciones?: string | null
+          pago_observacion?: string | null
+          periodo: string
+          propietario_id: string
+          subtotal_descuentos?: number
+          subtotal_ingresos?: number
+          total_liquidacion?: number
+          updated_at?: string
+        }
+        Update: {
+          comprobante_url?: string | null
+          created_at?: string
+          empresa_id?: string
+          estado?: Database["public"]["Enums"]["estado_liquidacion"]
+          fecha_generacion?: string
+          fecha_pago?: string | null
+          id?: string
+          numero?: string | null
+          observaciones?: string | null
+          pago_observacion?: string | null
+          periodo?: string
+          propietario_id?: string
+          subtotal_descuentos?: number
+          subtotal_ingresos?: number
+          total_liquidacion?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "liquidaciones_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "liquidaciones_propietario_id_fkey"
+            columns: ["propietario_id"]
+            isOneToOne: false
+            referencedRelation: "propietarios"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pagos: {
+        Row: {
+          cargo_id: string
+          created_at: string
+          empresa_id: string
+          fecha_pago: string
+          id: string
+          medio_pago: Database["public"]["Enums"]["medio_pago"] | null
+          monto_pagado: number
+          observaciones: string | null
+          referencia: string | null
+        }
+        Insert: {
+          cargo_id: string
+          created_at?: string
+          empresa_id: string
+          fecha_pago: string
+          id?: string
+          medio_pago?: Database["public"]["Enums"]["medio_pago"] | null
+          monto_pagado: number
+          observaciones?: string | null
+          referencia?: string | null
+        }
+        Update: {
+          cargo_id?: string
+          created_at?: string
+          empresa_id?: string
+          fecha_pago?: string
+          id?: string
+          medio_pago?: Database["public"]["Enums"]["medio_pago"] | null
+          monto_pagado?: number
+          observaciones?: string | null
+          referencia?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pagos_cargo_id_fkey"
+            columns: ["cargo_id"]
+            isOneToOne: false
+            referencedRelation: "cargos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pagos_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          created_at: string
+          email: string | null
+          empresa_id: string
+          id: string
+          nombre: string | null
+          rol: Database["public"]["Enums"]["rol_usuario"]
+        }
+        Insert: {
+          created_at?: string
+          email?: string | null
+          empresa_id: string
+          id: string
+          nombre?: string | null
+          rol?: Database["public"]["Enums"]["rol_usuario"]
+        }
+        Update: {
+          created_at?: string
+          email?: string | null
+          empresa_id?: string
+          id?: string
+          nombre?: string | null
+          rol?: Database["public"]["Enums"]["rol_usuario"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "profiles_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      propiedades: {
+        Row: {
+          activo: boolean
+          banos: number | null
+          bodegas: number | null
+          codigo_interno: string | null
+          comuna: string | null
+          created_at: string
+          departamento: string | null
+          direccion: string | null
+          dormitorios: number | null
+          empresa_id: string
+          estacionamientos: number | null
+          estado: Database["public"]["Enums"]["estado_propiedad"]
+          fecha_adquisicion: string | null
+          gasto_comun_estimado: number | null
+          id: string
+          moneda: Database["public"]["Enums"]["moneda"]
+          numero: string | null
+          observaciones: string | null
+          publicada: boolean
+          region: string | null
+          rol_sii: string | null
+          superficie_total_m2: number | null
+          superficie_util_m2: number | null
+          tipo: Database["public"]["Enums"]["tipo_propiedad"]
+          updated_at: string
+          valor_referencial_arriendo: number | null
+        }
+        Insert: {
+          activo?: boolean
+          banos?: number | null
+          bodegas?: number | null
+          codigo_interno?: string | null
+          comuna?: string | null
+          created_at?: string
+          departamento?: string | null
+          direccion?: string | null
+          dormitorios?: number | null
+          empresa_id: string
+          estacionamientos?: number | null
+          estado?: Database["public"]["Enums"]["estado_propiedad"]
+          fecha_adquisicion?: string | null
+          gasto_comun_estimado?: number | null
+          id?: string
+          moneda?: Database["public"]["Enums"]["moneda"]
+          numero?: string | null
+          observaciones?: string | null
+          publicada?: boolean
+          region?: string | null
+          rol_sii?: string | null
+          superficie_total_m2?: number | null
+          superficie_util_m2?: number | null
+          tipo?: Database["public"]["Enums"]["tipo_propiedad"]
+          updated_at?: string
+          valor_referencial_arriendo?: number | null
+        }
+        Update: {
+          activo?: boolean
+          banos?: number | null
+          bodegas?: number | null
+          codigo_interno?: string | null
+          comuna?: string | null
+          created_at?: string
+          departamento?: string | null
+          direccion?: string | null
+          dormitorios?: number | null
+          empresa_id?: string
+          estacionamientos?: number | null
+          estado?: Database["public"]["Enums"]["estado_propiedad"]
+          fecha_adquisicion?: string | null
+          gasto_comun_estimado?: number | null
+          id?: string
+          moneda?: Database["public"]["Enums"]["moneda"]
+          numero?: string | null
+          observaciones?: string | null
+          publicada?: boolean
+          region?: string | null
+          rol_sii?: string | null
+          superficie_total_m2?: number | null
+          superficie_util_m2?: number | null
+          tipo?: Database["public"]["Enums"]["tipo_propiedad"]
+          updated_at?: string
+          valor_referencial_arriendo?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "propiedades_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      propietarios: {
+        Row: {
+          activo: boolean
+          apellido: string | null
+          banco: string | null
+          comuna: string | null
+          created_at: string
+          direccion: string | null
+          email: string | null
+          empresa_id: string
+          estado_invitacion: Database["public"]["Enums"]["estado_invitacion"]
+          id: string
+          invitado_en: string | null
+          invitado_por: string | null
+          nombre: string | null
+          numero: string | null
+          numero_cuenta: string | null
+          profile_id: string | null
+          razon_social: string | null
+          region: string | null
+          rut: string
+          rut_titular: string | null
+          telefono: string | null
+          tipo_cuenta:
+            | Database["public"]["Enums"]["tipo_cuenta_bancaria"]
+            | null
+          tipo_persona: Database["public"]["Enums"]["tipo_persona"]
+          titular_cuenta: string | null
+          updated_at: string
+        }
+        Insert: {
+          activo?: boolean
+          apellido?: string | null
+          banco?: string | null
+          comuna?: string | null
+          created_at?: string
+          direccion?: string | null
+          email?: string | null
+          empresa_id: string
+          estado_invitacion?: Database["public"]["Enums"]["estado_invitacion"]
+          id?: string
+          invitado_en?: string | null
+          invitado_por?: string | null
+          nombre?: string | null
+          numero?: string | null
+          numero_cuenta?: string | null
+          profile_id?: string | null
+          razon_social?: string | null
+          region?: string | null
+          rut: string
+          rut_titular?: string | null
+          telefono?: string | null
+          tipo_cuenta?:
+            | Database["public"]["Enums"]["tipo_cuenta_bancaria"]
+            | null
+          tipo_persona?: Database["public"]["Enums"]["tipo_persona"]
+          titular_cuenta?: string | null
+          updated_at?: string
+        }
+        Update: {
+          activo?: boolean
+          apellido?: string | null
+          banco?: string | null
+          comuna?: string | null
+          created_at?: string
+          direccion?: string | null
+          email?: string | null
+          empresa_id?: string
+          estado_invitacion?: Database["public"]["Enums"]["estado_invitacion"]
+          id?: string
+          invitado_en?: string | null
+          invitado_por?: string | null
+          nombre?: string | null
+          numero?: string | null
+          numero_cuenta?: string | null
+          profile_id?: string | null
+          razon_social?: string | null
+          region?: string | null
+          rut?: string
+          rut_titular?: string | null
+          telefono?: string | null
+          tipo_cuenta?:
+            | Database["public"]["Enums"]["tipo_cuenta_bancaria"]
+            | null
+          tipo_persona?: Database["public"]["Enums"]["tipo_persona"]
+          titular_cuenta?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "propietarios_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "propietarios_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      propietarios_propiedades: {
+        Row: {
+          created_at: string
+          empresa_id: string
+          id: string
+          porcentaje_participacion: number
+          propiedad_id: string
+          propietario_id: string
+        }
+        Insert: {
+          created_at?: string
+          empresa_id: string
+          id?: string
+          porcentaje_participacion?: number
+          propiedad_id: string
+          propietario_id: string
+        }
+        Update: {
+          created_at?: string
+          empresa_id?: string
+          id?: string
+          porcentaje_participacion?: number
+          propiedad_id?: string
+          propietario_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "propietarios_propiedades_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "propietarios_propiedades_propiedad_id_fkey"
+            columns: ["propiedad_id"]
+            isOneToOne: false
+            referencedRelation: "propiedades"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "propietarios_propiedades_propietario_id_fkey"
+            columns: ["propietario_id"]
+            isOneToOne: false
+            referencedRelation: "propietarios"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+    }
+    Views: {
+      [_ in never]: never
+    }
     Functions: {
-      auth_empresa_id: { Args: Record<string, never>; Returns: string };
-      auth_rol: { Args: Record<string, never>; Returns: RolUsuario };
-    };
+      auth_empresa_id: { Args: never; Returns: string }
+      auth_rol: {
+        Args: never
+        Returns: Database["public"]["Enums"]["rol_usuario"]
+      }
+    }
     Enums: {
-      rol_usuario: RolUsuario;
-      tipo_persona: TipoPersona;
-      tipo_cuenta_bancaria: TipoCuentaBancaria;
-      tipo_propiedad: TipoPropiedad;
-      estado_propiedad: EstadoPropiedad;
-      moneda: Moneda;
-      reajuste_tipo: ReajusteTipo;
-      tipo_comision: TipoComision;
-      estado_contrato: EstadoContrato;
-      tipo_cargo: TipoCargo;
-      estado_cargo: EstadoCargo;
-      medio_pago: MedioPago;
-      estado_liquidacion: EstadoLiquidacion;
-      tipo_detalle_liquidacion: TipoDetalleLiquidacion;
-      categoria_documento: CategoriaDocumento;
-      categoria_gasto: CategoriaGasto;
-      estado_gasto: EstadoGasto;
-      responsable_gasto: ResponsableGasto;
-    };
-  };
-};
+      categoria_documento:
+        | "contrato"
+        | "anexo"
+        | "inventario"
+        | "acta_entrega"
+        | "acta_recepcion"
+        | "liquidacion"
+        | "comprobante_pago"
+        | "factura"
+        | "boleta"
+        | "gasto"
+        | "mantencion"
+        | "otro"
+      categoria_gasto:
+        | "mantencion"
+        | "reparacion"
+        | "servicios"
+        | "gastos_comunes"
+        | "contribuciones"
+        | "seguro"
+        | "comision"
+        | "legal"
+        | "administracion"
+        | "otro"
+      estado_cargo: "pendiente" | "parcial" | "pagado" | "vencido"
+      estado_contrato:
+        | "borrador"
+        | "vigente"
+        | "vencido"
+        | "terminado"
+        | "renovado"
+      estado_gasto: "pendiente" | "pagado" | "anulado"
+      estado_invitacion: "sin_invitar" | "invitado" | "activo"
+      estado_liquidacion: "pendiente" | "pagada" | "anulada"
+      estado_propiedad:
+        | "disponible"
+        | "reservada"
+        | "arrendada"
+        | "mantencion"
+        | "inactiva"
+      medio_pago: "transferencia" | "efectivo" | "cheque" | "tarjeta" | "otro"
+      moneda: "CLP" | "UF"
+      reajuste_tipo: "sin_reajuste" | "IPC" | "UF"
+      responsable_gasto: "propietario" | "arrendatario" | "corredora"
+      rol_usuario: "admin" | "propietario" | "arrendatario"
+      tipo_cargo:
+        | "arriendo"
+        | "gasto_comun"
+        | "administracion"
+        | "multa"
+        | "ajuste"
+        | "otro"
+        | "luz"
+        | "agua"
+        | "internet"
+      tipo_comision: "porcentaje" | "monto_fijo"
+      tipo_cuenta_bancaria: "corriente" | "vista" | "ahorro" | "rut"
+      tipo_detalle_liquidacion: "ingreso" | "descuento"
+      tipo_persona: "persona_natural" | "persona_juridica"
+      tipo_propiedad:
+        | "departamento"
+        | "casa"
+        | "oficina"
+        | "local_comercial"
+        | "bodega"
+        | "estacionamiento"
+        | "terreno"
+        | "otro"
+    }
+    CompositeTypes: {
+      [_ in never]: never
+    }
+  }
+}
+
+type DatabaseWithoutInternals = Omit<Database, "__InternalSupabase">
+
+type DefaultSchema = DatabaseWithoutInternals[Extract<keyof Database, "public">]
+
+export type Tables<
+  DefaultSchemaTableNameOrOptions extends
+    | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
+    | { schema: keyof DatabaseWithoutInternals },
+  TableName extends DefaultSchemaTableNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
+        DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
+    : never = never,
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
+      DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])[TableName] extends {
+      Row: infer R
+    }
+    ? R
+    : never
+  : DefaultSchemaTableNameOrOptions extends keyof (DefaultSchema["Tables"] &
+        DefaultSchema["Views"])
+    ? (DefaultSchema["Tables"] &
+        DefaultSchema["Views"])[DefaultSchemaTableNameOrOptions] extends {
+        Row: infer R
+      }
+      ? R
+      : never
+    : never
+
+export type TablesInsert<
+  DefaultSchemaTableNameOrOptions extends
+    | keyof DefaultSchema["Tables"]
+    | { schema: keyof DatabaseWithoutInternals },
+  TableName extends DefaultSchemaTableNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
+    : never = never,
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+      Insert: infer I
+    }
+    ? I
+    : never
+  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
+    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
+        Insert: infer I
+      }
+      ? I
+      : never
+    : never
+
+export type TablesUpdate<
+  DefaultSchemaTableNameOrOptions extends
+    | keyof DefaultSchema["Tables"]
+    | { schema: keyof DatabaseWithoutInternals },
+  TableName extends DefaultSchemaTableNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
+    : never = never,
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+      Update: infer U
+    }
+    ? U
+    : never
+  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
+    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
+        Update: infer U
+      }
+      ? U
+      : never
+    : never
+
+export type Enums<
+  DefaultSchemaEnumNameOrOptions extends
+    | keyof DefaultSchema["Enums"]
+    | { schema: keyof DatabaseWithoutInternals },
+  EnumName extends DefaultSchemaEnumNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
+    : never = never,
+> = DefaultSchemaEnumNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"][EnumName]
+  : DefaultSchemaEnumNameOrOptions extends keyof DefaultSchema["Enums"]
+    ? DefaultSchema["Enums"][DefaultSchemaEnumNameOrOptions]
+    : never
+
+export type CompositeTypes<
+  PublicCompositeTypeNameOrOptions extends
+    | keyof DefaultSchema["CompositeTypes"]
+    | { schema: keyof DatabaseWithoutInternals },
+  CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
+    : never = never,
+> = PublicCompositeTypeNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName]
+  : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema["CompositeTypes"]
+    ? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
+    : never
+
+export const Constants = {
+  public: {
+    Enums: {
+      categoria_documento: [
+        "contrato",
+        "anexo",
+        "inventario",
+        "acta_entrega",
+        "acta_recepcion",
+        "liquidacion",
+        "comprobante_pago",
+        "factura",
+        "boleta",
+        "gasto",
+        "mantencion",
+        "otro",
+      ],
+      categoria_gasto: [
+        "mantencion",
+        "reparacion",
+        "servicios",
+        "gastos_comunes",
+        "contribuciones",
+        "seguro",
+        "comision",
+        "legal",
+        "administracion",
+        "otro",
+      ],
+      estado_cargo: ["pendiente", "parcial", "pagado", "vencido"],
+      estado_contrato: [
+        "borrador",
+        "vigente",
+        "vencido",
+        "terminado",
+        "renovado",
+      ],
+      estado_gasto: ["pendiente", "pagado", "anulado"],
+      estado_invitacion: ["sin_invitar", "invitado", "activo"],
+      estado_liquidacion: ["pendiente", "pagada", "anulada"],
+      estado_propiedad: [
+        "disponible",
+        "reservada",
+        "arrendada",
+        "mantencion",
+        "inactiva",
+      ],
+      medio_pago: ["transferencia", "efectivo", "cheque", "tarjeta", "otro"],
+      moneda: ["CLP", "UF"],
+      reajuste_tipo: ["sin_reajuste", "IPC", "UF"],
+      responsable_gasto: ["propietario", "arrendatario", "corredora"],
+      rol_usuario: ["admin", "propietario", "arrendatario"],
+      tipo_cargo: [
+        "arriendo",
+        "gasto_comun",
+        "administracion",
+        "multa",
+        "ajuste",
+        "otro",
+        "luz",
+        "agua",
+        "internet",
+      ],
+      tipo_comision: ["porcentaje", "monto_fijo"],
+      tipo_cuenta_bancaria: ["corriente", "vista", "ahorro", "rut"],
+      tipo_detalle_liquidacion: ["ingreso", "descuento"],
+      tipo_persona: ["persona_natural", "persona_juridica"],
+      tipo_propiedad: [
+        "departamento",
+        "casa",
+        "oficina",
+        "local_comercial",
+        "bodega",
+        "estacionamiento",
+        "terreno",
+        "otro",
+      ],
+    },
+  },
+} as const
+
+// -----------------------------------------------------------------
+// Alias de conveniencia para los enums (usados en todo el código en
+// vez de referenciar Database["public"]["Enums"][...] cada vez).
+// Regenerar a mano tras cada `npm run types:gen` si cambia algún enum.
+// -----------------------------------------------------------------
+export type RolUsuario = Database["public"]["Enums"]["rol_usuario"];
+export type TipoPersona = Database["public"]["Enums"]["tipo_persona"];
+export type TipoCuentaBancaria = Database["public"]["Enums"]["tipo_cuenta_bancaria"];
+export type TipoPropiedad = Database["public"]["Enums"]["tipo_propiedad"];
+export type EstadoPropiedad = Database["public"]["Enums"]["estado_propiedad"];
+export type Moneda = Database["public"]["Enums"]["moneda"];
+export type ReajusteTipo = Database["public"]["Enums"]["reajuste_tipo"];
+export type TipoComision = Database["public"]["Enums"]["tipo_comision"];
+export type EstadoContrato = Database["public"]["Enums"]["estado_contrato"];
+export type TipoCargo = Database["public"]["Enums"]["tipo_cargo"];
+export type EstadoCargo = Database["public"]["Enums"]["estado_cargo"];
+export type MedioPago = Database["public"]["Enums"]["medio_pago"];
+export type EstadoLiquidacion = Database["public"]["Enums"]["estado_liquidacion"];
+export type TipoDetalleLiquidacion = Database["public"]["Enums"]["tipo_detalle_liquidacion"];
+export type CategoriaDocumento = Database["public"]["Enums"]["categoria_documento"];
+export type CategoriaGasto = Database["public"]["Enums"]["categoria_gasto"];
+export type EstadoGasto = Database["public"]["Enums"]["estado_gasto"];
+export type ResponsableGasto = Database["public"]["Enums"]["responsable_gasto"];
+export type EstadoInvitacion = Database["public"]["Enums"]["estado_invitacion"];
