@@ -6,15 +6,16 @@
  * peer-deps con React 19. Responsivos vía viewBox + width 100%.
  */
 
+/** Calibrada para leerse sobre fondo burdeo oscuro (--color-burgundy: #63182f). */
 export const PALETA = [
-  "#7f1d1d", // burdeo
-  "#b45309", // ámbar
-  "#1e3a5f", // grafito azulado
-  "#3f6212", // verde
-  "#6d28d9", // violeta
-  "#0e7490", // cian
-  "#9f1239", // rosa oscuro
-  "#525252", // gris
+  "#f5f5f4", // casi blanco
+  "#fbbf24", // ámbar
+  "#38bdf8", // celeste
+  "#4ade80", // verde
+  "#c084fc", // violeta
+  "#fb7185", // rosa
+  "#2dd4bf", // turquesa
+  "#a3a3a3", // gris claro
 ];
 
 function clpCompacto(n: number): string {
@@ -27,7 +28,7 @@ function clpCompacto(n: number): string {
 function Vacio({ alto = 220 }: { alto?: number }) {
   return (
     <div
-      className="flex items-center justify-center rounded-lg border border-dashed border-line text-sm text-muted"
+      className="flex items-center justify-center rounded-lg border border-dashed border-white/20 text-sm text-white/60"
       style={{ height: alto }}
     >
       Sin datos en el período.
@@ -61,8 +62,8 @@ export function BarChart({
         const y = padT + (H - padT - padB) * (1 - t);
         return (
           <g key={t}>
-            <line x1={padX} y1={y} x2={W} y2={y} stroke="#e7e5e4" strokeWidth={1} />
-            <text x={0} y={y + 3} fontSize={9} fill="#78716c">
+            <line x1={padX} y1={y} x2={W} y2={y} stroke="rgba(255,255,255,0.15)" strokeWidth={1} />
+            <text x={0} y={y + 3} fontSize={9} fill="rgba(255,255,255,0.6)">
               {clpCompacto(max * t)}
             </text>
           </g>
@@ -81,7 +82,7 @@ export function BarChart({
               x={padX + i * bw + bw / 2}
               y={H - padB + 14}
               fontSize={9}
-              fill="#78716c"
+              fill="rgba(255,255,255,0.6)"
               textAnchor="middle"
             >
               {labels[i]}
@@ -121,8 +122,8 @@ export function LineChart({
           const y = padT + (H - padT - padB) * (1 - t);
           return (
             <g key={t}>
-              <line x1={padX} y1={y} x2={W} y2={y} stroke="#e7e5e4" strokeWidth={1} />
-              <text x={0} y={y + 3} fontSize={9} fill="#78716c">
+              <line x1={padX} y1={y} x2={W} y2={y} stroke="rgba(255,255,255,0.15)" strokeWidth={1} />
+              <text x={0} y={y + 3} fontSize={9} fill="rgba(255,255,255,0.6)">
                 {clpCompacto(max * t)}
               </text>
             </g>
@@ -134,7 +135,7 @@ export function LineChart({
             x={px(i)}
             y={H - padB + 14}
             fontSize={9}
-            fill="#78716c"
+            fill="rgba(255,255,255,0.6)"
             textAnchor="middle"
           >
             {l}
@@ -243,8 +244,8 @@ export function GroupedBars({
           const y = padT + (H - padT - padB) * (1 - t);
           return (
             <g key={t}>
-              <line x1={padX} y1={y} x2={W} y2={y} stroke="#e7e5e4" strokeWidth={1} />
-              <text x={0} y={y + 3} fontSize={9} fill="#78716c">
+              <line x1={padX} y1={y} x2={W} y2={y} stroke="rgba(255,255,255,0.15)" strokeWidth={1} />
+              <text x={0} y={y + 3} fontSize={9} fill="rgba(255,255,255,0.6)">
                 {clpCompacto(max * t)}
               </text>
             </g>
@@ -268,7 +269,7 @@ export function GroupedBars({
               x={padX + gi * gw + gw / 2}
               y={H - padB + 14}
               fontSize={10}
-              fill="#78716c"
+              fill="rgba(255,255,255,0.6)"
               textAnchor="middle"
             >
               {g}
@@ -295,7 +296,7 @@ function Leyenda({
 }) {
   return (
     <ul
-      className={`mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted ${
+      className={`mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-white/70 ${
         columna ? "sm:flex-col" : ""
       }`}
     >

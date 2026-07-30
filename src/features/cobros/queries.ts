@@ -1,6 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/server";
-import { etiquetaContrato } from "@/lib/propiedad";
 import type { Database } from "@/types/database.types";
 import type { Cargo, CargoConContexto, FiltrosCargos, Pago } from "./types";
 
@@ -127,10 +126,15 @@ export async function listContratosSinArriendo(
 
   return (contratos as unknown as Row[])
     .filter((c) => !conArriendo.has(c.id))
-    .map((c) => ({
-      contratoId: c.id,
-      label: etiquetaContrato(c.numero_contrato, c.propiedades),
-    }));
+    .map((c) => {
+      const p = c.propiedades;
+      const calle = p ? [p.direccion, p.numero].filter(Boolean).join(" ") : null;
+      const unidad = p?.departamento ? `Depto/Unidad ${p.departamento}` : null;
+      return {
+        contratoId: c.id,
+        label: [calle, unidad].filter(Boolean).join(" · ") || "—",
+      };
+    });
 }
 
 export async function getCargo(id: string): Promise<CargoConContexto | null> {

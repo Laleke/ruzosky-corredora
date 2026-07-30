@@ -22,6 +22,9 @@ function clp(n: number): string {
   return `$${Math.round(n).toLocaleString("es-CL")}`;
 }
 
+const thOscuro = "px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-white/60";
+const tdOscuro = "px-3 py-3 text-sm text-white";
+
 function Kpi({
   icon: Icon,
   label,
@@ -36,19 +39,19 @@ function Kpi({
   alerta?: boolean;
 }) {
   return (
-    <div className={`${ui.card} p-5`}>
+    <div className="rounded-xl bg-burgundy p-5">
       <div className="flex items-center justify-between">
-        <span className="text-sm font-medium text-muted">{label}</span>
+        <span className="text-sm font-medium text-white/70">{label}</span>
         <span
           className={`flex h-9 w-9 items-center justify-center rounded-lg ${
-            alerta ? "bg-amber-50 text-amber-600" : "bg-burgundy-50 text-burgundy"
+            alerta ? "bg-amber-400/20 text-amber-300" : "bg-white/10 text-white"
           }`}
         >
           <Icon size={18} />
         </span>
       </div>
-      <p className="mt-3 text-2xl font-semibold tracking-tight text-ink">{valor}</p>
-      {sub && <p className="mt-1 text-xs text-muted">{sub}</p>}
+      <p className="mt-3 text-2xl font-semibold tracking-tight text-white">{valor}</p>
+      {sub && <p className="mt-1 text-xs text-white/60">{sub}</p>}
     </div>
   );
 }
@@ -61,8 +64,8 @@ function Panel({
   children: React.ReactNode;
 }) {
   return (
-    <div className={`${ui.card} p-5`}>
-      <h3 className="mb-4 text-sm font-semibold text-ink">{titulo}</h3>
+    <div className="rounded-xl bg-burgundy p-5">
+      <h3 className="mb-4 text-sm font-semibold text-white">{titulo}</h3>
       {children}
     </div>
   );
@@ -243,29 +246,29 @@ export function ReportesDashboard({
       {/* Tablas */}
       <Panel titulo="Rentabilidad por propietario">
         {rentabilidadPropietario.length === 0 ? (
-          <p className="text-sm text-muted">Sin datos en el período.</p>
+          <p className="text-sm text-white/70">Sin datos en el período.</p>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full">
-              <thead className="border-b border-line">
+              <thead className="border-b border-white/15">
                 <tr>
-                  <th className={ui.th}>Propietario</th>
-                  <th className={`${ui.th} text-right`}>Ingresos</th>
-                  <th className={`${ui.th} text-right`}>Comisiones</th>
-                  <th className={`${ui.th} text-right`}>Gastos</th>
-                  <th className={`${ui.th} text-right`}>Rentabilidad</th>
+                  <th className={thOscuro}>Propietario</th>
+                  <th className={`${thOscuro} text-right`}>Ingresos</th>
+                  <th className={`${thOscuro} text-right`}>Comisiones</th>
+                  <th className={`${thOscuro} text-right`}>Gastos</th>
+                  <th className={`${thOscuro} text-right`}>Rentabilidad</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-line">
+              <tbody className="divide-y divide-white/10">
                 {rentabilidadPropietario.map((r) => (
                   <tr key={r.propietario_id}>
-                    <td className={`${ui.td} font-medium`}>{r.propietario}</td>
-                    <td className={`${ui.td} text-right`}>{clp(r.ingresos)}</td>
-                    <td className={`${ui.td} text-right text-muted`}>− {clp(r.comisiones)}</td>
-                    <td className={`${ui.td} text-right text-muted`}>− {clp(r.gastos)}</td>
+                    <td className={`${tdOscuro} font-medium`}>{r.propietario}</td>
+                    <td className={`${tdOscuro} text-right`}>{clp(r.ingresos)}</td>
+                    <td className={`${tdOscuro} text-right text-white/60`}>− {clp(r.comisiones)}</td>
+                    <td className={`${tdOscuro} text-right text-white/60`}>− {clp(r.gastos)}</td>
                     <td
-                      className={`${ui.td} text-right font-semibold ${
-                        r.rentabilidad < 0 ? "text-red-600" : "text-ink"
+                      className={`${tdOscuro} text-right font-semibold ${
+                        r.rentabilidad < 0 ? "text-red-300" : "text-white"
                       }`}
                     >
                       {clp(r.rentabilidad)}
@@ -280,21 +283,21 @@ export function ReportesDashboard({
 
       <Panel titulo="Gastos por propiedad">
         {gastosPorPropiedad.length === 0 ? (
-          <p className="text-sm text-muted">Sin gastos en el período.</p>
+          <p className="text-sm text-white/70">Sin gastos en el período.</p>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full">
-              <thead className="border-b border-line">
+              <thead className="border-b border-white/15">
                 <tr>
-                  <th className={ui.th}>Propiedad</th>
-                  <th className={`${ui.th} text-right`}>Monto</th>
+                  <th className={thOscuro}>Propiedad</th>
+                  <th className={`${thOscuro} text-right`}>Monto</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-line">
+              <tbody className="divide-y divide-white/10">
                 {gastosPorPropiedad.map((g) => (
                   <tr key={g.propiedad_id}>
-                    <td className={`${ui.td} font-medium`}>{g.propiedad}</td>
-                    <td className={`${ui.td} text-right`}>{clp(g.monto)}</td>
+                    <td className={`${tdOscuro} font-medium`}>{g.propiedad}</td>
+                    <td className={`${tdOscuro} text-right`}>{clp(g.monto)}</td>
                   </tr>
                 ))}
               </tbody>

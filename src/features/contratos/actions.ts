@@ -340,14 +340,22 @@ export async function aplicarReajusteUF(
     };
   }
 
-  const fecha_proximo_reajuste = contrato.periodicidad_reajuste_meses
-    ? aFechaISO(
-        sumarMeses(
-          contrato.fecha_proximo_reajuste ? new Date(contrato.fecha_proximo_reajuste) : new Date(),
-          contrato.periodicidad_reajuste_meses
+  // Si "aplicar" se usa para corregir el canon a mitad de trimestre (aún no
+  // llega la fecha de revisión), no corresponde adelantar fecha_proximo_reajuste
+  // — si no, se saltaría la próxima revisión real. Solo avanza si hoy ya
+  // alcanzó o pasó esa fecha.
+  const hoyISO = aFechaISO(new Date());
+  const yaCorrespondia =
+    !contrato.fecha_proximo_reajuste || contrato.fecha_proximo_reajuste <= hoyISO;
+  const fecha_proximo_reajuste =
+    yaCorrespondia && contrato.periodicidad_reajuste_meses
+      ? aFechaISO(
+          sumarMeses(
+            contrato.fecha_proximo_reajuste ? new Date(contrato.fecha_proximo_reajuste) : new Date(),
+            contrato.periodicidad_reajuste_meses
+          )
         )
-      )
-    : null;
+      : contrato.fecha_proximo_reajuste;
 
   const { error } = await supabase
     .from("contratos")

@@ -49,26 +49,26 @@ export default async function LiquidacionesPage({
       />
 
       {pendientes.length > 0 && (
-        <div className={`${ui.card} mb-5 border-amber-200 bg-amber-50 p-5`}>
-          <div className="mb-3 flex items-center gap-2 text-amber-800">
+        <div className="mb-5 rounded-xl bg-burgundy p-5">
+          <div className="mb-3 flex items-center gap-2 text-amber-300">
             <AlertTriangle size={18} />
             <h2 className="text-sm font-semibold">
               {pendientes.length} liquidación{pendientes.length === 1 ? "" : "es"} pendiente
               {pendientes.length === 1 ? "" : "s"} de generar · {periodoActual}
             </h2>
           </div>
-          <ul className="flex flex-col divide-y divide-amber-200/70">
+          <ul className="flex flex-col divide-y divide-white/15">
             {pendientes.map((p) => (
               <li
                 key={p.propietarioId}
                 className="flex items-center justify-between gap-3 py-2 text-sm"
               >
-                <span className="text-ink">{p.propietarioNombre}</span>
+                <span className="text-white">{p.propietarioNombre}</span>
                 <span className="flex items-center gap-3">
-                  <span className="font-medium text-ink">{clp(p.totalEstimado)}</span>
+                  <span className="font-medium text-white">{clp(p.totalEstimado)}</span>
                   <Link
                     href={`/liquidaciones/nueva?propietario=${p.propietarioId}&periodo=${periodoActual}`}
-                    className={`${ui.btnSecondary} px-3 py-1.5 text-xs`}
+                    className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-white px-3 py-1.5 text-xs font-medium text-burgundy shadow-sm transition-colors hover:bg-white/90"
                   >
                     Generar
                   </Link>

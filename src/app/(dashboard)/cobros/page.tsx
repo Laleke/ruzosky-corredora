@@ -92,8 +92,8 @@ export default async function CobrosPage({
       />
 
       {reajustesPendientes.length > 0 && (
-        <div className={`${ui.card} mb-5 border-amber-200 bg-amber-50 p-5`}>
-          <div className="mb-3 flex items-center gap-2 text-amber-800">
+        <div className="mb-5 rounded-xl bg-burgundy p-5">
+          <div className="mb-3 flex items-center gap-2 text-amber-300">
             <AlertTriangle size={18} />
             <h2 className="text-sm font-semibold">
               {reajustesPendientes.length} contrato{reajustesPendientes.length === 1 ? "" : "s"} con
@@ -101,13 +101,13 @@ export default async function CobrosPage({
               postergarlo
             </h2>
           </div>
-          <ul className="flex flex-col divide-y divide-amber-200/70 text-sm text-ink">
+          <ul className="flex flex-col divide-y divide-white/15 text-sm text-white">
             {reajustesPendientes.map((c) => (
               <li key={c.id} className="flex items-center justify-between gap-3 py-2">
                 <span>
                   {c.propiedad_direccion} · corresponde desde {c.fecha_proximo_reajuste}
                 </span>
-                <Link href={`/contratos/${c.id}`} className={ui.linkAction}>
+                <Link href={`/contratos/${c.id}`} className="font-medium text-white/80 hover:text-white">
                   Revisar
                 </Link>
               </li>
@@ -117,15 +117,15 @@ export default async function CobrosPage({
       )}
 
       {sinArriendo.length > 0 && (
-        <div className={`${ui.card} mb-5 border-amber-200 bg-amber-50 p-5`}>
-          <div className="mb-3 flex items-center gap-2 text-amber-800">
+        <div className="mb-5 rounded-xl bg-burgundy p-5">
+          <div className="mb-3 flex items-center gap-2 text-amber-300">
             <AlertTriangle size={18} />
             <h2 className="text-sm font-semibold">
               {sinArriendo.length} contrato{sinArriendo.length === 1 ? "" : "s"} sin arriendo
               generado · {periodoActual}
             </h2>
           </div>
-          <ul className="flex flex-col divide-y divide-amber-200/70 text-sm text-ink">
+          <ul className="flex flex-col divide-y divide-white/15 text-sm text-white">
             {sinArriendo.map((c) => (
               <li key={c.contratoId} className="py-2">
                 {c.label}
@@ -136,13 +136,13 @@ export default async function CobrosPage({
       )}
 
       <div className="mb-6 grid grid-cols-1 gap-4 lg:grid-cols-3">
-        <div className={`${ui.card} p-5 lg:col-span-2`}>
-          <h2 className="mb-3 text-sm font-semibold text-ink">Generación asistida</h2>
+        <div className="rounded-xl bg-burgundy p-5 lg:col-span-2">
+          <h2 className="mb-3 text-sm font-semibold text-white">Generación asistida</h2>
           <GenerarArriendos periodoDefault={periodoActual} />
         </div>
-        <div className={`${ui.card} flex flex-col justify-center p-5`}>
-          <span className="text-sm font-medium text-muted">Deuda pendiente total</span>
-          <span className="mt-1 text-2xl font-semibold tracking-tight text-ink">
+        <div className="flex flex-col justify-center rounded-xl bg-burgundy p-5">
+          <span className="text-sm font-medium text-white/70">Deuda pendiente total</span>
+          <span className="mt-1 text-2xl font-semibold tracking-tight text-white">
             {monto(deudaTotal)}
           </span>
         </div>
