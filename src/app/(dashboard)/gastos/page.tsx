@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Eye, Info } from "lucide-react";
 import { listGastos } from "@/features/gastos/queries";
 import { getOpcionesRelacion } from "@/features/documentos/queries";
 import { FiltroGastos } from "@/features/gastos/filtro-gastos";
@@ -69,57 +70,57 @@ export default async function GastosPage({
         </div>
       ) : (
         <>
-          <div className="mb-3 text-sm text-muted">
+          <div className="mb-3 text-sm text-canvas-muted">
             {gastos.length} gasto{gastos.length === 1 ? "" : "s"} · Total vigente:{" "}
-            <span className="font-semibold text-ink">{clp(totalVigente)}</span>
+            <span className="font-semibold text-canvas-fg">{clp(totalVigente)}</span>
           </div>
-          <div className={`${ui.card} overflow-hidden`}>
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead className="border-b border-line bg-stone-50/60">
-                  <tr>
-                    <th className={ui.th}>Fecha</th>
-                    <th className={ui.th}>Descripción</th>
-                    <th className={ui.th}>Categoría</th>
-                    <th className={ui.th}>Propiedad</th>
-                    <th className={`${ui.th} text-right`}>Monto</th>
-                    <th className={ui.th}>Estado</th>
-                    <th className={ui.th}></th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-line">
-                  {gastos.map((g) => {
-                    const est = ESTADO_GASTO[g.estado];
-                    return (
-                      <tr key={g.id} className="transition-colors hover:bg-stone-50/50">
-                        <td className={`${ui.td} text-muted`}>{g.fecha}</td>
-                        <td className={`${ui.td} font-medium`}>
-                          <span className="flex items-center gap-2">
-                            {g.descripcion}
-                            {g.descontar_de_liquidacion && (
-                              <span className={badge("info")} title="Se descuenta de la liquidación del propietario">
-                                Liq.
-                              </span>
-                            )}
+          <div className={ui.cardGrid}>
+            {gastos.map((g) => {
+              const est = ESTADO_GASTO[g.estado];
+              return (
+                <div key={g.id} className={ui.listCard}>
+                  <div className="flex items-start justify-between gap-2">
+                    <div>
+                      <p className="text-xs text-white/60">
+                        {g.fecha} · {CATEGORIA_GASTO_LABEL[g.categoria]}
+                      </p>
+                      <p className="flex items-center gap-2 font-medium text-white">
+                        {g.descripcion}
+                        {g.descontar_de_liquidacion && (
+                          <span className={badge("info")} title="Se descuenta de la liquidación del propietario">
+                            Liq.
                           </span>
-                        </td>
-                        <td className={ui.td}>{CATEGORIA_GASTO_LABEL[g.categoria]}</td>
-                        <td className={`${ui.td} text-muted`}>{g.propiedad_label ?? "—"}</td>
-                        <td className={`${ui.td} text-right font-medium`}>{clp(g.monto)}</td>
-                        <td className={ui.td}>
-                          <span className={badge(est.tone)}>{est.label}</span>
-                        </td>
-                        <td className={`${ui.td} text-right`}>
-                          <Link href={`/gastos/${g.id}`} className={ui.linkAction}>
-                            Ver
-                          </Link>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
+                        )}
+                      </p>
+                    </div>
+                    <span className={badge(est.tone)}>{est.label}</span>
+                  </div>
+
+                  <div className="flex items-center justify-between gap-2">
+                    <details className="min-w-0 flex-1">
+                      <summary className={ui.listCardDisclosure}>
+                        <Info size={14} /> Ver más información
+                      </summary>
+                      <div className="mt-2 flex flex-col gap-1 text-sm text-white/80">
+                        <span>Propiedad: {g.propiedad_label ?? "—"}</span>
+                        <span>Monto: {clp(g.monto)}</span>
+                      </div>
+                    </details>
+
+                    <div className="flex shrink-0 items-center gap-2">
+                      <Link
+                        href={`/gastos/${g.id}`}
+                        aria-label="Ver detalle"
+                        title="Ver detalle"
+                        className={ui.listCardIconBtn}
+                      >
+                        <Eye size={16} />
+                      </Link>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
           </div>
         </>
       )}

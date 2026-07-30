@@ -27,9 +27,12 @@ function abrir(url: string, nuevaPestana: boolean) {
 export function AccionesArchivo({
   versionId,
   compacto = false,
+  oscuro = false,
 }: {
   versionId: string;
   compacto?: boolean;
+  /** Fondo oscuro alrededor (ej. listCard burdeo) — íconos en blanco en vez de burdeo. */
+  oscuro?: boolean;
 }) {
   const [cargando, setCargando] = useState<"ver" | "descargar" | null>(null);
 
@@ -42,12 +45,15 @@ export function AccionesArchivo({
   }
 
   if (compacto) {
+    const btnCls = oscuro
+      ? "text-white/80 transition-colors hover:text-white"
+      : ui.linkAction;
     return (
       <div className="flex items-center justify-end gap-3">
         <button
           onClick={() => abrirArchivo("ver")}
           disabled={cargando !== null}
-          className={ui.linkAction}
+          className={btnCls}
           title="Ver"
         >
           <Eye size={16} />
@@ -55,7 +61,7 @@ export function AccionesArchivo({
         <button
           onClick={() => abrirArchivo("descargar")}
           disabled={cargando !== null}
-          className={ui.linkAction}
+          className={btnCls}
           title="Descargar"
         >
           <Download size={16} />

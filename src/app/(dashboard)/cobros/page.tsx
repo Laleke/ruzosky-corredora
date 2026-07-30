@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { AlertTriangle } from "lucide-react";
+import { AlertTriangle, Eye, Info } from "lucide-react";
 import { listCargos, listContratosSinArriendo } from "@/features/cobros/queries";
 import { listContratosConReajustePendiente } from "@/features/contratos/queries";
 import { GenerarArriendos } from "@/features/cobros/generar-arriendos";
@@ -155,54 +155,50 @@ export default async function CobrosPage({
             : "Aún no hay cargos. Genera los del mes o crea uno."}
         </div>
       ) : (
-        <div className={`${ui.card} overflow-hidden`}>
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="border-b border-line bg-stone-50/60">
-                <tr>
-                  <th className={ui.th}>Período</th>
-                  <th className={ui.th}>Contrato / Propiedad</th>
-                  <th className={ui.th}>Tipo</th>
-                  <th className={ui.th}>Monto</th>
-                  <th className={ui.th}>Saldo</th>
-                  <th className={ui.th}>Estado</th>
-                  <th className={ui.th}></th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-line">
-                {cargos.map((c) => {
-                  const est = estadoMostrar(
-                    c.estado,
-                    Number(c.saldo_pendiente),
-                    c.fecha_vencimiento,
-                    hoy
-                  );
-                  return (
-                    <tr key={c.id} className="transition-colors hover:bg-stone-50/50">
-                      <td className={`${ui.td} text-muted`}>{c.periodo.slice(0, 7)}</td>
-                      <td className={`${ui.td} font-medium`}>
-                        {c.numero_contrato ? `${c.numero_contrato} · ` : ""}
-                        {c.propiedad_direccion}
-                      </td>
-                      <td className={`${ui.td} text-muted`}>
-                        {TIPO_LABEL[c.tipo_cargo] ?? c.tipo_cargo}
-                      </td>
-                      <td className={ui.td}>{monto(c.monto)}</td>
-                      <td className={`${ui.td} font-medium`}>{monto(c.saldo_pendiente)}</td>
-                      <td className={ui.td}>
-                        <span className={badge(est.tone)}>{est.label}</span>
-                      </td>
-                      <td className={`${ui.td} text-right`}>
-                        <Link href={`/cobros/${c.id}`} className={ui.linkAction}>
-                          Detalle
-                        </Link>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
+        <div className={ui.cardGrid}>
+          {cargos.map((c) => {
+            const est = estadoMostrar(c.estado, Number(c.saldo_pendiente), c.fecha_vencimiento, hoy);
+            return (
+              <div key={c.id} className={ui.listCard}>
+                <div className="flex items-start justify-between gap-2">
+                  <div>
+                    <p className="text-xs text-white/60">
+                      {c.periodo.slice(0, 7)} · {TIPO_LABEL[c.tipo_cargo] ?? c.tipo_cargo}
+                    </p>
+                    <p className="font-medium text-white">
+                      {c.numero_contrato ? `${c.numero_contrato} · ` : ""}
+                      {c.propiedad_direccion}
+                    </p>
+                  </div>
+                  <span className={badge(est.tone)}>{est.label}</span>
+                </div>
+
+                <div className="flex items-center justify-between gap-2">
+                  <details className="min-w-0 flex-1">
+                    <summary className={ui.listCardDisclosure}>
+                      <Info size={14} /> Ver más información
+                    </summary>
+                    <div className="mt-2 flex flex-col gap-1 text-sm text-white/80">
+                      <span>Monto: {monto(c.monto)}</span>
+                      <span>Saldo: {monto(c.saldo_pendiente)}</span>
+                      {c.fecha_vencimiento && <span>Vence: {c.fecha_vencimiento}</span>}
+                    </div>
+                  </details>
+
+                  <div className="flex shrink-0 items-center gap-2">
+                    <Link
+                      href={`/cobros/${c.id}`}
+                      aria-label="Ver detalle"
+                      title="Ver detalle"
+                      className={ui.listCardIconBtn}
+                    >
+                      <Eye size={16} />
+                    </Link>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
         </div>
       )}
     </div>

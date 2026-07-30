@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, ArrowRight } from "lucide-react";
 import { ui } from "@/components/ui";
+import { ComboboxOpcion } from "@/components/combobox-opcion";
 
 type Opcion = { id: string; label: string };
 type Paso = { key: "propietario" | "periodo"; pregunta: string };
@@ -69,22 +70,17 @@ export function SeleccionLiquidacionWizard({ propietarios }: { propietarios: Opc
 
         <div className="w-full max-w-sm" key={paso}>
           {actual.key === "propietario" ? (
-            <select
+            <ComboboxOpcion
+              name="propietario_buscador"
+              options={propietarios}
               value={propietario}
-              onChange={(e) => {
-                setPropietario(e.target.value);
+              onChange={(id) => {
+                setPropietario(id);
                 setErrorPaso(null);
               }}
-              className={`${ui.input} text-base`}
+              placeholder="Selecciona o escribe…"
               autoFocus
-            >
-              <option value="">Selecciona…</option>
-              {propietarios.map((o) => (
-                <option key={o.id} value={o.id}>
-                  {o.label}
-                </option>
-              ))}
-            </select>
+            />
           ) : (
             <input
               type="month"

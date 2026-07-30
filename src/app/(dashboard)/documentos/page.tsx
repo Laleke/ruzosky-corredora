@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { FileText } from "lucide-react";
+import { Eye, FileText, Info } from "lucide-react";
 import {
   listDocumentos,
   getOpcionesRelacion,
@@ -71,66 +71,56 @@ export default async function DocumentosPage({
           No hay documentos con esos filtros.
         </div>
       ) : (
-        <div className={`${ui.card} overflow-hidden`}>
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="border-b border-line bg-stone-50/60">
-                <tr>
-                  <th className={ui.th}>Nombre</th>
-                  <th className={ui.th}>Categoría</th>
-                  <th className={ui.th}>Propiedad</th>
-                  <th className={ui.th}>Fecha</th>
-                  <th className={ui.th}>Tamaño</th>
-                  <th className={ui.th}>Usuario</th>
-                  <th className={ui.th}></th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-line">
-                {documentos.map((d) => (
-                  <tr key={d.id} className="transition-colors hover:bg-stone-50/50">
-                    <td className={ui.td}>
-                      <Link
-                        href={`/documentos/${d.id}`}
-                        className="flex items-center gap-2 font-medium text-ink hover:text-burgundy"
-                      >
-                        <FileText size={16} className="shrink-0 text-muted" />
-                        <span className="min-w-0">
-                          <span className="block truncate">{d.nombre}</span>
-                          {d.version_actual > 1 && (
-                            <span className="text-xs text-muted">
-                              v{d.version_actual}
-                            </span>
-                          )}
-                        </span>
-                      </Link>
-                    </td>
-                    <td className={ui.td}>
-                      <span className={badge(CATEGORIA_TONE[d.categoria])}>
-                        {CATEGORIA_LABEL[d.categoria]}
-                      </span>
-                    </td>
-                    <td className={`${ui.td} text-muted`}>
-                      {d.propiedad_label ?? "—"}
-                    </td>
-                    <td className={`${ui.td} text-muted`}>
-                      {d.fecha_documento ?? d.created_at.slice(0, 10)}
-                    </td>
-                    <td className={`${ui.td} text-muted`}>
-                      {formatearTamano(d.version_tamano_bytes)}
-                    </td>
-                    <td className={`${ui.td} text-muted`}>
-                      {d.subido_por_email ?? "—"}
-                    </td>
-                    <td className={`${ui.td} text-right`}>
-                      {d.version_actual_id && (
-                        <AccionesArchivo versionId={d.version_actual_id} compacto />
+        <div className={ui.cardGrid}>
+          {documentos.map((d) => (
+            <div key={d.id} className={ui.listCard}>
+              <div className="flex items-start justify-between gap-2">
+                <div className="min-w-0">
+                  <p className="text-xs text-white/60">
+                    {d.fecha_documento ?? d.created_at.slice(0, 10)} · {formatearTamano(d.version_tamano_bytes)}
+                  </p>
+                  <p className="flex items-center gap-1.5 font-medium text-white">
+                    <FileText size={15} className="shrink-0 text-white/60" />
+                    <span className="truncate">
+                      {d.nombre}
+                      {d.version_actual > 1 && (
+                        <span className="ml-1 text-xs text-white/60">v{d.version_actual}</span>
                       )}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                    </span>
+                  </p>
+                </div>
+                <span className={badge(CATEGORIA_TONE[d.categoria])}>
+                  {CATEGORIA_LABEL[d.categoria]}
+                </span>
+              </div>
+
+              <div className="flex items-center justify-between gap-2">
+                <details className="min-w-0 flex-1">
+                  <summary className={ui.listCardDisclosure}>
+                    <Info size={14} /> Ver más información
+                  </summary>
+                  <div className="mt-2 flex flex-col gap-1 text-sm text-white/80">
+                    <span>Propiedad: {d.propiedad_label ?? "—"}</span>
+                    <span>Subido por: {d.subido_por_email ?? "—"}</span>
+                  </div>
+                </details>
+
+                <div className="flex shrink-0 items-center gap-2">
+                  <Link
+                    href={`/documentos/${d.id}`}
+                    aria-label="Ver detalle"
+                    title="Ver detalle"
+                    className={ui.listCardIconBtn}
+                  >
+                    <Eye size={16} />
+                  </Link>
+                  {d.version_actual_id && (
+                    <AccionesArchivo versionId={d.version_actual_id} compacto oscuro />
+                  )}
+                </div>
+              </div>
+            </div>
+          ))}
         </div>
       )}
     </div>

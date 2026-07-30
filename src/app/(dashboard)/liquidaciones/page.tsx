@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { AlertTriangle } from "lucide-react";
+import { AlertTriangle, Eye, Info } from "lucide-react";
 import { listLiquidaciones, listPendientesLiquidar } from "@/features/liquidaciones/queries";
 import { FiltroLiquidaciones } from "@/features/liquidaciones/filtro-liquidaciones";
 import { listPropietarios } from "@/features/propietarios/queries";
@@ -90,44 +90,44 @@ export default async function LiquidacionesPage({
           No hay liquidaciones con esos filtros.
         </div>
       ) : (
-        <div className={`${ui.card} overflow-hidden`}>
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="border-b border-line bg-stone-50/60">
-                <tr>
-                  <th className={ui.th}>N°</th>
-                  <th className={ui.th}>Período</th>
-                  <th className={ui.th}>Propietario</th>
-                  <th className={ui.th}>Total</th>
-                  <th className={ui.th}>Estado</th>
-                  <th className={ui.th}>Generación</th>
-                  <th className={ui.th}></th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-line">
-                {liquidaciones.map((l) => {
-                  const est = ESTADO[l.estado] ?? { label: l.estado, tone: "neutral" as const };
-                  return (
-                    <tr key={l.id} className="transition-colors hover:bg-stone-50/50">
-                      <td className={`${ui.td} text-muted`}>{l.numero ?? "—"}</td>
-                      <td className={`${ui.td} font-medium`}>{l.periodo.slice(0, 7)}</td>
-                      <td className={ui.td}>{l.propietario_nombre}</td>
-                      <td className={`${ui.td} font-medium`}>{clp(l.total_liquidacion)}</td>
-                      <td className={ui.td}>
-                        <span className={badge(est.tone)}>{est.label}</span>
-                      </td>
-                      <td className={`${ui.td} text-muted`}>{l.fecha_generacion}</td>
-                      <td className={`${ui.td} text-right`}>
-                        <Link href={`/liquidaciones/${l.id}`} className={ui.linkAction}>
-                          Ver detalle
-                        </Link>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
+        <div className={ui.cardGrid}>
+          {liquidaciones.map((l) => {
+            const est = ESTADO[l.estado] ?? { label: l.estado, tone: "neutral" as const };
+            return (
+              <div key={l.id} className={ui.listCard}>
+                <div className="flex items-start justify-between gap-2">
+                  <div>
+                    <p className="text-xs text-white/60">{l.numero ?? "—"} · {l.periodo.slice(0, 7)}</p>
+                    <p className="font-medium text-white">{l.propietario_nombre}</p>
+                  </div>
+                  <span className={badge(est.tone)}>{est.label}</span>
+                </div>
+
+                <div className="flex items-center justify-between gap-2">
+                  <details className="min-w-0 flex-1">
+                    <summary className={ui.listCardDisclosure}>
+                      <Info size={14} /> Ver más información
+                    </summary>
+                    <div className="mt-2 flex flex-col gap-1 text-sm text-white/80">
+                      <span>Total: {clp(l.total_liquidacion)}</span>
+                      {l.fecha_generacion && <span>Generada: {l.fecha_generacion}</span>}
+                    </div>
+                  </details>
+
+                  <div className="flex shrink-0 items-center gap-2">
+                    <Link
+                      href={`/liquidaciones/${l.id}`}
+                      aria-label="Ver detalle"
+                      title="Ver detalle"
+                      className={ui.listCardIconBtn}
+                    >
+                      <Eye size={16} />
+                    </Link>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
         </div>
       )}
     </div>

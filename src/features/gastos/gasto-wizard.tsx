@@ -5,6 +5,7 @@ import { useActionState } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, ArrowRight, Check } from "lucide-react";
 import { ui } from "@/components/ui";
+import { ComboboxOpcion } from "@/components/combobox-opcion";
 import { CATEGORIAS_GASTO, ESTADOS_GASTO } from "./constants";
 import { crearGasto, type GastoFormState } from "./actions";
 import type { ContextoPropiedad } from "@/features/documentos/queries";
@@ -243,26 +244,28 @@ export function GastoWizard({
       </div>
 
       {confirmandoCancelar && (
-        <div className="flex flex-col items-center gap-2 rounded-xl bg-white/10 p-4">
-          <p className="text-sm text-white">Se perderá el avance de este gasto. ¿Cancelar de todas formas?</p>
-          <div className="flex gap-2">
-            <button
-              type="button"
-              onClick={() => {
-                limpiarBorrador();
-                router.push("/gastos");
-              }}
-              className="inline-flex items-center gap-1.5 rounded-lg bg-white px-4 py-2 text-sm font-medium text-burgundy shadow-sm transition-colors hover:bg-white/90"
-            >
-              Sí, cancelar
-            </button>
-            <button
-              type="button"
-              onClick={() => setConfirmandoCancelar(false)}
-              className="inline-flex items-center gap-1.5 rounded-lg bg-white/10 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-white/20"
-            >
-              No
-            </button>
+        <div className="fixed inset-x-0 top-0 z-50 flex justify-center p-4">
+          <div className="flex flex-col items-center gap-2 rounded-xl bg-burgundy-strong p-4 shadow-lg">
+            <p className="text-sm text-white">Se perderá el avance de este gasto. ¿Cancelar de todas formas?</p>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  limpiarBorrador();
+                  router.push("/gastos");
+                }}
+                className="inline-flex items-center gap-1.5 rounded-lg bg-white px-4 py-2 text-sm font-medium text-burgundy shadow-sm transition-colors hover:bg-white/90"
+              >
+                Sí, cancelar
+              </button>
+              <button
+                type="button"
+                onClick={() => setConfirmandoCancelar(false)}
+                className="inline-flex items-center gap-1.5 rounded-lg bg-white/10 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-white/20"
+              >
+                No
+              </button>
+            </div>
           </div>
         </div>
       )}
@@ -352,19 +355,14 @@ function SelectorPropiedadWizard({
     <div className="flex flex-col gap-3 text-left">
       <div className="flex flex-col gap-1.5">
         <label className="text-sm font-medium text-white">Propiedad</label>
-        <select
+        <ComboboxOpcion
+          name="propiedad_id_buscador"
+          options={propiedades}
           value={propiedadId}
-          onChange={(e) => onProp(e.target.value)}
-          className={ui.input}
+          onChange={onProp}
+          placeholder="Selecciona o escribe…"
           autoFocus
-        >
-          <option value="">Selecciona…</option>
-          {propiedades.map((o) => (
-            <option key={o.id} value={o.id}>
-              {o.label}
-            </option>
-          ))}
-        </select>
+        />
       </div>
 
       {contratos.length > 1 && (

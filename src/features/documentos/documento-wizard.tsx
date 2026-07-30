@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, ArrowRight, Check, UploadCloud } from "lucide-react";
 import { ui } from "@/components/ui";
+import { ComboboxOpcion } from "@/components/combobox-opcion";
 import { CATEGORIAS, MAX_TAMANO_BYTES, formatearTamano } from "./constants";
 import { subirArchivo, limpiarArchivo } from "./storage-client";
 import { registrarDocumento } from "./actions";
@@ -200,26 +201,20 @@ export function DocumentoWizard({
         <div className="flex flex-col gap-3 text-left">
           <div className="flex flex-col gap-1.5">
             <label className="text-sm font-medium text-white">Propiedad</label>
-            <select
+            <ComboboxOpcion
+              name="propiedad_id_buscador"
+              options={opciones.propiedades}
               value={valores.propiedad_id}
-              onChange={(e) => {
-                const id = e.target.value;
+              onChange={(id) => {
                 set("propiedad_id", id);
                 const cs = contexto[id] ?? [];
                 const contratoId = cs.length === 1 ? cs[0].contratoId : "";
                 set("contrato_id", contratoId);
                 set("arrendatario_id", cs.find((c) => c.contratoId === contratoId)?.arrendatarioId ?? "");
               }}
-              className={ui.input}
+              placeholder="Sin propiedad asociada (opcional)"
               autoFocus
-            >
-              <option value="">Sin propiedad asociada</option>
-              {opciones.propiedades.map((o) => (
-                <option key={o.id} value={o.id}>
-                  {o.label}
-                </option>
-              ))}
-            </select>
+            />
           </div>
           {contratos.length > 1 && (
             <div className="flex flex-col gap-1.5">
@@ -276,23 +271,25 @@ export function DocumentoWizard({
       </div>
 
       {confirmandoCancelar && (
-        <div className="flex flex-col items-center gap-2 rounded-xl bg-white/10 p-4">
-          <p className="text-sm text-white">Se perderá el avance de esta subida. ¿Cancelar de todas formas?</p>
-          <div className="flex gap-2">
-            <button
-              type="button"
-              onClick={() => router.push("/documentos")}
-              className="inline-flex items-center gap-1.5 rounded-lg bg-white px-4 py-2 text-sm font-medium text-burgundy shadow-sm transition-colors hover:bg-white/90"
-            >
-              Sí, cancelar
-            </button>
-            <button
-              type="button"
-              onClick={() => setConfirmandoCancelar(false)}
-              className="inline-flex items-center gap-1.5 rounded-lg bg-white/10 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-white/20"
-            >
-              No
-            </button>
+        <div className="fixed inset-x-0 top-0 z-50 flex justify-center p-4">
+          <div className="flex flex-col items-center gap-2 rounded-xl bg-burgundy-strong p-4 shadow-lg">
+            <p className="text-sm text-white">Se perderá el avance de esta subida. ¿Cancelar de todas formas?</p>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={() => router.push("/documentos")}
+                className="inline-flex items-center gap-1.5 rounded-lg bg-white px-4 py-2 text-sm font-medium text-burgundy shadow-sm transition-colors hover:bg-white/90"
+              >
+                Sí, cancelar
+              </button>
+              <button
+                type="button"
+                onClick={() => setConfirmandoCancelar(false)}
+                className="inline-flex items-center gap-1.5 rounded-lg bg-white/10 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-white/20"
+              >
+                No
+              </button>
+            </div>
           </div>
         </div>
       )}
