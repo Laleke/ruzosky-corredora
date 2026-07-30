@@ -78,21 +78,18 @@ export default async function DetalleCargoPage({
       </section>
 
       <section className="flex flex-col gap-4">
-        <div className="flex items-center gap-2.5">
-          <h2 className="text-lg font-semibold text-canvas-fg">Pagos</h2>
-          {saldo > 0 && (
-            <Link
-              href={`/cobros/${id}/pagos/nuevo`}
-              aria-label="Registrar pago"
-              title="Registrar pago"
-              className="flex h-7 w-7 items-center justify-center rounded-full bg-burgundy text-white transition-colors hover:bg-burgundy-strong"
-            >
-              <Plus size={16} strokeWidth={2.5} />
-            </Link>
-          )}
-        </div>
+        <h2 className="text-lg font-semibold text-canvas-fg">Pagos</h2>
 
-        {saldo <= 0 && <p className="text-sm text-canvas-muted">Cargo pagado por completo.</p>}
+        {saldo > 0 ? (
+          <Link
+            href={`/cobros/${id}/pagos/nuevo`}
+            className="flex items-center justify-center gap-2 rounded-xl bg-burgundy p-4 text-sm font-semibold text-white transition-colors hover:bg-burgundy-strong"
+          >
+            <Plus size={16} strokeWidth={2.5} /> Registrar pago
+          </Link>
+        ) : (
+          <p className="text-sm text-canvas-muted">Cargo pagado por completo.</p>
+        )}
 
         {pagos.length > 0 && (
           <div className="rounded-xl bg-burgundy overflow-hidden">
