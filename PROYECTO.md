@@ -16,9 +16,9 @@ Ciclo operable: propiedad → (propietario/contrato/arrendatario auto) → cargo
 
 **Última sesión: 2026-07-29 (segunda mitad — 4 commits más sobre la misma fecha).** App **en producción** (Vercel), redeploy con cada push. Repo `github.com/Laleke/ruzosky-corredora`. Rama `main` **pusheada hasta `dd2eec8`**, autorizado explícitamente por Eduardo en cada push. Sin cambios sin commitear al cerrar. `tsc --noEmit` y `next build` verdes tras cada entregable — **ninguno de estos cambios se verificó en navegador real** (sin Playwright/chromium-cli en el entorno); todo el feedback de ajuste vino de capturas de pantalla que Eduardo mandó desde su celular.
 
-### ✅ Migraciones 0021/0022/0023 ejecutadas — 0020 aún sin confirmar
+### ✅ Todas las migraciones ejecutadas (`0001`–`0023`), Eduardo confirmó
 
-`canon_actual`, `canon_uf_base` y `fecha_proximo_reajuste` existen en `contratos` en producción. Migración `0020_contratos_delete.sql` (pendiente de sesiones anteriores) — **sigue sin confirmación explícita** de que se haya ejecutado.
+`canon_actual`, `canon_uf_base`, `fecha_proximo_reajuste` (contratos) y la política RLS de DELETE de Contratos (`0020_contratos_delete.sql`) ya existen/aplican en producción. "Eliminar" en Contratos debería funcionar correctamente ahora.
 
 ### Resumen de los 4 commits de esta sesión (`f6629b0`→`6409c8b`→`8c8be69`→`dd2eec8`)
 
@@ -85,11 +85,11 @@ Nueva etapa de la app (uso con datos reales, no solo demo): tema oscuro grafito 
 
 **Pendiente / próximo (en orden):**
 1. **Eduardo sigue probando visualmente en el celular** — esta sesión se corrigió con base en capturas reales (tarjetas de Cobros, botón de "Generación asistida", botón "Registrar pago"); revisar el resto de pantallas recién tocadas (acordeón de cargos, wizard de pago, filtros con buscador, fechas dd/mm/yyyy) que aún no generaron feedback explícito.
-2. **Confirmar si `0020_contratos_delete.sql` ya se ejecutó** (pendiente desde hace 2 sesiones, sin confirmación explícita) — sin ella "Eliminar" en Contratos afecta 0 filas en silencio.
+2. Confirmar que "Eliminar" funciona en producción en Contratos (ya con `0020_contratos_delete.sql` ejecutada, junto con el resto de migraciones `0001`–`0023`).
 3. Probar el flujo de reajuste de canon con datos reales cuando llegue el 01-09-2026 (próxima revisión real de Vicuña Mackenna) — confirmar que "Aplicar reajuste (UF)" sigue dando el resultado correcto y que ya no adelanta la fecha de forma indebida (bug corregido esta sesión).
 4. Roadmap de Hardening — Sprint 1 sigue incompleto: faltan T2 (auditoría), T3 (backups), T5 (gate de rol), T11 (regenerar `database.types.ts`). No se tocó en las últimas sesiones (todo el foco fue UI).
 5. Backlog QA (R1/R2/R3/R5, motor de liquidación) — sin cambios, sigue pendiente.
-6. Una vez estable, correr `limpiar_datos_prueba` + `cargar_datos_reales_803_1907A` para empezar a usar la app con datos reales.
+6. Ahora que todas las migraciones están aplicadas, evaluar correr `limpiar_datos_prueba` + `cargar_datos_reales_803_1907A` para empezar a usar la app con datos reales.
 7. **Lección técnica a tener presente en cualquier cálculo futuro de fechas**: nunca derivar mes/año con `new Date(...).toISOString().slice(...)` en código que corre server-side — la conversión a UTC puede retroceder un día (y el mes) en zona horaria con offset negativo. Usar aritmética entera de meses (ver `periodoArriendoVigente` en `src/features/cobros/queries.ts`) o, si hace falta la fecha completa, construirla con componentes UTC explícitos.
 
 **Flujo de trabajo:** construir → `next build` verde + `tsc` limpio → commits locales pequeños por entregable → **push solo con autorización explícita** de Eduardo (dice "push"/"aplica commit y push"). Migraciones: Eduardo las aplica en el SQL Editor y confirma — nunca asumir que ya corrieron.
