@@ -210,6 +210,9 @@ export function SolicitudPagoWizard({ cargoId, saldoPendiente }: { cargoId: stri
         className="flex flex-col items-center gap-4 text-center"
       >
         <p className="text-xs text-white/60">Saldo pendiente: ${saldoPendiente.toLocaleString("es-CL")}</p>
+        <p className="text-xs text-white/50">
+          Este pago quedará pendiente de validación del propietario antes de reflejarse en tu saldo.
+        </p>
 
         {PASOS.filter((p) => p.tipo !== "archivo").map((p, i) => {
           const idx = PASOS.indexOf(p);
@@ -270,7 +273,7 @@ export function SolicitudPagoWizard({ cargoId, saldoPendiente }: { cargoId: stri
               disabled={pending}
               className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-white px-3 py-2 text-sm font-medium text-burgundy shadow-sm transition-colors hover:bg-white/90 disabled:pointer-events-none disabled:opacity-50"
             >
-              <Check size={15} /> {pending ? "Enviando…" : "Enviar solicitud"}
+              <Check size={15} /> {pending ? "Enviando…" : "Informar pago"}
             </button>
           )}
         </div>

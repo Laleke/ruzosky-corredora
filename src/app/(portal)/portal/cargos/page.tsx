@@ -25,9 +25,9 @@ const ESTADO: Record<string, { label: string; tone: Parameters<typeof badge>[0] 
 };
 
 const ESTADO_SOLICITUD: Record<string, { label: string; tone: Parameters<typeof badge>[0] }> = {
-  pendiente: { label: "Solicitud enviada — esperando aprobación", tone: "warning" },
-  aprobada: { label: "Solicitud aprobada", tone: "success" },
-  rechazada: { label: "Solicitud rechazada", tone: "danger" },
+  pendiente: { label: "Pago informado — esperando validación", tone: "warning" },
+  aprobada: { label: "Pago validado", tone: "success" },
+  rechazada: { label: "Pago no validado", tone: "danger" },
 };
 
 function clp(n: number): string {
@@ -95,12 +95,17 @@ export default async function PortalCargosPage() {
                 )}
 
                 {saldo > 0 && !solicitudActiva && (
-                  <Link
-                    href={`/portal/cargos/${c.id}/solicitar-pago`}
-                    className="mt-1 flex items-center justify-center gap-2 rounded-lg bg-white px-3 py-2 text-sm font-medium text-burgundy shadow-sm transition-colors hover:bg-white/90"
-                  >
-                    <Send size={15} /> Solicitar pago
-                  </Link>
+                  <div className="mt-1 flex flex-col gap-1">
+                    <Link
+                      href={`/portal/cargos/${c.id}/solicitar-pago`}
+                      className="flex items-center justify-center gap-2 rounded-lg bg-white px-3 py-2 text-sm font-medium text-burgundy shadow-sm transition-colors hover:bg-white/90"
+                    >
+                      <Send size={15} /> Informar pago
+                    </Link>
+                    <p className="text-center text-xs text-white/50">
+                      Quedará pendiente de validación del propietario.
+                    </p>
+                  </div>
                 )}
               </div>
             );
