@@ -2,8 +2,9 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, MessageCircle, Send } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import { ui } from "@/components/ui";
+import { WhatsAppIcon } from "@/components/whatsapp-icon";
 import { esEmailValido, formatearTelefono } from "@/lib/contacto";
 import { linkWhatsApp, mensajeInvitacionPortal } from "@/lib/whatsapp";
 import { invitarNuevo } from "./actions";
@@ -33,13 +34,12 @@ export function InvitarNuevoForm({ entidad }: { entidad: EntidadPortal }) {
   const [telefono, setTelefono] = useState("");
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [link, setLink] = useState<string | null>(null);
+  const [enviado, setEnviado] = useState(false);
 
   const t = LABEL[entidad];
 
-  async function onInvitar() {
+  async function onEnviar() {
     setError(null);
-    setLink(null);
     if (!esEmailValido(email) || !email.trim()) {
       setError("Ingresa un email válido.");
       return;
@@ -48,14 +48,22 @@ export function InvitarNuevoForm({ entidad }: { entidad: EntidadPortal }) {
       setError("Ingresa un teléfono.");
       return;
     }
+
+    const ventana = window.open("", "_blank");
     setPending(true);
     const res = await invitarNuevo(entidad, email, telefono);
     setPending(false);
-    if (res.error) {
+
+    if (res.error || !res.link) {
+      ventana?.close();
       setError(res.error);
       return;
     }
-    setLink(res.link);
+
+    const wa = linkWhatsApp(telefono, mensajeInvitacionPortal(res.link));
+    if (ventana) ventana.location.href = wa;
+    else window.open(wa, "_blank", "noopener");
+    setEnviado(true);
   }
 
   return (
@@ -76,52 +84,41 @@ export function InvitarNuevoForm({ entidad }: { entidad: EntidadPortal }) {
         </p>
       </div>
 
-      {!link ? (
-        <div className="flex flex-col gap-3">
-          <div className="flex flex-col gap-1.5">
-            <label className="text-sm font-medium text-white">Email</label>
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="correo@ejemplo.cl"
-              className={ui.input}
-            />
-          </div>
-          <div className="flex flex-col gap-1.5">
-            <label className="text-sm font-medium text-white">Teléfono</label>
-            <input
-              type="tel"
-              value={telefono}
-              onChange={(e) => setTelefono(formatearTelefono(e.target.value))}
-              placeholder="+56912345678"
-              className={ui.input}
-            />
-          </div>
-          {error && <p className="text-sm text-amber-200">{error}</p>}
-          <button
-            type="button"
-            onClick={onInvitar}
-            disabled={pending}
-            className="inline-flex items-center justify-center gap-2 rounded-lg bg-white px-4 py-2 text-sm font-medium text-burgundy shadow-sm transition-colors hover:bg-white/90 disabled:pointer-events-none disabled:opacity-50"
-          >
-            <Send size={15} /> {pending ? "Generando…" : "Generar invitación"}
-          </button>
+      <div className="flex flex-col gap-3">
+        <div className="flex flex-col gap-1.5">
+          <label className="text-sm font-medium text-white">Email</label>
+          <input
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="correo@ejemplo.cl"
+            className={ui.input}
+          />
         </div>
-      ) : (
-        <div className="flex flex-col gap-3">
-          <a
-            href={linkWhatsApp(telefono, mensajeInvitacionPortal(link))}
-            target="_blank"
-            rel="noopener"
-            className="inline-flex items-center justify-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-emerald-700"
-          >
-            <MessageCircle size={16} /> Enviar por WhatsApp
-          </a>
+        <div className="flex flex-col gap-1.5">
+          <label className="text-sm font-medium text-white">Teléfono</label>
+          <input
+            type="tel"
+            value={telefono}
+            onChange={(e) => setTelefono(formatearTelefono(e.target.value))}
+            placeholder="+56912345678"
+            className={ui.input}
+          />
+        </div>
+        {error && <p className="text-sm text-amber-200">{error}</p>}
+        <button
+          type="button"
+          onClick={onEnviar}
+          disabled={pending}
+          className="inline-flex items-center justify-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-emerald-700 disabled:pointer-events-none disabled:opacity-50"
+        >
+          <WhatsAppIcon size={16} /> {pending ? "Generando…" : "Enviar por WhatsApp"}
+        </button>
+        {enviado && (
           <button
             type="button"
             onClick={() => {
-              setLink(null);
+              setEnviado(false);
               setEmail("");
               setTelefono("");
             }}
@@ -129,8 +126,8 @@ export function InvitarNuevoForm({ entidad }: { entidad: EntidadPortal }) {
           >
             Invitar a otra persona
           </button>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
 }

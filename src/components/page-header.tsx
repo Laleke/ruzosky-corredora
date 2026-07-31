@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { Plus, MessageCircle } from "lucide-react";
+import { Plus } from "lucide-react";
+import { WhatsAppIcon } from "@/components/whatsapp-icon";
 
 export function PageHeader({
   titulo,
@@ -38,9 +39,9 @@ export function PageHeader({
       {accionSecundaria && (
         <Link
           href={accionSecundaria.href}
-          className="inline-flex items-center gap-1.5 rounded-lg bg-white/10 px-3 py-1.5 text-sm font-medium text-canvas-fg transition-colors hover:bg-white/20"
+          className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-600 px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-emerald-700"
         >
-          <MessageCircle size={15} /> {accionSecundaria.label}
+          <WhatsAppIcon size={15} /> {accionSecundaria.label}
         </Link>
       )}
     </div>

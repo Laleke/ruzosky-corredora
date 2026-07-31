@@ -41,6 +41,7 @@ export async function updateSession(request: NextRequest) {
   const isPublic =
     pathname.startsWith("/login") ||
     pathname.startsWith("/auth") ||
+    pathname.startsWith("/invitacion") ||
     pathname === "/";
 
   // Sin sesión y ruta privada → redirige a login.

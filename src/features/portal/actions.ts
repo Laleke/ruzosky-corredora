@@ -23,19 +23,27 @@ function sitioUrl(): string {
 }
 
 /**
- * Construye el link de confirmación nosotros mismos a partir de
- * `properties.hashed_token` — NUNCA usar `properties.action_link`: ese apunta
- * al endpoint hosteado de Supabase (`/auth/v1/verify`), que al verificar
- * entrega la sesión en un formato que nuestra ruta `/auth/confirm` (basada en
- * `token_hash`+`type`, el patrón oficial para entrega propia del link) no
- * puede leer — así se ve "caído" aunque el token sea válido.
+ * Construye el link que se comparte por WhatsApp. Apunta a una página de
+ * aterrizaje propia (`/portal/aceptar-invitacion`), NUNCA directo a
+ * `/auth/confirm` — WhatsApp (y otros mensajeros) precargan el link para
+ * generar la vista previa, y como el token es de un solo uso, esa precarga
+ * lo consume antes de que la persona lo toque de verdad (llegaba pidiendo
+ * iniciar sesión). La página de aterrizaje no consume nada por sí sola: solo
+ * cuando la persona toca "Registrarme" se dispara la navegación real a
+ * `/auth/confirm` con el token.
+ *
+ * También construye el link nosotros mismos a partir de
+ * `properties.hashed_token` — NUNCA `properties.action_link`: ese apunta al
+ * endpoint hosteado de Supabase (`/auth/v1/verify`), que al verificar entrega
+ * la sesión en un formato que `/auth/confirm` no puede leer.
  */
 function construirLinkConfirmacion(
   hashedToken: string,
   type: "invite" | "recovery",
   next: string
 ): string {
-  return `${sitioUrl()}/auth/confirm?token_hash=${hashedToken}&type=${type}&next=${encodeURIComponent(next)}`;
+  const params = new URLSearchParams({ token_hash: hashedToken, type, next });
+  return `${sitioUrl()}/invitacion?${params.toString()}`;
 }
 
 function nombrePersona(p: {

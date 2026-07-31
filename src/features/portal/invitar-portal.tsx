@@ -1,8 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { MessageCircle, Send } from "lucide-react";
 import { badge, ui } from "@/components/ui";
+import { WhatsAppIcon } from "@/components/whatsapp-icon";
 import { esEmailValido } from "@/lib/contacto";
 import { linkWhatsApp, mensajeInvitacionPortal } from "@/lib/whatsapp";
 import { invitarAlPortal } from "./actions";
@@ -30,27 +30,40 @@ export function InvitarPortal({
   const [email, setEmail] = useState(emailDefault ?? "");
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [link, setLink] = useState<string | null>(null);
 
-  async function onInvitar() {
+  const est = ESTADO_LABEL[estadoInvitacion];
+
+  /**
+   * Genera la invitación y abre WhatsApp en un solo paso. La ventana se abre
+   * síncrono al click (antes del await) para no chocar con el bloqueador de
+   * popups del navegador — se le asigna la URL real una vez que la tenemos.
+   */
+  async function onEnviar() {
     setError(null);
-    setLink(null);
     if (!esEmailValido(email) || !email.trim()) {
       setError("Ingresa un email válido.");
       return;
     }
+    if (!telefonoDefault) {
+      setError("Falta un teléfono registrado para enviar por WhatsApp.");
+      return;
+    }
+
+    const ventana = window.open("", "_blank");
     setPending(true);
     const res = await invitarAlPortal(entidad, entidadId, email);
     setPending(false);
-    if (res.error) {
-      setError(res.error);
+
+    if (res.error || !res.link) {
+      ventana?.close();
+      setError(res.error ?? "No se pudo generar la invitación.");
       return;
     }
-    setLink(res.link);
-  }
 
-  const est = ESTADO_LABEL[estadoInvitacion];
-  const puedeWhatsapp = Boolean(link && telefonoDefault);
+    const wa = linkWhatsApp(telefonoDefault, mensajeInvitacionPortal(res.link));
+    if (ventana) ventana.location.href = wa;
+    else window.open(wa, "_blank", "noopener");
+  }
 
   return (
     <div className="flex flex-col gap-3">
@@ -69,37 +82,13 @@ export function InvitarPortal({
           />
           <button
             type="button"
-            onClick={onInvitar}
+            onClick={onEnviar}
             disabled={pending}
-            className="inline-flex items-center justify-center gap-2 rounded-lg bg-white px-4 py-2 text-sm font-medium text-burgundy shadow-sm transition-colors hover:bg-white/90 disabled:pointer-events-none disabled:opacity-50"
+            className="inline-flex items-center justify-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-emerald-700 disabled:pointer-events-none disabled:opacity-50"
           >
-            <Send size={15} />
-            {pending
-              ? "Generando…"
-              : estadoInvitacion === "invitado"
-                ? "Reenviar invitación"
-                : "Invitar al portal"}
+            <WhatsAppIcon size={16} /> {pending ? "Generando…" : "Enviar por WhatsApp"}
           </button>
           {error && <p className="text-xs text-amber-200">{error}</p>}
-          {link && (
-            <div className="flex flex-col gap-2 rounded-lg bg-white/10 p-3">
-              {puedeWhatsapp ? (
-                <a
-                  href={linkWhatsApp(telefonoDefault!, mensajeInvitacionPortal(link))}
-                  target="_blank"
-                  rel="noopener"
-                  className="inline-flex items-center justify-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-emerald-700"
-                >
-                  <MessageCircle size={16} /> Enviar por WhatsApp
-                </a>
-              ) : (
-                <p className="text-xs text-amber-200">
-                  Falta un teléfono registrado para enviar por WhatsApp — agrégalo y vuelve a
-                  invitar.
-                </p>
-              )}
-            </div>
-          )}
         </div>
       )}
     </div>
