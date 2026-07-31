@@ -3,7 +3,9 @@ import Link from "next/link";
 import { Plus } from "lucide-react";
 import { eliminarPago, eliminarCargo } from "@/features/cobros/actions";
 import { getCargo, getPagosDeCargo } from "@/features/cobros/queries";
+import { ComprobantePago } from "@/features/cobros/comprobante-pago";
 import { BotonVolver } from "@/components/boton-volver";
+import { getCurrentProfile } from "@/lib/auth";
 import { formatearFecha, formatearPeriodo } from "@/lib/fecha";
 
 const TIPO_LABEL: Record<string, string> = {
@@ -29,11 +31,12 @@ export default async function DetalleCargoPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const [cargo, pagos] = await Promise.all([
+  const [cargo, pagos, profile] = await Promise.all([
     getCargo(id),
     getPagosDeCargo(id),
+    getCurrentProfile(),
   ]);
-  if (!cargo) notFound();
+  if (!cargo || !profile) notFound();
 
   const saldo = Number(cargo.saldo_pendiente);
 
@@ -100,6 +103,7 @@ export default async function DetalleCargoPage({
                   <th className={thOscuro}>Monto</th>
                   <th className={thOscuro}>Medio</th>
                   <th className={thOscuro}>Referencia</th>
+                  <th className={thOscuro}>Comprobante</th>
                   <th className={thOscuro}></th>
                 </tr>
               </thead>
@@ -110,6 +114,15 @@ export default async function DetalleCargoPage({
                     <td className={`${tdOscuro} font-medium`}>{monto(p.monto_pagado)}</td>
                     <td className={`${tdOscuro} text-white/70`}>{p.medio_pago ?? "—"}</td>
                     <td className={`${tdOscuro} text-white/70`}>{p.referencia ?? "—"}</td>
+                    <td className={tdOscuro}>
+                      <ComprobantePago
+                        pagoId={p.id}
+                        cargoId={id}
+                        contratoId={cargo.contrato_id}
+                        empresaId={profile.empresa_id}
+                        tieneComprobante={Boolean(p.documento_id)}
+                      />
+                    </td>
                     <td className={`${tdOscuro} text-right`}>
                       <form action={eliminarPago.bind(null, p.id, id)}>
                         <button

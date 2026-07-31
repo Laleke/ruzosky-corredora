@@ -40,6 +40,7 @@ export default async function ArrendatariosPage({
         titulo="Arrendatarios"
         descripcion="Inquilinos vinculados a los contratos."
         accion={{ href: "/arrendatarios/nuevo", label: "Nuevo arrendatario" }}
+        accionSecundaria={{ href: "/arrendatarios/invitar", label: "Invitar por WhatsApp" }}
       />
 
       <FiltroArrendatarios

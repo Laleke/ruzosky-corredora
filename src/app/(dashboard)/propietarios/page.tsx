@@ -40,6 +40,7 @@ export default async function PropietariosPage({
         titulo="Propietarios"
         descripcion="Dueños de las propiedades en administración."
         accion={{ href: "/propietarios/nuevo", label: "Nuevo propietario" }}
+        accionSecundaria={{ href: "/propietarios/invitar", label: "Invitar por WhatsApp" }}
       />
 
       <FiltroPropietarios

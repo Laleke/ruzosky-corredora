@@ -214,6 +214,7 @@ export async function registrarPago(
     medio_pago,
     referencia: texto(formData, "referencia"),
     observaciones: texto(formData, "observaciones"),
+    documento_id: texto(formData, "documento_id"),
   });
 
   if (error) return { error: "No se pudo registrar el pago." };
@@ -223,6 +224,57 @@ export async function registrarPago(
   revalidatePath(`/cobros/${cargoId}`);
   revalidatePath("/cobros");
   return { error: null };
+}
+
+/** Adjunta (o reemplaza) el comprobante de un pago ya registrado (documento subido aparte). */
+export async function adjuntarComprobantePago(
+  pagoId: string,
+  cargoId: string,
+  documentoId: string
+): Promise<CobroFormState> {
+  const profile = await getCurrentProfile();
+  if (!profile || profile.rol !== "admin") return { error: "No autorizado." };
+
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("pagos")
+    .update({ documento_id: documentoId })
+    .eq("id", pagoId);
+
+  if (error) return { error: "No se pudo adjuntar el comprobante." };
+
+  revalidatePath(`/cobros/${cargoId}`);
+  return { error: null };
+}
+
+/** Signed URL (60s) del comprobante de un pago, si tiene. */
+export async function getComprobanteUrlPago(
+  pagoId: string
+): Promise<{ url: string | null; error: string | null }> {
+  const profile = await getCurrentProfile();
+  if (!profile || profile.rol !== "admin") return { url: null, error: "No autorizado." };
+
+  const supabase = await createClient();
+  const { data: pago } = await supabase
+    .from("pagos")
+    .select("documento_id")
+    .eq("id", pagoId)
+    .single();
+  if (!pago?.documento_id) return { url: null, error: "Sin comprobante." };
+
+  const { data: ver } = await supabase
+    .from("documento_versiones")
+    .select("storage_path, nombre_archivo")
+    .eq("documento_id", pago.documento_id)
+    .order("version", { ascending: false })
+    .limit(1)
+    .single();
+  if (!ver) return { url: null, error: "Comprobante no encontrado." };
+
+  const { data } = await supabase.storage
+    .from("documentos")
+    .createSignedUrl(ver.storage_path, 60, { download: ver.nombre_archivo });
+  return { url: data?.signedUrl ?? null, error: data?.signedUrl ? null : "No se pudo abrir." };
 }
 
 export async function eliminarPago(pagoId: string, cargoId: string) {

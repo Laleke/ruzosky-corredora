@@ -6,6 +6,7 @@ import {
   ArrowRight,
   ArrowUpRight,
   ListChecks,
+  Receipt,
 } from "lucide-react";
 import { getCurrentProfile } from "@/lib/auth";
 import { getDashboardStats, getTareasPendientes } from "@/features/dashboard/queries";
@@ -80,7 +81,7 @@ export default async function DashboardPage() {
         </p>
       </div>
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <Kpi
           icon={Building2}
           label="Propiedades"
@@ -100,6 +101,13 @@ export default async function DashboardPage() {
           valor={String(stats.cargosMorosos)}
           sub="vencidos con saldo"
           alerta={stats.cargosMorosos > 0}
+          href="/cobros"
+        />
+        <Kpi
+          icon={Receipt}
+          label="Pagos generados"
+          valor={String(stats.pagosGeneradosMes)}
+          sub="este mes"
           href="/cobros"
         />
       </div>

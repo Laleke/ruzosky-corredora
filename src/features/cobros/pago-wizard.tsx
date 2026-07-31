@@ -3,8 +3,11 @@
 import { useEffect, useRef, useState } from "react";
 import { useActionState } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, ArrowRight, Check } from "lucide-react";
+import { ArrowLeft, ArrowRight, Check, Paperclip } from "lucide-react";
 import { ui } from "@/components/ui";
+import { MAX_TAMANO_BYTES } from "@/features/documentos/constants";
+import { subirArchivo, limpiarArchivo } from "@/features/documentos/storage-client";
+import { registrarDocumento } from "@/features/documentos/actions";
 import { registrarPago, type CobroFormState } from "./actions";
 
 const MEDIO_OPCIONES = [
@@ -15,7 +18,7 @@ const MEDIO_OPCIONES = [
   { value: "otro", label: "Otro" },
 ];
 
-type TipoPaso = "monto" | "fecha" | "select" | "texto";
+type TipoPaso = "monto" | "fecha" | "select" | "texto" | "archivo";
 type Paso = { key: string; pregunta: string; tipo: TipoPaso; requerido?: boolean };
 
 const PASOS: Paso[] = [
@@ -23,6 +26,7 @@ const PASOS: Paso[] = [
   { key: "fecha_pago", pregunta: "¿Qué fecha tiene el pago?", tipo: "fecha", requerido: true },
   { key: "medio_pago", pregunta: "¿Cuál fue el medio de pago?", tipo: "select" },
   { key: "referencia", pregunta: "¿Alguna observación adicional?", tipo: "texto" },
+  { key: "documento_id", pregunta: "¿Deseas adjuntar un comprobante?", tipo: "archivo" },
 ];
 
 function hoyISO(): string {
@@ -33,7 +37,17 @@ function fmt(digits: string): string {
   return digits === "" ? "" : Number(digits).toLocaleString("es-CL");
 }
 
-export function PagoWizard({ cargoId, saldoPendiente }: { cargoId: string; saldoPendiente: number }) {
+export function PagoWizard({
+  cargoId,
+  saldoPendiente,
+  contratoId,
+  empresaId,
+}: {
+  cargoId: string;
+  saldoPendiente: number;
+  contratoId: string;
+  empresaId: string;
+}) {
   const router = useRouter();
   const [state, formAction, pending] = useActionState(registrarPago.bind(null, cargoId), {
     error: null,
@@ -44,10 +58,15 @@ export function PagoWizard({ cargoId, saldoPendiente }: { cargoId: string; saldo
     fecha_pago: hoyISO(),
     medio_pago: "transferencia",
     referencia: "",
+    documento_id: "",
   });
   const [errorPaso, setErrorPaso] = useState<string | null>(null);
   const [confirmandoCancelar, setConfirmandoCancelar] = useState(false);
   const enviado = useRef(false);
+
+  const [archivoNombre, setArchivoNombre] = useState<string | null>(null);
+  const [subiendoArchivo, setSubiendoArchivo] = useState(false);
+  const [errorArchivo, setErrorArchivo] = useState<string | null>(null);
 
   const actual = PASOS[paso];
   const esUltimo = paso === PASOS.length - 1;
@@ -61,6 +80,42 @@ export function PagoWizard({ cargoId, saldoPendiente }: { cargoId: string; saldo
   function set(key: string, value: string) {
     setValores((v) => ({ ...v, [key]: value }));
     setErrorPaso(null);
+  }
+
+  async function onArchivo(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file) return;
+    setErrorArchivo(null);
+
+    if (file.size > MAX_TAMANO_BYTES) {
+      setErrorArchivo("El comprobante supera el tamaño máximo (25 MB).");
+      return;
+    }
+
+    setSubiendoArchivo(true);
+    const { archivo, error: errUp } = await subirArchivo(file, empresaId);
+    if (!archivo) {
+      setSubiendoArchivo(false);
+      setErrorArchivo(errUp ?? "No se pudo subir el comprobante.");
+      return;
+    }
+
+    const res = await registrarDocumento({
+      nombre: `Comprobante de pago`.slice(0, 200),
+      categoria: "comprobante_pago",
+      contrato_id: contratoId,
+      archivo,
+    });
+    setSubiendoArchivo(false);
+    if (res.error || !res.id) {
+      await limpiarArchivo(archivo.storage_path);
+      setErrorArchivo(res.error ?? "No se pudo registrar el comprobante.");
+      return;
+    }
+
+    set("documento_id", res.id);
+    setArchivoNombre(file.name);
   }
 
   function puedeAvanzar(): boolean {
@@ -125,6 +180,21 @@ export function PagoWizard({ cargoId, saldoPendiente }: { cargoId: string; saldo
             </option>
           ))}
         </select>
+      );
+    }
+    if (p.tipo === "archivo") {
+      return (
+        <div className="flex flex-col items-center gap-2">
+          <input type="hidden" name={p.key} value={val} />
+          <label className="flex cursor-pointer items-center gap-2 rounded-lg bg-white/10 px-4 py-2 text-sm text-white hover:bg-white/20">
+            <Paperclip size={15} />
+            {subiendoArchivo
+              ? "Subiendo…"
+              : archivoNombre ?? "Adjuntar comprobante (opcional)"}
+            <input type="file" className="hidden" onChange={onArchivo} disabled={subiendoArchivo} />
+          </label>
+          {errorArchivo && <p className="text-xs text-amber-200">{errorArchivo}</p>}
+        </div>
       );
     }
     return (
@@ -209,36 +279,39 @@ export function PagoWizard({ cargoId, saldoPendiente }: { cargoId: string; saldo
         {errorPaso && <p className="text-sm text-amber-200">{errorPaso}</p>}
         {esUltimo && state.error && <p className="text-sm text-amber-200">{state.error}</p>}
 
-        <div className="flex flex-wrap items-center justify-center gap-3">
+        <div className="grid w-full grid-cols-3 items-center gap-2">
           <button
             type="button"
             onClick={() => setConfirmandoCancelar(true)}
-            className="inline-flex items-center gap-1.5 rounded-lg bg-white/10 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-white/20"
+            className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-white/10 px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-white/20"
           >
             Cancelar
           </button>
-          {paso > 0 && (
+          {paso > 0 ? (
             <button
               type="button"
               onClick={atras}
-              className="inline-flex items-center gap-1.5 rounded-lg bg-white/10 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-white/20"
+              className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-white/10 px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-white/20"
             >
               <ArrowLeft size={15} /> Atrás
             </button>
+          ) : (
+            <span />
           )}
           {!esUltimo ? (
             <button
               type="button"
               onClick={siguiente}
-              className="inline-flex items-center gap-1.5 rounded-lg bg-white px-4 py-2 text-sm font-medium text-burgundy shadow-sm transition-colors hover:bg-white/90"
+              disabled={subiendoArchivo}
+              className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-white px-3 py-2 text-sm font-medium text-burgundy shadow-sm transition-colors hover:bg-white/90 disabled:pointer-events-none disabled:opacity-50"
             >
               Siguiente <ArrowRight size={15} />
             </button>
           ) : (
             <button
               type="submit"
-              disabled={pending}
-              className="inline-flex items-center gap-1.5 rounded-lg bg-white px-4 py-2 text-sm font-medium text-burgundy shadow-sm transition-colors hover:bg-white/90 disabled:pointer-events-none disabled:opacity-50"
+              disabled={pending || subiendoArchivo}
+              className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-white px-3 py-2 text-sm font-medium text-burgundy shadow-sm transition-colors hover:bg-white/90 disabled:pointer-events-none disabled:opacity-50"
             >
               <Check size={15} /> {pending ? "Guardando…" : "Registrar pago"}
             </button>

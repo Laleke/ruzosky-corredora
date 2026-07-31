@@ -8,14 +8,16 @@ export type DashboardStats = {
   propiedadesArrendadas: number;
   deudaPendiente: number;
   cargosMorosos: number;
+  pagosGeneradosMes: number;
 };
 
 /** Métricas para el dashboard. Conteos y sumas acotados al tenant por RLS. */
 export async function getDashboardStats(): Promise<DashboardStats> {
   const supabase = await createClient();
   const hoy = new Date().toISOString().slice(0, 10);
+  const inicioMes = `${hoy.slice(0, 7)}-01`;
 
-  const [propiedadesTotal, propiedadesArrendadas, cargos] = await Promise.all([
+  const [propiedadesTotal, propiedadesArrendadas, cargos, pagosMes] = await Promise.all([
     supabase
       .from("propiedades")
       .select("*", { count: "exact", head: true })
@@ -28,6 +30,11 @@ export async function getDashboardStats(): Promise<DashboardStats> {
       .from("cargos")
       .select("saldo_pendiente, fecha_vencimiento")
       .gt("saldo_pendiente", 0),
+    supabase
+      .from("pagos")
+      .select("*", { count: "exact", head: true })
+      .gte("fecha_pago", inicioMes)
+      .lte("fecha_pago", hoy),
   ]);
 
   const filas = cargos.data ?? [];
@@ -44,6 +51,7 @@ export async function getDashboardStats(): Promise<DashboardStats> {
     propiedadesArrendadas: propiedadesArrendadas.count ?? 0,
     deudaPendiente,
     cargosMorosos,
+    pagosGeneradosMes: pagosMes.count ?? 0,
   };
 }
 

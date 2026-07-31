@@ -344,6 +344,7 @@ export function DetallePropietario({
                 entidad="propietario"
                 entidadId={id}
                 emailDefault={propietario.email}
+                telefonoDefault={propietario.telefono}
                 estadoInvitacion={propietario.estado_invitacion}
               />
             </div>

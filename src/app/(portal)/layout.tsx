@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { headers } from "next/headers";
 import { getCurrentProfile } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { PortalSidebar } from "@/features/portal/portal-sidebar";
@@ -10,6 +11,8 @@ const TABLA: Record<EntidadPortal, "propietarios" | "arrendatarios"> = {
   arrendatario: "arrendatarios",
 };
 
+const RUTA_COMPLETAR_PERFIL = "/portal/completar-perfil";
+
 export default async function PortalLayout({
   children,
 }: {
@@ -20,13 +23,30 @@ export default async function PortalLayout({
   if (profile.rol === "admin") redirect("/dashboard");
 
   const rol = profile.rol as EntidadPortal;
+  const pathname = (await headers()).get("x-pathname") ?? "";
 
   const supabase = await createClient();
-  await supabase
+  const { data: fila } = await supabase
     .from(TABLA[rol])
-    .update({ estado_invitacion: "activo" })
+    .select("id, estado_invitacion")
     .eq("profile_id", profile.id)
-    .eq("estado_invitacion", "invitado");
+    .maybeSingle();
+
+  // Invitado por WhatsApp sin ficha previa (ver `invitarNuevo`): todavía no
+  // existe fila de negocio vinculada — debe completarla antes de usar el
+  // resto del portal (todo lo demás quedaría vacío igual, por RLS).
+  if (!fila) {
+    if (pathname === RUTA_COMPLETAR_PERFIL) return <>{children}</>;
+    redirect(RUTA_COMPLETAR_PERFIL);
+  } else if (pathname === RUTA_COMPLETAR_PERFIL) {
+    // Ya completó su ficha — no tiene nada que hacer en ese wizard.
+    redirect("/portal");
+  } else if (fila.estado_invitacion === "invitado") {
+    await supabase
+      .from(TABLA[rol])
+      .update({ estado_invitacion: "activo" })
+      .eq("id", fila.id);
+  }
 
   return (
     <div className="min-h-screen">

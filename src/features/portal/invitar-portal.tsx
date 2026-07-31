@@ -1,9 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { Check, Copy, Send } from "lucide-react";
+import { MessageCircle, Send } from "lucide-react";
 import { badge, ui } from "@/components/ui";
 import { esEmailValido } from "@/lib/contacto";
+import { linkWhatsApp, mensajeInvitacionPortal } from "@/lib/whatsapp";
 import { invitarAlPortal } from "./actions";
 import type { EntidadPortal, EstadoInvitacion } from "./types";
 
@@ -17,18 +18,19 @@ export function InvitarPortal({
   entidad,
   entidadId,
   emailDefault,
+  telefonoDefault,
   estadoInvitacion,
 }: {
   entidad: EntidadPortal;
   entidadId: string;
   emailDefault: string | null;
+  telefonoDefault: string | null;
   estadoInvitacion: EstadoInvitacion;
 }) {
   const [email, setEmail] = useState(emailDefault ?? "");
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [link, setLink] = useState<string | null>(null);
-  const [copiado, setCopiado] = useState(false);
 
   async function onInvitar() {
     setError(null);
@@ -47,14 +49,8 @@ export function InvitarPortal({
     setLink(res.link);
   }
 
-  async function onCopiar() {
-    if (!link) return;
-    await navigator.clipboard.writeText(link);
-    setCopiado(true);
-    setTimeout(() => setCopiado(false), 2000);
-  }
-
   const est = ESTADO_LABEL[estadoInvitacion];
+  const puedeWhatsapp = Boolean(link && telefonoDefault);
 
   return (
     <div className="flex flex-col gap-3">
@@ -86,26 +82,22 @@ export function InvitarPortal({
           </button>
           {error && <p className="text-xs text-amber-200">{error}</p>}
           {link && (
-            <div className="flex flex-col gap-1.5 rounded-lg bg-white/10 p-3">
-              <p className="text-xs text-white/70">
-                Copia este link y compártelo con la persona (WhatsApp, etc.):
-              </p>
-              <div className="flex items-center gap-2">
-                <input
-                  readOnly
-                  value={link}
-                  className="min-w-0 flex-1 rounded-lg border border-white/20 bg-transparent px-2 py-1.5 text-xs text-white"
-                  onFocus={(e) => e.currentTarget.select()}
-                />
-                <button
-                  type="button"
-                  onClick={onCopiar}
-                  className="inline-flex shrink-0 items-center gap-1 rounded-lg bg-white/15 px-2.5 py-1.5 text-xs font-medium text-white hover:bg-white/25"
+            <div className="flex flex-col gap-2 rounded-lg bg-white/10 p-3">
+              {puedeWhatsapp ? (
+                <a
+                  href={linkWhatsApp(telefonoDefault!, mensajeInvitacionPortal(link))}
+                  target="_blank"
+                  rel="noopener"
+                  className="inline-flex items-center justify-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-emerald-700"
                 >
-                  {copiado ? <Check size={14} /> : <Copy size={14} />}
-                  {copiado ? "Copiado" : "Copiar"}
-                </button>
-              </div>
+                  <MessageCircle size={16} /> Enviar por WhatsApp
+                </a>
+              ) : (
+                <p className="text-xs text-amber-200">
+                  Falta un teléfono registrado para enviar por WhatsApp — agrégalo y vuelve a
+                  invitar.
+                </p>
+              )}
             </div>
           )}
         </div>

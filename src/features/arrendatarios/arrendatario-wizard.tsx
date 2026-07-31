@@ -83,9 +83,19 @@ const PASOS: Paso[] = [
   { key: "numero", pregunta: "¿Número de la calle?", tipo: "texto" },
 ];
 
-const DRAFT_KEY = "rzk:draft:arrendatario-wizard";
+const DRAFT_KEY_DEFAULT = "rzk:draft:arrendatario-wizard";
 
-export function ArrendatarioWizard({ action }: { action: Action }) {
+export function ArrendatarioWizard({
+  action,
+  cancelarHref = "/arrendatarios",
+  draftKey = DRAFT_KEY_DEFAULT,
+}: {
+  action: Action;
+  /** A dónde navega "Sí, cancelar" — por defecto el listado admin de arrendatarios. */
+  cancelarHref?: string;
+  /** Namespace del borrador en localStorage — cambiar si se reusa el wizard en otro flujo. */
+  draftKey?: string;
+}) {
   const router = useRouter();
   const [state, formAction, pending] = useActionState(action, { error: null });
   const [paso, setPaso] = useState(0);
@@ -99,7 +109,7 @@ export function ArrendatarioWizard({ action }: { action: Action }) {
 
   useEffect(() => {
     try {
-      const raw = localStorage.getItem(DRAFT_KEY);
+      const raw = localStorage.getItem(draftKey);
       if (!raw) return;
       const guardado = JSON.parse(raw);
       if (guardado?.valores) setValores({ ...VALORES_INICIALES, ...guardado.valores });
@@ -112,7 +122,7 @@ export function ArrendatarioWizard({ action }: { action: Action }) {
 
   useEffect(() => {
     try {
-      localStorage.setItem(DRAFT_KEY, JSON.stringify({ paso, valores }));
+      localStorage.setItem(draftKey, JSON.stringify({ paso, valores }));
     } catch {
       /* almacenamiento lleno o no disponible: ignorar */
     }
@@ -120,7 +130,7 @@ export function ArrendatarioWizard({ action }: { action: Action }) {
 
   function limpiarBorrador() {
     try {
-      localStorage.removeItem(DRAFT_KEY);
+      localStorage.removeItem(draftKey);
     } catch {
       /* ignorar */
     }
@@ -263,7 +273,7 @@ export function ArrendatarioWizard({ action }: { action: Action }) {
                 type="button"
                 onClick={() => {
                   limpiarBorrador();
-                  router.push("/arrendatarios");
+                  router.push(cancelarHref);
                 }}
                 className="inline-flex items-center gap-1.5 rounded-lg bg-white px-4 py-2 text-sm font-medium text-burgundy shadow-sm transition-colors hover:bg-white/90"
               >

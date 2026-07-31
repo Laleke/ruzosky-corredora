@@ -770,6 +770,7 @@ export type Database = {
         Row: {
           cargo_id: string
           created_at: string
+          documento_id: string | null
           empresa_id: string
           fecha_pago: string
           id: string
@@ -781,6 +782,7 @@ export type Database = {
         Insert: {
           cargo_id: string
           created_at?: string
+          documento_id?: string | null
           empresa_id: string
           fecha_pago: string
           id?: string
@@ -792,6 +794,7 @@ export type Database = {
         Update: {
           cargo_id?: string
           created_at?: string
+          documento_id?: string | null
           empresa_id?: string
           fecha_pago?: string
           id?: string
@@ -806,6 +809,13 @@ export type Database = {
             columns: ["cargo_id"]
             isOneToOne: false
             referencedRelation: "cargos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pagos_documento_id_fkey"
+            columns: ["documento_id"]
+            isOneToOne: false
+            referencedRelation: "documentos"
             referencedColumns: ["id"]
           },
           {

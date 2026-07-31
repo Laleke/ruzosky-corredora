@@ -50,5 +50,9 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
+  // Next.js no expone el pathname actual a los Server Components (RSC) —
+  // se reenvía por header para que layouts como (portal)/layout.tsx puedan
+  // leerlo vía `headers()` sin duplicar lógica de ruteo en cada página.
+  response.headers.set("x-pathname", pathname);
   return response;
 }

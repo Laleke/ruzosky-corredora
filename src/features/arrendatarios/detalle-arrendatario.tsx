@@ -270,6 +270,7 @@ export function DetalleArrendatario({
                 entidad="arrendatario"
                 entidadId={id}
                 emailDefault={arrendatario.email}
+                telefonoDefault={arrendatario.telefono}
                 estadoInvitacion={arrendatario.estado_invitacion}
               />
             </div>
