@@ -29,20 +29,39 @@ export async function misPropiedades(): Promise<Propiedad[]> {
   return data ?? [];
 }
 
+type ArrendatarioResumen = {
+  nombre: string | null;
+  apellido: string | null;
+  razon_social: string | null;
+  tipo_persona: string;
+};
+
+function nombreArrendatario(a: ArrendatarioResumen | null): string {
+  if (!a) return "—";
+  return a.tipo_persona === "persona_juridica"
+    ? a.razon_social ?? "—"
+    : [a.nombre, a.apellido].filter(Boolean).join(" ") || "—";
+}
+
 export async function misContratos(): Promise<ContratoConPropiedad[]> {
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("contratos")
-    .select("*, propiedades(codigo_interno, direccion, numero, departamento)")
+    .select(
+      "*, propiedades(codigo_interno, direccion, numero, departamento), contratos_arrendatarios(arrendatarios(nombre, apellido, razon_social, tipo_persona))"
+    )
     .order("created_at", { ascending: false });
   if (error) throw new Error(error.message);
 
-  type Row = Contrato & { propiedades: PropiedadResumen };
+  type Row = Contrato & {
+    propiedades: PropiedadResumen;
+    contratos_arrendatarios: { arrendatarios: ArrendatarioResumen | null }[];
+  };
   return ((data ?? []) as unknown as Row[]).map((c) => ({
     ...c,
     propiedad_direccion: c.propiedades?.direccion ?? "—",
     propiedad_label: etiquetaPropiedad(c.propiedades),
-    arrendatarios_nombres: [],
+    arrendatarios_nombres: c.contratos_arrendatarios.map((v) => nombreArrendatario(v.arrendatarios)),
   }));
 }
 
@@ -67,6 +86,11 @@ export async function misCargos(): Promise<CargoConContexto[]> {
     numero_contrato: c.contratos?.numero_contrato ?? null,
     propiedad_direccion: c.contratos?.propiedades?.direccion ?? "—",
   }));
+}
+
+export async function miCargo(id: string): Promise<CargoConContexto | null> {
+  const cargos = await misCargos();
+  return cargos.find((c) => c.id === id) ?? null;
 }
 
 export async function misPagosDeCargo(cargoId: string): Promise<Pago[]> {

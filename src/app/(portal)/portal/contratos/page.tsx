@@ -52,6 +52,7 @@ export default async function PortalContratosPage() {
                       <Info size={14} /> Ver más información
                     </summary>
                     <div className="mt-2 flex flex-col gap-1 text-sm text-white/80">
+                      <span>Arrendatario: {c.arrendatarios_nombres.join(", ") || "—"}</span>
                       <span>Inicio: {formatearFecha(c.fecha_inicio)}</span>
                       <span>Término: {formatearFecha(c.fecha_termino)}</span>
                       <span>Canon: {formatoCanon(c.canon_actual ?? c.canon_monto, c.canon_moneda)}</span>

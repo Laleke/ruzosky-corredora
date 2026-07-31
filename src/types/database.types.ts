@@ -1111,6 +1111,101 @@ export type Database = {
           },
         ]
       }
+      solicitudes_pago: {
+        Row: {
+          arrendatario_id: string
+          cargo_id: string
+          comprobante_mime_type: string | null
+          comprobante_nombre_archivo: string | null
+          comprobante_storage_path: string | null
+          comprobante_tamano_bytes: number | null
+          created_at: string
+          empresa_id: string
+          estado: Database["public"]["Enums"]["estado_solicitud_pago"]
+          fecha_pago: string
+          id: string
+          medio_pago: Database["public"]["Enums"]["medio_pago"] | null
+          monto: number
+          motivo_rechazo: string | null
+          observaciones: string | null
+          pago_id: string | null
+          referencia: string | null
+          revisado_en: string | null
+          revisado_por: string | null
+        }
+        Insert: {
+          arrendatario_id: string
+          cargo_id: string
+          comprobante_mime_type?: string | null
+          comprobante_nombre_archivo?: string | null
+          comprobante_storage_path?: string | null
+          comprobante_tamano_bytes?: number | null
+          created_at?: string
+          empresa_id: string
+          estado?: Database["public"]["Enums"]["estado_solicitud_pago"]
+          fecha_pago: string
+          id?: string
+          medio_pago?: Database["public"]["Enums"]["medio_pago"] | null
+          monto: number
+          motivo_rechazo?: string | null
+          observaciones?: string | null
+          pago_id?: string | null
+          referencia?: string | null
+          revisado_en?: string | null
+          revisado_por?: string | null
+        }
+        Update: {
+          arrendatario_id?: string
+          cargo_id?: string
+          comprobante_mime_type?: string | null
+          comprobante_nombre_archivo?: string | null
+          comprobante_storage_path?: string | null
+          comprobante_tamano_bytes?: number | null
+          created_at?: string
+          empresa_id?: string
+          estado?: Database["public"]["Enums"]["estado_solicitud_pago"]
+          fecha_pago?: string
+          id?: string
+          medio_pago?: Database["public"]["Enums"]["medio_pago"] | null
+          monto?: number
+          motivo_rechazo?: string | null
+          observaciones?: string | null
+          pago_id?: string | null
+          referencia?: string | null
+          revisado_en?: string | null
+          revisado_por?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "solicitudes_pago_arrendatario_id_fkey"
+            columns: ["arrendatario_id"]
+            isOneToOne: false
+            referencedRelation: "arrendatarios"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "solicitudes_pago_cargo_id_fkey"
+            columns: ["cargo_id"]
+            isOneToOne: false
+            referencedRelation: "cargos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "solicitudes_pago_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "solicitudes_pago_pago_id_fkey"
+            columns: ["pago_id"]
+            isOneToOne: false
+            referencedRelation: "pagos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -1163,6 +1258,7 @@ export type Database = {
         | "arrendada"
         | "mantencion"
         | "inactiva"
+      estado_solicitud_pago: "pendiente" | "aprobada" | "rechazada"
       medio_pago: "transferencia" | "efectivo" | "cheque" | "tarjeta" | "otro"
       moneda: "CLP" | "UF"
       reajuste_tipo: "sin_reajuste" | "IPC" | "UF"
@@ -1362,6 +1458,7 @@ export const Constants = {
         "mantencion",
         "inactiva",
       ],
+      estado_solicitud_pago: ["pendiente", "aprobada", "rechazada"],
       medio_pago: ["transferencia", "efectivo", "cheque", "tarjeta", "otro"],
       moneda: ["CLP", "UF"],
       reajuste_tipo: ["sin_reajuste", "IPC", "UF"],
@@ -1420,3 +1517,4 @@ export type CategoriaGasto = Database["public"]["Enums"]["categoria_gasto"];
 export type EstadoGasto = Database["public"]["Enums"]["estado_gasto"];
 export type ResponsableGasto = Database["public"]["Enums"]["responsable_gasto"];
 export type EstadoInvitacion = Database["public"]["Enums"]["estado_invitacion"];
+export type EstadoSolicitudPago = Database["public"]["Enums"]["estado_solicitud_pago"];

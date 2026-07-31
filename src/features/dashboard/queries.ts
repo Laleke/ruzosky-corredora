@@ -8,7 +8,7 @@ export type DashboardStats = {
   propiedadesArrendadas: number;
   deudaPendiente: number;
   cargosMorosos: number;
-  pagosGeneradosMes: number;
+  pagosGeneradosMesMonto: number;
 };
 
 /** Métricas para el dashboard. Conteos y sumas acotados al tenant por RLS. */
@@ -32,7 +32,7 @@ export async function getDashboardStats(): Promise<DashboardStats> {
       .gt("saldo_pendiente", 0),
     supabase
       .from("pagos")
-      .select("*", { count: "exact", head: true })
+      .select("monto_pagado")
       .gte("fecha_pago", inicioMes)
       .lte("fecha_pago", hoy),
   ]);
@@ -45,13 +45,17 @@ export async function getDashboardStats(): Promise<DashboardStats> {
   const cargosMorosos = filas.filter(
     (c) => c.fecha_vencimiento && c.fecha_vencimiento < hoy
   ).length;
+  const pagosGeneradosMesMonto = (pagosMes.data ?? []).reduce(
+    (acc, p) => acc + Number(p.monto_pagado),
+    0
+  );
 
   return {
     propiedadesTotal: propiedadesTotal.count ?? 0,
     propiedadesArrendadas: propiedadesArrendadas.count ?? 0,
     deudaPendiente,
     cargosMorosos,
-    pagosGeneradosMes: pagosMes.count ?? 0,
+    pagosGeneradosMesMonto,
   };
 }
 

@@ -3,9 +3,9 @@ import type { Database } from "@/types/database.types";
 
 /**
  * Cliente con service_role — bypassa RLS. Solo debe importarse desde server
- * actions ya gateadas por getCurrentProfile()/rol==='admin'
- * (ver src/features/portal/actions.ts). Nunca desde código de cliente ni
- * desde un route handler sin ese gate previo.
+ * actions ya gateadas por getCurrentProfile() con el rol correspondiente
+ * (ver src/features/portal/actions.ts y src/features/solicitudes-pago/actions.ts).
+ * Nunca desde código de cliente ni desde un route handler sin ese gate previo.
  */
 export function createAdminClient() {
   return createSupabaseClient<Database>(

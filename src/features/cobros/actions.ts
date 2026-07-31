@@ -34,8 +34,12 @@ function texto(formData: FormData, campo: string): string | null {
   return v === "" ? null : v;
 }
 
-/** Recalcula saldo_pendiente y estado de un cargo según la suma de pagos. */
-async function recalcularCargo(supabase: DB, cargoId: string): Promise<void> {
+/**
+ * Recalcula saldo_pendiente y estado de un cargo según la suma de pagos.
+ * Exportada: la reutiliza `aprobarSolicitudPago` (src/features/solicitudes-pago/actions.ts)
+ * al crear el pago real desde una solicitud aprobada.
+ */
+export async function recalcularCargo(supabase: DB, cargoId: string): Promise<void> {
   const { data: cargo } = await supabase
     .from("cargos")
     .select("monto")

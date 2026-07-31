@@ -33,13 +33,11 @@ function Kpi({
   valor: string;
   sub?: string;
   alerta?: boolean;
-  href: string;
+  /** Sin href: tarjeta informativa, no clicable (sin flecha ni hover). */
+  href?: string;
 }) {
-  return (
-    <Link
-      href={href}
-      className="group flex items-center gap-3 rounded-xl bg-burgundy p-4 shadow-sm transition hover:bg-burgundy-strong"
-    >
+  const contenido = (
+    <>
       <span
         className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg ${
           alerta ? "bg-amber-400/20 text-amber-300" : "bg-white/10 text-white"
@@ -54,6 +52,23 @@ function Kpi({
         </div>
         {sub && <p className="truncate text-xs text-white/50">{sub}</p>}
       </div>
+    </>
+  );
+
+  if (!href) {
+    return (
+      <div className="flex items-center gap-3 rounded-xl bg-burgundy p-4 shadow-sm">
+        {contenido}
+      </div>
+    );
+  }
+
+  return (
+    <Link
+      href={href}
+      className="group flex items-center gap-3 rounded-xl bg-burgundy p-4 shadow-sm transition hover:bg-burgundy-strong"
+    >
+      {contenido}
       <ArrowUpRight
         size={16}
         className="shrink-0 text-white/40 transition-colors group-hover:text-white"
@@ -93,6 +108,7 @@ export default async function DashboardPage() {
           icon={Wallet}
           label="Deuda pendiente"
           valor={clp(stats.deudaPendiente)}
+          alerta={stats.deudaPendiente > 0}
           href="/cobros"
         />
         <Kpi
@@ -106,9 +122,8 @@ export default async function DashboardPage() {
         <Kpi
           icon={Receipt}
           label="Pagos generados"
-          valor={String(stats.pagosGeneradosMes)}
+          valor={clp(stats.pagosGeneradosMesMonto)}
           sub="este mes"
-          href="/cobros"
         />
       </div>
 

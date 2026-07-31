@@ -2,6 +2,7 @@ import Link from "next/link";
 import { AlertTriangle, Eye, Info } from "lucide-react";
 import { listCargos, listContratosSinArriendo, periodoArriendoVigente } from "@/features/cobros/queries";
 import { listContratosConReajustePendiente } from "@/features/contratos/queries";
+import { solicitudesPendientes } from "@/features/solicitudes-pago/queries";
 import { GenerarArriendos } from "@/features/cobros/generar-arriendos";
 import { FiltroCobros } from "@/features/cobros/filtro-cobros";
 import { getOpcionesRelacion } from "@/features/documentos/queries";
@@ -66,11 +67,12 @@ export default async function CobrosPage({
 
   // El arriendo se paga por adelantado: el período a generar es el próximo, no el actual.
   const periodoActual = periodoArriendoVigente();
-  const [cargos, opciones, sinArriendo, reajustesPendientes] = await Promise.all([
+  const [cargos, opciones, sinArriendo, reajustesPendientes, solicitudes] = await Promise.all([
     listCargos(filtros),
     getOpcionesRelacion(),
     listContratosSinArriendo(`${periodoActual}-01`),
     listContratosConReajustePendiente(),
+    solicitudesPendientes(),
   ]);
   const hoy = new Date().toISOString().slice(0, 10);
   const deudaTotal = cargos.reduce((acc, c) => acc + Number(c.saldo_pendiente), 0);
@@ -85,6 +87,17 @@ export default async function CobrosPage({
         descripcion="Cargos generados, saldos y morosidad."
         accion={{ href: "/cobros/nuevo", label: "Nuevo cargo" }}
       />
+
+      {solicitudes.length > 0 && (
+        <Link
+          href="/cobros/solicitudes"
+          className="mb-5 flex items-center gap-2 rounded-lg bg-amber-500/20 px-4 py-2.5 text-sm font-medium text-amber-200 transition-colors hover:bg-amber-500/30"
+        >
+          <AlertTriangle size={16} />
+          {solicitudes.length} solicitud{solicitudes.length === 1 ? "" : "es"} de pago pendiente
+          {solicitudes.length === 1 ? "" : "s"} de revisar
+        </Link>
+      )}
 
       <FiltroCobros
         valores={sp}

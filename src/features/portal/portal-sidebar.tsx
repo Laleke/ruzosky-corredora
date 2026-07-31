@@ -10,6 +10,7 @@ import {
   Wallet,
   Receipt,
   FolderOpen,
+  ClipboardCheck,
   LogOut,
   Menu,
   X,
@@ -23,6 +24,7 @@ const NAV_POR_ROL: Record<EntidadPortal, typeof NAV_BASE> = {
     { href: "/portal/propiedades", label: "Mis propiedades", icon: Building2 },
     { href: "/portal/contratos", label: "Mis contratos", icon: FileText },
     { href: "/portal/liquidaciones", label: "Mis liquidaciones", icon: Receipt },
+    { href: "/portal/solicitudes", label: "Solicitudes de pago", icon: ClipboardCheck },
     { href: "/portal/documentos", label: "Mis documentos", icon: FolderOpen },
   ],
   arrendatario: [

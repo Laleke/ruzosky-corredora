@@ -1,4 +1,7 @@
+import Link from "next/link";
+import { Send } from "lucide-react";
 import { misCargos } from "@/features/portal/queries";
+import { misSolicitudes } from "@/features/solicitudes-pago/queries";
 import { ui, badge } from "@/components/ui";
 import { formatearFecha, formatearPeriodo } from "@/lib/fecha";
 
@@ -21,12 +24,25 @@ const ESTADO: Record<string, { label: string; tone: Parameters<typeof badge>[0] 
   vencido: { label: "Vencido", tone: "danger" },
 };
 
+const ESTADO_SOLICITUD: Record<string, { label: string; tone: Parameters<typeof badge>[0] }> = {
+  pendiente: { label: "Solicitud enviada — esperando aprobación", tone: "warning" },
+  aprobada: { label: "Solicitud aprobada", tone: "success" },
+  rechazada: { label: "Solicitud rechazada", tone: "danger" },
+};
+
 function clp(n: number): string {
   return `$${Math.round(n).toLocaleString("es-CL")}`;
 }
 
 export default async function PortalCargosPage() {
-  const cargos = await misCargos();
+  const [cargos, solicitudes] = await Promise.all([misCargos(), misSolicitudes()]);
+
+  // Solicitud más reciente por cargo (una activa/pendiente a la vez en la práctica).
+  const solicitudPorCargo = new Map<string, (typeof solicitudes)[number]>();
+  for (const s of solicitudes) {
+    const actual = solicitudPorCargo.get(s.cargo_id);
+    if (!actual || s.created_at > actual.created_at) solicitudPorCargo.set(s.cargo_id, s);
+  }
 
   return (
     <div>
@@ -48,6 +64,10 @@ export default async function PortalCargosPage() {
           {cargos.map((c) => {
             const est = ESTADO[c.estado] ?? { label: c.estado, tone: "neutral" as const };
             const saldo = Number(c.saldo_pendiente);
+            const solicitud = solicitudPorCargo.get(c.id);
+            const solicitudActiva = solicitud?.estado === "pendiente";
+            const solicitudEstado = solicitud ? ESTADO_SOLICITUD[solicitud.estado] : null;
+
             return (
               <div key={c.id} className={ui.listCard}>
                 <div className="flex items-start justify-between gap-2">
@@ -66,6 +86,22 @@ export default async function PortalCargosPage() {
                   <span>Saldo pendiente: {clp(saldo)}</span>
                   <span>Vence: {formatearFecha(c.fecha_vencimiento)}</span>
                 </div>
+
+                {solicitudEstado && (
+                  <span className={`w-fit ${badge(solicitudEstado.tone)}`}>{solicitudEstado.label}</span>
+                )}
+                {solicitud?.estado === "rechazada" && solicitud.motivo_rechazo && (
+                  <p className="text-xs text-white/60">Motivo: {solicitud.motivo_rechazo}</p>
+                )}
+
+                {saldo > 0 && !solicitudActiva && (
+                  <Link
+                    href={`/portal/cargos/${c.id}/solicitar-pago`}
+                    className="mt-1 flex items-center justify-center gap-2 rounded-lg bg-white px-3 py-2 text-sm font-medium text-burgundy shadow-sm transition-colors hover:bg-white/90"
+                  >
+                    <Send size={15} /> Solicitar pago
+                  </Link>
+                )}
               </div>
             );
           })}
