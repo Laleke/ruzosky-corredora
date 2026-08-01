@@ -1,6 +1,12 @@
 import Link from "next/link";
 import { AlertTriangle, Eye, Info } from "lucide-react";
-import { listCargos, listContratosSinArriendo, periodoArriendoVigente } from "@/features/cobros/queries";
+import {
+  listCargos,
+  listContratosSinArriendo,
+  periodoArriendoVigente,
+  debeAvisarGeneracionAsistida,
+  listContratosConDesfazadoPendiente,
+} from "@/features/cobros/queries";
 import { listContratosConReajustePendiente } from "@/features/contratos/queries";
 import { solicitudesPendientes } from "@/features/solicitudes-pago/queries";
 import { GenerarArriendos } from "@/features/cobros/generar-arriendos";
@@ -67,13 +73,18 @@ export default async function CobrosPage({
 
   // El arriendo se paga por adelantado: el período a generar es el próximo, no el actual.
   const periodoActual = periodoArriendoVigente();
-  const [cargos, opciones, sinArriendo, reajustesPendientes, solicitudes] = await Promise.all([
-    listCargos(filtros),
-    getOpcionesRelacion(),
-    listContratosSinArriendo(`${periodoActual}-01`),
-    listContratosConReajustePendiente(),
-    solicitudesPendientes(),
-  ]);
+  // Antes del día 21 todavía hay tiempo de sobra para generar el arriendo
+  // del mes siguiente — no se avisa ni se ofrece la generación asistida.
+  const avisarGeneracion = debeAvisarGeneracionAsistida();
+  const [cargos, opciones, sinArriendo, reajustesPendientes, solicitudes, desfazadosPendientes] =
+    await Promise.all([
+      listCargos(filtros),
+      getOpcionesRelacion(),
+      avisarGeneracion ? listContratosSinArriendo(`${periodoActual}-01`) : Promise.resolve([]),
+      listContratosConReajustePendiente(),
+      solicitudesPendientes(),
+      listContratosConDesfazadoPendiente(),
+    ]);
   const hoy = new Date().toISOString().slice(0, 10);
   const deudaTotal = cargos.reduce((acc, c) => acc + Number(c.saldo_pendiente), 0);
   const hayFiltros = Boolean(
@@ -125,6 +136,28 @@ export default async function CobrosPage({
                 <Link href={`/contratos/${c.id}`} className="font-medium text-white/80 hover:text-white">
                   Revisar
                 </Link>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {desfazadosPendientes.length > 0 && (
+        <div className="mb-5 rounded-xl bg-burgundy p-5">
+          <div className="mb-3 flex items-center gap-2 text-amber-300">
+            <AlertTriangle size={18} />
+            <h2 className="text-sm font-semibold">
+              {desfazadosPendientes.length} contrato{desfazadosPendientes.length === 1 ? "" : "s"}{" "}
+              terminado{desfazadosPendientes.length === 1 ? "" : "s"} con cargo desfazado (luz/GGCC/
+              etc.) sin generar — revisar antes de devolver la garantía
+            </h2>
+          </div>
+          <ul className="flex flex-col divide-y divide-white/15 text-sm text-white">
+            {desfazadosPendientes.map((c) => (
+              <li key={c.id} className="flex items-center justify-between gap-3 py-2">
+                <span>
+                  {c.propiedad_direccion} · terminó el {formatearFecha(c.fecha_termino)}
+                </span>
               </li>
             ))}
           </ul>
@@ -217,6 +250,12 @@ export default async function CobrosPage({
                               <span>Monto: {monto(c.monto)}</span>
                               <span>Saldo: {monto(c.saldo_pendiente)}</span>
                               {c.fecha_vencimiento && <span>Vence: {formatearFecha(c.fecha_vencimiento)}</span>}
+                              {(c.fecha_consumo_desde || c.fecha_consumo_hasta) && (
+                                <span>
+                                  Consumo: {formatearFecha(c.fecha_consumo_desde)} –{" "}
+                                  {formatearFecha(c.fecha_consumo_hasta)}
+                                </span>
+                              )}
                             </div>
                           </details>
 

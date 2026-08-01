@@ -159,6 +159,8 @@ export async function crearCargo(
     saldo_pendiente: monto,
     estado: "pendiente",
     observaciones: texto(formData, "observaciones"),
+    fecha_consumo_desde: texto(formData, "fecha_consumo_desde"),
+    fecha_consumo_hasta: texto(formData, "fecha_consumo_hasta"),
   });
 
   if (error) {

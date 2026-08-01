@@ -85,6 +85,11 @@ export default async function PortalCargosPage() {
                   <span>Monto: {clp(Number(c.monto))}</span>
                   <span>Saldo pendiente: {clp(saldo)}</span>
                   <span>Vence: {formatearFecha(c.fecha_vencimiento)}</span>
+                  {(c.fecha_consumo_desde || c.fecha_consumo_hasta) && (
+                    <span>
+                      Consumo: {formatearFecha(c.fecha_consumo_desde)} – {formatearFecha(c.fecha_consumo_hasta)}
+                    </span>
+                  )}
                 </div>
 
                 {solicitudEstado && (

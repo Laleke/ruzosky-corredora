@@ -12,6 +12,7 @@ const TABLA: Record<EntidadPortal, "propietarios" | "arrendatarios"> = {
 };
 
 const RUTA_COMPLETAR_PERFIL = "/portal/completar-perfil";
+const RUTA_SET_PASSWORD = "/portal/set-password";
 
 export default async function PortalLayout({
   children,
@@ -24,6 +25,15 @@ export default async function PortalLayout({
 
   const rol = profile.rol as EntidadPortal;
   const pathname = (await headers()).get("x-pathname") ?? "";
+
+  // Quien entró por un link de invitación pero nunca definió su propia
+  // contraseña queda con sesión válida en ESE navegador, pero sin forma de
+  // volver a entrar desde otro dispositivo — se le obliga a pasar por acá
+  // antes de ver cualquier otra pantalla del portal.
+  if (!profile.password_set) {
+    if (pathname === RUTA_SET_PASSWORD) return <>{children}</>;
+    redirect(RUTA_SET_PASSWORD);
+  }
 
   const supabase = await createClient();
   const { data: fila } = await supabase

@@ -60,11 +60,10 @@ export async function crearSolicitudPago(
   if (monto === null || monto <= 0) {
     return { error: "El monto del pago debe ser mayor a 0." };
   }
-  if (monto > Number(cargo.saldo_pendiente) + 0.01) {
-    return {
-      error: `El monto supera el saldo pendiente ($${Number(cargo.saldo_pendiente).toLocaleString("es-CL")}).`,
-    };
-  }
+  // No se bloquea si supera el saldo pendiente (puede ser un abono adelantado,
+  // un error del arrendatario a corregir, etc.) — se deja pasar, pero se marca
+  // para que el propietario/admin la revise con más cuidado al aprobar.
+  const excedeSaldo = monto > Number(cargo.saldo_pendiente) + 0.01;
 
   const fecha_pago = texto(formData, "fecha_pago") ?? new Date().toISOString().slice(0, 10);
   const medioRaw = texto(formData, "medio_pago");
@@ -99,6 +98,8 @@ export async function crearSolicitudPago(
     medio_pago,
     referencia: texto(formData, "referencia"),
     observaciones: texto(formData, "observaciones"),
+    excede_saldo: excedeSaldo,
+    saldo_pendiente_al_crear: cargo.saldo_pendiente,
     comprobante_storage_path: comprobante?.path ?? null,
     comprobante_nombre_archivo: comprobante?.nombre ?? null,
     comprobante_tamano_bytes: comprobante?.tamano ?? null,

@@ -14,6 +14,7 @@ import {
   Banknote,
   BarChart3,
   FolderOpen,
+  UserCog,
   LogOut,
   Menu,
   X,
@@ -29,6 +30,7 @@ const NAV = [
   { href: "/liquidaciones", label: "Liquidaciones", icon: Receipt },
   { href: "/gastos", label: "Gastos", icon: Banknote },
   { href: "/documentos", label: "Documentos", icon: FolderOpen },
+  { href: "/usuarios", label: "Usuarios del portal", icon: UserCog },
   { href: "/reportes", label: "Reportes", icon: BarChart3 },
 ];
 

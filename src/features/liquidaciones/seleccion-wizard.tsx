@@ -97,27 +97,29 @@ export function SeleccionLiquidacionWizard({ propietarios }: { propietarios: Opc
 
         {errorPaso && <p className="text-sm text-amber-200">{errorPaso}</p>}
 
-        <div className="flex flex-wrap items-center justify-center gap-3">
+        <div className="grid w-full grid-cols-3 items-center gap-2">
           <button
             type="button"
             onClick={() => setConfirmandoCancelar(true)}
-            className="inline-flex items-center gap-1.5 rounded-lg bg-white/10 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-white/20"
+            className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-white/10 px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-white/20"
           >
             Cancelar
           </button>
-          {paso > 0 && (
+          {paso > 0 ? (
             <button
               type="button"
               onClick={atras}
-              className="inline-flex items-center gap-1.5 rounded-lg bg-white/10 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-white/20"
+              className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-white/10 px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-white/20"
             >
               <ArrowLeft size={15} /> Atrás
             </button>
+          ) : (
+            <span />
           )}
           <button
             type="button"
             onClick={siguiente}
-            className="inline-flex items-center gap-1.5 rounded-lg bg-white px-4 py-2 text-sm font-medium text-burgundy shadow-sm transition-colors hover:bg-white/90"
+            className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-white px-3 py-2 text-sm font-medium text-burgundy shadow-sm transition-colors hover:bg-white/90"
           >
             {esUltimo ? "Ver vista previa" : "Siguiente"} <ArrowRight size={15} />
           </button>

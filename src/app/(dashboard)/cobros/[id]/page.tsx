@@ -78,6 +78,12 @@ export default async function DetalleCargoPage({
             <p className="text-lg font-semibold text-white">{formatearFecha(cargo.fecha_vencimiento)}</p>
           </div>
         </div>
+        {(cargo.fecha_consumo_desde || cargo.fecha_consumo_hasta) && (
+          <p className="mt-3 text-sm text-white/70">
+            Período de consumo: {formatearFecha(cargo.fecha_consumo_desde)} –{" "}
+            {formatearFecha(cargo.fecha_consumo_hasta)}
+          </p>
+        )}
       </section>
 
       <section className="flex flex-col gap-4">

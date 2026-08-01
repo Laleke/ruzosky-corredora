@@ -1,6 +1,11 @@
 import { createClient } from "@/lib/supabase/server";
 import { listPendientesLiquidar } from "@/features/liquidaciones/queries";
-import { listContratosSinArriendo, periodoArriendoVigente } from "@/features/cobros/queries";
+import {
+  listContratosSinArriendo,
+  periodoArriendoVigente,
+  debeAvisarGeneracionAsistida,
+  listContratosConDesfazadoPendiente,
+} from "@/features/cobros/queries";
 import { listContratosConReajustePendiente } from "@/features/contratos/queries";
 
 export type DashboardStats = {
@@ -85,9 +90,12 @@ export async function getTareasPendientes(): Promise<TareaPendiente[]> {
     comprobantesPendientes,
     contratosPorVencer,
     contratosConReajustePendiente,
+    contratosConDesfazadoPendiente,
   ] = await Promise.all([
     listPendientesLiquidar(`${periodoActual}-01`),
-    listContratosSinArriendo(`${periodoArriendo}-01`),
+    debeAvisarGeneracionAsistida()
+      ? listContratosSinArriendo(`${periodoArriendo}-01`)
+      : Promise.resolve([]),
     supabase
       .from("gastos")
       .select("*", { count: "exact", head: true })
@@ -107,6 +115,7 @@ export async function getTareasPendientes(): Promise<TareaPendiente[]> {
       .gte("fecha_termino", hoy)
       .lte("fecha_termino", en30dias),
     listContratosConReajustePendiente(),
+    listContratosConDesfazadoPendiente(),
   ]);
 
   return [
@@ -151,6 +160,13 @@ export async function getTareasPendientes(): Promise<TareaPendiente[]> {
       cantidad: contratosConReajustePendiente.length,
       href: "/contratos",
       alerta: contratosConReajustePendiente.length > 0,
+    },
+    {
+      key: "desfazados",
+      label: "Contratos terminados con cargo desfazado sin generar (luz/GGCC/etc.)",
+      cantidad: contratosConDesfazadoPendiente.length,
+      href: "/cobros",
+      alerta: contratosConDesfazadoPendiente.length > 0,
     },
   ];
 }

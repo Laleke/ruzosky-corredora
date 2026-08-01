@@ -237,6 +237,15 @@ export function SolicitudPagoWizard({ cargoId, saldoPendiente }: { cargoId: stri
           </div>
         )}
 
+        {actual.key === "monto_pagado" &&
+          Number(valores.monto_pagado || 0) > saldoPendiente && (
+            <p className="max-w-sm text-sm text-amber-200">
+              Este monto supera el saldo pendiente (${saldoPendiente.toLocaleString("es-CL")}).
+              Puedes continuar igual — quedará marcado para que el propietario lo revise con más
+              cuidado.
+            </p>
+          )}
+
         {errorPaso && <p className="text-sm text-amber-200">{errorPaso}</p>}
         {esUltimo && state.error && <p className="text-sm text-amber-200">{state.error}</p>}
 

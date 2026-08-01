@@ -2,6 +2,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/server";
 import type { Database } from "@/types/database.types";
 import type { Cargo, CargoConContexto, FiltrosCargos, Pago } from "./types";
+import { TIPOS_DESFAZADOS } from "./constants";
 
 type DB = SupabaseClient<Database>;
 
@@ -11,6 +12,16 @@ type DB = SupabaseClient<Database>;
  * al actual, no el mes calendario en curso — ese ya debió cobrarse antes
  * de que empezara. No aplica a Liquidaciones (que revisan lo ya cobrado).
  */
+/**
+ * El aviso de "arriendo sin generar" (y la Generación asistida) solo tiene
+ * sentido a partir del día 21 de cada mes — antes de eso todavía hay tiempo
+ * de sobra para generar el arriendo del mes siguiente y el aviso solo
+ * generaría ruido. Regla explícita de Eduardo (2026-07-31).
+ */
+export function debeAvisarGeneracionAsistida(hoy: Date = new Date()): boolean {
+  return hoy.getDate() >= 21;
+}
+
 export function periodoArriendoVigente(hoy: Date = new Date()): string {
   // Aritmética de meses pura (sin pasar por toISOString/UTC): construir la
   // fecha del 1° del mes siguiente y convertirla a ISO puede retroceder un
@@ -158,6 +169,64 @@ export async function listContratosSinArriendo(
         monto: Number(c.canon_actual ?? c.canon_monto),
       };
     });
+}
+
+export type ContratoConDesfazadoPendiente = {
+  id: string;
+  propiedad_direccion: string;
+  fecha_termino: string;
+};
+
+/**
+ * Contratos ya `terminado` que tuvieron alguna vez un cargo "desfazado"
+ * (gasto_comun/luz/agua/internet — ver `constants.ts`) pero no tienen
+ * ninguno generado para el mes de término en adelante. El consumo real de
+ * esos servicios sigue corriendo hasta que el arrendatario se va, así que
+ * casi siempre falta un último cargo por facturar — que hay que cobrar (o
+ * descontar de la garantía) antes de devolverla. Se deja de avisar en
+ * cuanto se genera ese último cargo (no hay botón de "marcar resuelto":
+ * decisión explícita de Eduardo, 2026-07-31).
+ */
+export async function listContratosConDesfazadoPendiente(): Promise<
+  ContratoConDesfazadoPendiente[]
+> {
+  const supabase = await createClient();
+  const { data: terminados } = await supabase
+    .from("contratos")
+    .select("id, fecha_termino, propiedades(direccion)")
+    .eq("estado", "terminado")
+    .not("fecha_termino", "is", null);
+  if (!terminados || terminados.length === 0) return [];
+
+  const ids = terminados.map((c) => c.id);
+  const { data: cargosDesfazados } = await supabase
+    .from("cargos")
+    .select("contrato_id, periodo")
+    .in("contrato_id", ids)
+    .in("tipo_cargo", TIPOS_DESFAZADOS);
+
+  const periodosPorContrato = new Map<string, string[]>();
+  for (const c of cargosDesfazados ?? []) {
+    const arr = periodosPorContrato.get(c.contrato_id) ?? [];
+    arr.push(c.periodo);
+    periodosPorContrato.set(c.contrato_id, arr);
+  }
+
+  type Row = { id: string; fecha_termino: string; propiedades: { direccion: string | null } | null };
+
+  return (terminados as unknown as Row[])
+    .filter((c) => {
+      const periodos = periodosPorContrato.get(c.id);
+      if (!periodos || periodos.length === 0) return false; // nunca tuvo cargos desfazados: no aplica
+      const mesTermino = c.fecha_termino.slice(0, 7);
+      const yaTieneUltimo = periodos.some((p) => p.slice(0, 7) >= mesTermino);
+      return !yaTieneUltimo;
+    })
+    .map((c) => ({
+      id: c.id,
+      propiedad_direccion: c.propiedades?.direccion ?? "—",
+      fecha_termino: c.fecha_termino,
+    }));
 }
 
 export async function getCargo(id: string): Promise<CargoConContexto | null> {

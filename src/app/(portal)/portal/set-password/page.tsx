@@ -1,16 +1,23 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import { marcarPasswordEstablecida } from "@/features/portal/actions";
 import { ui } from "@/components/ui";
 
 export default function SetPasswordPage() {
   const router = useRouter();
+  const [email, setEmail] = useState<string | null>(null);
   const [password, setPassword] = useState("");
   const [confirmacion, setConfirmacion] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
+
+  useEffect(() => {
+    const supabase = createClient();
+    supabase.auth.getUser().then(({ data }) => setEmail(data.user?.email ?? null));
+  }, []);
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -28,13 +35,15 @@ export default function SetPasswordPage() {
     setPending(true);
     const supabase = createClient();
     const { error: errorUpdate } = await supabase.auth.updateUser({ password });
-    setPending(false);
 
     if (errorUpdate) {
+      setPending(false);
       setError("No se pudo actualizar la contraseña. Intenta de nuevo.");
       return;
     }
 
+    await marcarPasswordEstablecida();
+    setPending(false);
     router.replace("/portal");
   }
 
@@ -43,8 +52,14 @@ export default function SetPasswordPage() {
       <div>
         <h1 className="text-xl font-semibold text-white">Crea tu contraseña</h1>
         <p className="mt-1 text-sm text-white/70">
-          Define una contraseña para acceder al portal en el futuro.
+          Define una contraseña para poder entrar al portal en el futuro, desde este u otro
+          dispositivo, sin depender del link que te enviaron.
         </p>
+        {email && (
+          <p className="mt-3 rounded-lg bg-white/10 px-3 py-2 text-sm text-white">
+            Tu usuario para entrar será: <span className="font-medium">{email}</span>
+          </p>
+        )}
       </div>
 
       <form onSubmit={onSubmit} className="flex flex-col gap-4">

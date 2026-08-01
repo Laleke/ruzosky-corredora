@@ -18,6 +18,26 @@ const TABLA: Record<EntidadPortal, "propietarios" | "arrendatarios"> = {
   arrendatario: "arrendatarios",
 };
 
+/**
+ * Marca que el usuario ya definió su propia contraseña (llamar justo después
+ * de `supabase.auth.updateUser({ password })` en `/portal/set-password`).
+ * `profiles` es admin-only por RLS — se usa el cliente admin, pero solo para
+ * marcar el PROPIO profile del usuario autenticado (nunca uno ajeno).
+ */
+export async function marcarPasswordEstablecida(): Promise<{ error: string | null }> {
+  const profile = await getCurrentProfile();
+  if (!profile) return { error: "No autorizado." };
+
+  const admin = createAdminClient();
+  const { error } = await admin
+    .from("profiles")
+    .update({ password_set: true })
+    .eq("id", profile.id);
+
+  if (error) return { error: "No se pudo guardar el estado de la cuenta." };
+  return { error: null };
+}
+
 function sitioUrl(): string {
   return process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
 }
@@ -87,9 +107,6 @@ export async function invitarAlPortal(
 
   if (errorFila || !fila) {
     return { error: "No se encontró el registro.", link: null };
-  }
-  if (fila.estado_invitacion === "activo") {
-    return { error: "Ya está activo en el portal.", link: null };
   }
 
   const admin = createAdminClient();

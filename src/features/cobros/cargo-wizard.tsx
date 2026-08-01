@@ -7,6 +7,7 @@ import { ArrowLeft, ArrowRight, Check } from "lucide-react";
 import { ui } from "@/components/ui";
 import { ComboboxOpcion } from "@/components/combobox-opcion";
 import { crearCargo, type CobroFormState } from "./actions";
+import { esTipoDesfazado } from "./constants";
 import type { ContextoPropiedad } from "@/features/documentos/queries";
 
 const TIPO_OPCIONES = [
@@ -27,12 +28,25 @@ type Paso = {
   pregunta: string;
   tipo: TipoPaso;
   requerido?: boolean;
+  omitirSi?: (v: Valores) => boolean;
 };
 
 const PASOS: Paso[] = [
   { key: "propiedad_id", pregunta: "¿A qué propiedad y contrato corresponde el cargo?", tipo: "propiedad", requerido: true },
   { key: "tipo_cargo", pregunta: "¿Qué tipo de cargo es?", tipo: "select" },
-  { key: "periodo", pregunta: "¿A qué período corresponde?", tipo: "periodo", requerido: true },
+  { key: "periodo", pregunta: "¿A qué período corresponde (cobro/vencimiento)?", tipo: "periodo", requerido: true },
+  {
+    key: "fecha_consumo_desde",
+    pregunta: "¿Desde cuándo es el período de consumo de esta boleta?",
+    tipo: "fecha",
+    omitirSi: (v) => !esTipoDesfazado(v.tipo_cargo),
+  },
+  {
+    key: "fecha_consumo_hasta",
+    pregunta: "¿Hasta cuándo es el período de consumo de esta boleta?",
+    tipo: "fecha",
+    omitirSi: (v) => !esTipoDesfazado(v.tipo_cargo),
+  },
   { key: "monto", pregunta: "¿Cuál es el monto?", tipo: "monto", requerido: true },
   { key: "fecha_vencimiento", pregunta: "¿Cuál es la fecha de vencimiento?", tipo: "fecha" },
   { key: "observaciones", pregunta: "¿Alguna observación adicional?", tipo: "textarea" },
@@ -46,6 +60,8 @@ const VALORES_INICIALES: Valores = {
   arrendatario_id: "",
   tipo_cargo: "gasto_comun",
   periodo: "",
+  fecha_consumo_desde: "",
+  fecha_consumo_hasta: "",
   monto: "",
   fecha_vencimiento: "",
   observaciones: "",
@@ -114,6 +130,12 @@ export function CargoWizard({
     return valores[actual.key].trim() !== "";
   }
 
+  function avanzarDesde(desde: number): number {
+    let next = desde + 1;
+    while (next < PASOS.length && PASOS[next].omitirSi?.(valores)) next++;
+    return Math.min(next, PASOS.length - 1);
+  }
+
   function siguiente() {
     if (!puedeAvanzar()) {
       setErrorPaso(
@@ -123,12 +145,16 @@ export function CargoWizard({
       );
       return;
     }
-    setPaso((p) => Math.min(p + 1, PASOS.length - 1));
+    setPaso(avanzarDesde(paso));
   }
 
   function atras() {
     setErrorPaso(null);
-    setPaso((p) => Math.max(p - 1, 0));
+    setPaso((p) => {
+      let prev = p - 1;
+      while (prev >= 0 && PASOS[prev].omitirSi?.(valores)) prev--;
+      return Math.max(prev, 0);
+    });
   }
 
   function renderInput(p: Paso, visible: boolean) {
@@ -151,7 +177,10 @@ export function CargoWizard({
       );
     }
 
-    if (!visible) return <input type="hidden" name={p.key} value={val} />;
+    if (!visible) {
+      if (p.omitirSi?.(valores)) return null;
+      return <input type="hidden" name={p.key} value={val} />;
+    }
 
     if (p.tipo === "select") {
       return (
@@ -289,28 +318,30 @@ export function CargoWizard({
         {errorPaso && <p className="text-sm text-amber-200">{errorPaso}</p>}
         {esUltimo && state.error && <p className="text-sm text-amber-200">{state.error}</p>}
 
-        <div className="flex flex-wrap items-center justify-center gap-3">
+        <div className="grid w-full grid-cols-3 items-center gap-2">
           <button
             type="button"
             onClick={() => setConfirmandoCancelar(true)}
-            className="inline-flex items-center gap-1.5 rounded-lg bg-white/10 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-white/20"
+            className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-white/10 px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-white/20"
           >
             Cancelar
           </button>
-          {paso > 0 && (
+          {paso > 0 ? (
             <button
               type="button"
               onClick={atras}
-              className="inline-flex items-center gap-1.5 rounded-lg bg-white/10 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-white/20"
+              className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-white/10 px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-white/20"
             >
               <ArrowLeft size={15} /> Atrás
             </button>
+          ) : (
+            <span />
           )}
           {!esUltimo ? (
             <button
               type="button"
               onClick={siguiente}
-              className="inline-flex items-center gap-1.5 rounded-lg bg-white px-4 py-2 text-sm font-medium text-burgundy shadow-sm transition-colors hover:bg-white/90"
+              className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-white px-3 py-2 text-sm font-medium text-burgundy shadow-sm transition-colors hover:bg-white/90"
             >
               Siguiente <ArrowRight size={15} />
             </button>
@@ -318,7 +349,7 @@ export function CargoWizard({
             <button
               type="submit"
               disabled={pending}
-              className="inline-flex items-center gap-1.5 rounded-lg bg-white px-4 py-2 text-sm font-medium text-burgundy shadow-sm transition-colors hover:bg-white/90 disabled:pointer-events-none disabled:opacity-50"
+              className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-white px-3 py-2 text-sm font-medium text-burgundy shadow-sm transition-colors hover:bg-white/90 disabled:pointer-events-none disabled:opacity-50"
             >
               <Check size={15} /> {pending ? "Guardando…" : "Crear cargo"}
             </button>

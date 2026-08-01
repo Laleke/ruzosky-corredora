@@ -29,7 +29,7 @@ export function GenerarArriendos({ periodoDefault }: { periodoDefault?: string }
         disabled={pending}
         className="inline-flex items-center justify-center gap-2 rounded-lg bg-white px-4 py-2 text-sm font-medium text-burgundy shadow-sm transition-colors hover:bg-white/90 disabled:pointer-events-none disabled:opacity-50"
       >
-        {pending ? "Generando…" : "Generar arriendos del mes"}
+        {pending ? "Generando…" : "Generar arriendos"}
       </button>
       {state.error && (
         <p className="w-full text-sm text-amber-200" role="alert">

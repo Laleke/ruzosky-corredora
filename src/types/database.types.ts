@@ -148,6 +148,8 @@ export type Database = {
           created_at: string
           empresa_id: string
           estado: Database["public"]["Enums"]["estado_cargo"]
+          fecha_consumo_desde: string | null
+          fecha_consumo_hasta: string | null
           fecha_emision: string
           fecha_vencimiento: string | null
           id: string
@@ -163,6 +165,8 @@ export type Database = {
           created_at?: string
           empresa_id: string
           estado?: Database["public"]["Enums"]["estado_cargo"]
+          fecha_consumo_desde?: string | null
+          fecha_consumo_hasta?: string | null
           fecha_emision: string
           fecha_vencimiento?: string | null
           id?: string
@@ -178,6 +182,8 @@ export type Database = {
           created_at?: string
           empresa_id?: string
           estado?: Database["public"]["Enums"]["estado_cargo"]
+          fecha_consumo_desde?: string | null
+          fecha_consumo_hasta?: string | null
           fecha_emision?: string
           fecha_vencimiento?: string | null
           id?: string
@@ -834,6 +840,7 @@ export type Database = {
           empresa_id: string
           id: string
           nombre: string | null
+          password_set: boolean
           rol: Database["public"]["Enums"]["rol_usuario"]
         }
         Insert: {
@@ -842,6 +849,7 @@ export type Database = {
           empresa_id: string
           id: string
           nombre?: string | null
+          password_set?: boolean
           rol?: Database["public"]["Enums"]["rol_usuario"]
         }
         Update: {
@@ -850,6 +858,7 @@ export type Database = {
           empresa_id?: string
           id?: string
           nombre?: string | null
+          password_set?: boolean
           rol?: Database["public"]["Enums"]["rol_usuario"]
         }
         Relationships: [
@@ -1122,6 +1131,7 @@ export type Database = {
           created_at: string
           empresa_id: string
           estado: Database["public"]["Enums"]["estado_solicitud_pago"]
+          excede_saldo: boolean
           fecha_pago: string
           id: string
           medio_pago: Database["public"]["Enums"]["medio_pago"] | null
@@ -1132,6 +1142,7 @@ export type Database = {
           referencia: string | null
           revisado_en: string | null
           revisado_por: string | null
+          saldo_pendiente_al_crear: number | null
         }
         Insert: {
           arrendatario_id: string
@@ -1143,6 +1154,7 @@ export type Database = {
           created_at?: string
           empresa_id: string
           estado?: Database["public"]["Enums"]["estado_solicitud_pago"]
+          excede_saldo?: boolean
           fecha_pago: string
           id?: string
           medio_pago?: Database["public"]["Enums"]["medio_pago"] | null
@@ -1153,6 +1165,7 @@ export type Database = {
           referencia?: string | null
           revisado_en?: string | null
           revisado_por?: string | null
+          saldo_pendiente_al_crear?: number | null
         }
         Update: {
           arrendatario_id?: string
@@ -1164,6 +1177,7 @@ export type Database = {
           created_at?: string
           empresa_id?: string
           estado?: Database["public"]["Enums"]["estado_solicitud_pago"]
+          excede_saldo?: boolean
           fecha_pago?: string
           id?: string
           medio_pago?: Database["public"]["Enums"]["medio_pago"] | null
@@ -1174,6 +1188,7 @@ export type Database = {
           referencia?: string | null
           revisado_en?: string | null
           revisado_por?: string | null
+          saldo_pendiente_al_crear?: number | null
         }
         Relationships: [
           {
@@ -1215,6 +1230,10 @@ export type Database = {
       auth_rol: {
         Args: never
         Returns: Database["public"]["Enums"]["rol_usuario"]
+      }
+      propiedad_de_contrato: {
+        Args: { p_contrato_id: string }
+        Returns: string
       }
     }
     Enums: {

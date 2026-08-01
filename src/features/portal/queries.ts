@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { etiquetaPropiedad } from "@/lib/propiedad";
+import type { Database } from "@/types/database.types";
 import type { Cargo, CargoConContexto, Pago } from "@/features/cobros/types";
 import type { Contrato, ContratoConPropiedad } from "@/features/contratos/types";
 import type { Propiedad } from "@/features/propiedades/types";
@@ -132,6 +133,66 @@ export async function miLiquidacion(
     .order("created_at");
 
   return { liquidacion, detalles: detalles ?? [] };
+}
+
+export type UsuarioPortal = {
+  entidad: "propietario" | "arrendatario";
+  entidadId: string;
+  nombre: string;
+  email: string | null;
+  telefono: string | null;
+  estadoInvitacion: Database["public"]["Enums"]["estado_invitacion"];
+};
+
+type PersonaConEstado = {
+  id: string;
+  tipo_persona: string;
+  nombre: string | null;
+  apellido: string | null;
+  razon_social: string | null;
+  email: string | null;
+  telefono: string | null;
+  estado_invitacion: Database["public"]["Enums"]["estado_invitacion"];
+};
+
+function nombrePersonaCompleto(p: PersonaConEstado): string {
+  return p.tipo_persona === "persona_juridica"
+    ? p.razon_social ?? "—"
+    : [p.nombre, p.apellido].filter(Boolean).join(" ") || "—";
+}
+
+/**
+ * Admin-only (uso en /usuarios): todos los propietarios/arrendatarios que ya
+ * tienen algún estado de invitación al portal (invitado o activo) — para
+ * poder reenviar la invitación o restablecer su contraseña desde un solo
+ * lugar, sin tener que ir ficha por ficha.
+ */
+export async function usuariosPortal(): Promise<UsuarioPortal[]> {
+  const supabase = await createClient();
+  const [propietarios, arrendatarios] = await Promise.all([
+    supabase
+      .from("propietarios")
+      .select("id, tipo_persona, nombre, apellido, razon_social, email, telefono, estado_invitacion")
+      .neq("estado_invitacion", "sin_invitar"),
+    supabase
+      .from("arrendatarios")
+      .select("id, tipo_persona, nombre, apellido, razon_social, email, telefono, estado_invitacion")
+      .neq("estado_invitacion", "sin_invitar"),
+  ]);
+
+  const mapear = (entidad: "propietario" | "arrendatario") => (p: PersonaConEstado): UsuarioPortal => ({
+    entidad,
+    entidadId: p.id,
+    nombre: nombrePersonaCompleto(p),
+    email: p.email,
+    telefono: p.telefono,
+    estadoInvitacion: p.estado_invitacion,
+  });
+
+  return [
+    ...(propietarios.data ?? []).map(mapear("propietario")),
+    ...(arrendatarios.data ?? []).map(mapear("arrendatario")),
+  ];
 }
 
 export async function misDocumentos(): Promise<DocumentoListado[]> {

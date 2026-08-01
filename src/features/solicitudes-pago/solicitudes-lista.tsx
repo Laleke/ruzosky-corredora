@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Check, X, Paperclip } from "lucide-react";
+import { Check, X, Paperclip, AlertTriangle } from "lucide-react";
 import { ui, badge } from "@/components/ui";
 import { formatearFecha, formatearPeriodo } from "@/lib/fecha";
 import { aprobarSolicitudPago, rechazarSolicitudPago } from "./actions";
@@ -43,6 +43,17 @@ function Fila({ s }: { s: SolicitudConContexto }) {
 
   return (
     <div className={ui.listCard}>
+      {s.excede_saldo && (
+        <div className="flex items-center gap-2 rounded-lg bg-red-600/20 px-3 py-2 text-xs font-medium text-red-200">
+          <AlertTriangle size={14} />
+          Supera el saldo pendiente que tenía el cargo al momento de informarlo
+          {s.saldo_pendiente_al_crear !== null
+            ? ` (${clp(Number(s.saldo_pendiente_al_crear))})`
+            : ""}
+          — revisar con cuidado antes de aprobar.
+        </div>
+      )}
+
       <div className="flex items-start justify-between gap-2">
         <div>
           <p className="text-xs text-white/60">
@@ -51,7 +62,7 @@ function Fila({ s }: { s: SolicitudConContexto }) {
           <p className="font-medium text-white">{s.arrendatario_nombre}</p>
           <p className="text-xs text-white/60">{s.propiedad_direccion}</p>
         </div>
-        <span className={badge("warning")}>{clp(Number(s.monto))}</span>
+        <span className={badge(s.excede_saldo ? "danger" : "warning")}>{clp(Number(s.monto))}</span>
       </div>
 
       <div className="flex flex-col gap-1 text-sm text-white/80">

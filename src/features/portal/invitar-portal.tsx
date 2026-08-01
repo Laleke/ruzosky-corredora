@@ -32,15 +32,18 @@ export function InvitarPortal({
   const [error, setError] = useState<string | null>(null);
 
   const est = ESTADO_LABEL[estadoInvitacion];
+  const activo = estadoInvitacion === "activo";
 
   /**
-   * Genera la invitación y abre WhatsApp en un solo paso. La ventana se abre
-   * síncrono al click (antes del await) para no chocar con el bloqueador de
-   * popups del navegador — se le asigna la URL real una vez que la tenemos.
+   * Genera la invitación (o, si ya está activo, un link de restablecer
+   * contraseña) y abre WhatsApp en un solo paso. La ventana se abre síncrono
+   * al click (antes del await) para no chocar con el bloqueador de popups —
+   * se le asigna la URL real una vez que la tenemos.
    */
   async function onEnviar() {
     setError(null);
-    if (!esEmailValido(email) || !email.trim()) {
+    const correo = activo ? emailDefault ?? "" : email;
+    if (!esEmailValido(correo) || !correo.trim()) {
       setError("Ingresa un email válido.");
       return;
     }
@@ -51,7 +54,7 @@ export function InvitarPortal({
 
     const ventana = window.open("", "_blank");
     setPending(true);
-    const res = await invitarAlPortal(entidad, entidadId, email);
+    const res = await invitarAlPortal(entidad, entidadId, correo);
     setPending(false);
 
     if (res.error || !res.link) {
@@ -71,26 +74,26 @@ export function InvitarPortal({
         <span className={badge(est.tone)}>{est.label}</span>
       </div>
 
-      {estadoInvitacion !== "activo" && (
-        <div className="flex flex-col gap-2">
-          <input
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            placeholder="correo@ejemplo.cl"
-            className={ui.input}
-          />
-          <button
-            type="button"
-            onClick={onEnviar}
-            disabled={pending}
-            className="inline-flex items-center justify-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-emerald-700 disabled:pointer-events-none disabled:opacity-50"
-          >
-            <WhatsAppIcon size={16} /> {pending ? "Generando…" : "Enviar por WhatsApp"}
-          </button>
-          {error && <p className="text-xs text-amber-200">{error}</p>}
-        </div>
+      {!activo && (
+        <input
+          type="email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          placeholder="correo@ejemplo.cl"
+          className={ui.input}
+        />
       )}
+
+      <button
+        type="button"
+        onClick={onEnviar}
+        disabled={pending}
+        className="inline-flex items-center justify-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-emerald-700 disabled:pointer-events-none disabled:opacity-50"
+      >
+        <WhatsAppIcon size={16} />
+        {pending ? "Generando…" : activo ? "Restablecer contraseña" : "Enviar por WhatsApp"}
+      </button>
+      {error && <p className="text-xs text-amber-200">{error}</p>}
     </div>
   );
 }
