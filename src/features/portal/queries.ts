@@ -96,6 +96,68 @@ export async function miCargo(id: string): Promise<CargoConContexto | null> {
   return cargos.find((c) => c.id === id) ?? null;
 }
 
+export type PersonaResumen = { nombre: string; email: string | null; telefono: string | null };
+
+type PersonaRow = {
+  tipo_persona: string;
+  nombre: string | null;
+  apellido: string | null;
+  razon_social: string | null;
+  email: string | null;
+  telefono: string | null;
+};
+
+function mapPersona(p: PersonaRow | null): PersonaResumen | null {
+  if (!p) return null;
+  const nombre =
+    p.tipo_persona === "persona_juridica"
+      ? p.razon_social ?? "—"
+      : [p.nombre, p.apellido].filter(Boolean).join(" ") || "—";
+  return { nombre, email: p.email, telefono: p.telefono };
+}
+
+/**
+ * Datos base (nombre/contacto, solo lectura) del/los arrendatario(s) y
+ * propietario(s) de un contrato — para mostrarlos como referencia en el
+ * detalle de "pago informado" del portal. RLS (migración 0034) habilita al
+ * arrendatario a leer solo el/los propietario(s) de su propia propiedad, no
+ * la tabla `propietarios` completa.
+ */
+export async function personasDeContrato(contratoId: string): Promise<{
+  arrendatarios: PersonaResumen[];
+  propietarios: PersonaResumen[];
+}> {
+  const supabase = await createClient();
+
+  const [{ data: contrato }, { data: arrRows }] = await Promise.all([
+    supabase.from("contratos").select("propiedad_id").eq("id", contratoId).single(),
+    supabase
+      .from("contratos_arrendatarios")
+      .select("arrendatarios(tipo_persona, nombre, apellido, razon_social, email, telefono)")
+      .eq("contrato_id", contratoId),
+  ]);
+
+  type ArrRow = { arrendatarios: PersonaRow | null };
+  const arrendatarios = ((arrRows ?? []) as unknown as ArrRow[])
+    .map((r) => mapPersona(r.arrendatarios))
+    .filter((p): p is PersonaResumen => p !== null);
+
+  let propietarios: PersonaResumen[] = [];
+  if (contrato?.propiedad_id) {
+    const { data: propRows } = await supabase
+      .from("propietarios_propiedades")
+      .select("propietarios(tipo_persona, nombre, apellido, razon_social, email, telefono)")
+      .eq("propiedad_id", contrato.propiedad_id);
+
+    type PropRow = { propietarios: PersonaRow | null };
+    propietarios = ((propRows ?? []) as unknown as PropRow[])
+      .map((r) => mapPersona(r.propietarios))
+      .filter((p): p is PersonaResumen => p !== null);
+  }
+
+  return { arrendatarios, propietarios };
+}
+
 export async function misPagosDeCargo(cargoId: string): Promise<Pago[]> {
   const supabase = await createClient();
   const { data, error } = await supabase

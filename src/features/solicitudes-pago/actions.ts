@@ -306,7 +306,10 @@ export async function getComprobanteUrlSolicitud(
   solicitudId: string
 ): Promise<{ url: string | null; error: string | null }> {
   const profile = await getCurrentProfile();
-  if (!profile || (profile.rol !== "admin" && profile.rol !== "propietario")) {
+  if (
+    !profile ||
+    (profile.rol !== "admin" && profile.rol !== "propietario" && profile.rol !== "arrendatario")
+  ) {
     return { url: null, error: "No autorizado." };
   }
 

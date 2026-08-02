@@ -65,6 +65,24 @@ export async function miSolicitudPendiente(cargoId: string): Promise<SolicitudPa
 }
 
 /**
+ * La solicitud más reciente de este cargo (cualquier estado) — para mostrar
+ * el detalle de "pago informado" del arrendatario aunque ya haya sido
+ * aprobada o rechazada. RLS (`solicitudes_pago_select_arrendatario`) limita a
+ * sus propias filas.
+ */
+export async function miSolicitudDeCargo(cargoId: string): Promise<SolicitudPago | null> {
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("solicitudes_pago")
+    .select("*")
+    .eq("cargo_id", cargoId)
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  return data ?? null;
+}
+
+/**
  * Solicitudes pendientes de revisar. RLS filtra automáticamente el alcance:
  * admin ve todas las de la empresa; propietario solo las de sus propiedades.
  */
