@@ -279,7 +279,7 @@ export async function getComprobanteUrlPago(
 
   const { data } = await supabase.storage
     .from("documentos")
-    .createSignedUrl(ver.storage_path, 60, { download: ver.nombre_archivo });
+    .createSignedUrl(ver.storage_path, 60);
   return { url: data?.signedUrl ?? null, error: data?.signedUrl ? null : "No se pudo abrir." };
 }
 

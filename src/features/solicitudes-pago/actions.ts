@@ -324,9 +324,7 @@ export async function getComprobanteUrlSolicitud(
   const admin = createAdminClient();
   const { data, error } = await admin.storage
     .from("documentos")
-    .createSignedUrl(solicitud.comprobante_storage_path, 60, {
-      download: solicitud.comprobante_nombre_archivo ?? undefined,
-    });
+    .createSignedUrl(solicitud.comprobante_storage_path, 60);
 
   if (error || !data) return { url: null, error: "No se pudo generar el enlace." };
   return { url: data.signedUrl, error: null };
