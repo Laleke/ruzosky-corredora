@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Pencil, Send } from "lucide-react";
+import { Eye, Send } from "lucide-react";
 import { misCargos } from "@/features/portal/queries";
 import { misSolicitudes } from "@/features/solicitudes-pago/queries";
 import { ui, badge } from "@/components/ui";
@@ -17,12 +17,19 @@ const TIPO_LABEL: Record<string, string> = {
   otro: "Otro",
 };
 
-const ESTADO: Record<string, { label: string; tone: Parameters<typeof badge>[0] }> = {
-  pendiente: { label: "Pendiente", tone: "warning" },
-  parcial: { label: "Parcial", tone: "info" },
-  pagado: { label: "Pagado", tone: "success" },
-  vencido: { label: "Vencido", tone: "danger" },
-};
+function estadoMostrar(
+  estado: string,
+  saldo: number,
+  fechaVencimiento: string | null,
+  hoy: string
+): { label: string; tone: Parameters<typeof badge>[0] } {
+  if (estado === "pagado") return { label: "Pagado", tone: "success" };
+  if (saldo > 0 && fechaVencimiento && fechaVencimiento < hoy) {
+    return { label: "Vencido", tone: "danger" };
+  }
+  if (estado === "parcial") return { label: "Parcial", tone: "neutral" };
+  return { label: "Pendiente", tone: "neutral" };
+}
 
 const ESTADO_SOLICITUD: Record<string, { label: string; tone: Parameters<typeof badge>[0] }> = {
   pendiente: { label: "Pago informado — esperando validación", tone: "warning" },
@@ -36,6 +43,7 @@ function clp(n: number): string {
 
 export default async function PortalCargosPage() {
   const [cargos, solicitudes] = await Promise.all([misCargos(), misSolicitudes()]);
+  const hoy = new Date().toISOString().slice(0, 10);
 
   // Solicitud más reciente por cargo (una activa/pendiente a la vez en la práctica).
   const solicitudPorCargo = new Map<string, (typeof solicitudes)[number]>();
@@ -62,8 +70,8 @@ export default async function PortalCargosPage() {
       ) : (
         <div className={ui.cardGrid}>
           {cargos.map((c) => {
-            const est = ESTADO[c.estado] ?? { label: c.estado, tone: "neutral" as const };
             const saldo = Number(c.saldo_pendiente);
+            const est = estadoMostrar(c.estado, saldo, c.fecha_vencimiento, hoy);
             const solicitud = solicitudPorCargo.get(c.id);
             const solicitudActiva = solicitud?.estado === "pendiente";
             const solicitudEstado = solicitud ? ESTADO_SOLICITUD[solicitud.estado] : null;
@@ -82,8 +90,8 @@ export default async function PortalCargosPage() {
                 </div>
 
                 <div className="flex flex-col gap-1 text-sm text-white/80">
+                  <span>Deuda pendiente: {clp(saldo)}</span>
                   <span>Monto: {clp(Number(c.monto))}</span>
-                  <span>Saldo pendiente: {clp(saldo)}</span>
                   <span>Vence: {formatearFecha(c.fecha_vencimiento)}</span>
                   {(c.fecha_consumo_desde || c.fecha_consumo_hasta) && (
                     <span>
@@ -113,12 +121,12 @@ export default async function PortalCargosPage() {
                   </div>
                 )}
 
-                {solicitudActiva && (
+                {solicitud && (
                   <Link
-                    href={`/portal/cargos/${c.id}/solicitar-pago`}
+                    href={`/portal/cargos/${c.id}`}
                     className="mt-1 flex items-center justify-center gap-2 rounded-lg bg-white/10 px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-white/20"
                   >
-                    <Pencil size={15} /> Editar pago informado
+                    <Eye size={15} /> Ver pago informado
                   </Link>
                 )}
               </div>

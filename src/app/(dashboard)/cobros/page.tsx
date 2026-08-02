@@ -52,7 +52,7 @@ function estadoMostrar(
   if (saldo > 0 && fechaVencimiento && fechaVencimiento < hoy) {
     return { label: "Vencido", tone: "danger" };
   }
-  if (estado === "parcial") return { label: "Parcial", tone: "warning" };
+  if (estado === "parcial") return { label: "Parcial", tone: "neutral" };
   return { label: "Pendiente", tone: "neutral" };
 }
 
@@ -116,6 +116,13 @@ export default async function CobrosPage({
         arrendatarios={opciones.arrendatarios}
         hayFiltros={hayFiltros}
       />
+
+      {!hayFiltros && (
+        <p className="mb-5 text-xs text-canvas-muted">
+          Mostrando deuda viva (pendiente/parcial/vencida) más el período actual. Para ver cargos
+          pagados de otros períodos, usa los filtros de Estado o Período.
+        </p>
+      )}
 
       {reajustesPendientes.length > 0 && (
         <div className="mb-5 rounded-xl bg-burgundy p-5">
@@ -218,9 +225,9 @@ export default async function CobrosPage({
             return (
               <details key={periodo} className="rounded-xl bg-burgundy overflow-hidden">
                 <summary className="flex cursor-pointer list-none items-center justify-between p-5 [&::-webkit-details-marker]:hidden">
-                  <span className="font-semibold text-white">Deuda pendiente</span>
+                  <span className="font-semibold text-white">{formatearPeriodo(periodo)}</span>
                   <span className="flex items-center gap-2 text-white/70">
-                    {monto(deudaPeriodo)} · {formatearPeriodo(periodo)}
+                    Deuda pendiente: {monto(deudaPeriodo)}
                   </span>
                 </summary>
                 <div className="flex flex-col divide-y divide-white/10 px-5 pb-5">
@@ -247,6 +254,7 @@ export default async function CobrosPage({
                               <Info size={14} /> Ver más información
                             </summary>
                             <div className="mt-2 flex flex-col gap-1 text-sm text-white/80">
+                              <span>Deuda pendiente: {monto(c.saldo_pendiente)}</span>
                               <span>Monto: {monto(c.monto)}</span>
                               {Number(c.monto) - Number(c.saldo_pendiente) > 0 && (
                                 <span className="text-emerald-400">
@@ -254,7 +262,6 @@ export default async function CobrosPage({
                                 </span>
                               )}
                               <div className="my-1 border-t border-white/10" />
-                              <span>Saldo: {monto(c.saldo_pendiente)}</span>
                               {c.fecha_vencimiento && <span>Vence: {formatearFecha(c.fecha_vencimiento)}</span>}
                               {(c.fecha_consumo_desde || c.fecha_consumo_hasta) && (
                                 <span>
