@@ -377,7 +377,7 @@ export function SolicitudPagoWizard({
               className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-white px-3 py-2 text-sm font-medium text-burgundy shadow-sm transition-colors hover:bg-white/90 disabled:pointer-events-none disabled:opacity-50"
             >
               <Check size={15} />{" "}
-              {pending ? "Guardando…" : editando ? "Guardar cambios" : "Informar pago"}
+              {pending ? "Guardando…" : editando ? "Guardar cambios" : "Enviar"}
             </button>
           )}
         </div>
