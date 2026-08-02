@@ -5,7 +5,11 @@ import { useRouter } from "next/navigation";
 import { Check, X, Paperclip, AlertTriangle } from "lucide-react";
 import { ui, badge } from "@/components/ui";
 import { formatearFecha, formatearPeriodo } from "@/lib/fecha";
-import { aprobarSolicitudPago, rechazarSolicitudPago } from "./actions";
+import {
+  aprobarSolicitudPago,
+  rechazarSolicitudPago,
+  getComprobanteUrlSolicitud,
+} from "./actions";
 import type { SolicitudConContexto } from "./types";
 
 function clp(n: number): string {
@@ -18,6 +22,15 @@ function Fila({ s }: { s: SolicitudConContexto }) {
   const [rechazando, setRechazando] = useState(false);
   const [motivo, setMotivo] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [cargandoComprobante, setCargandoComprobante] = useState(false);
+
+  async function onVerComprobante() {
+    setCargandoComprobante(true);
+    const { url, error: errVer } = await getComprobanteUrlSolicitud(s.id);
+    setCargandoComprobante(false);
+    if (url) window.open(url, "_blank", "noopener");
+    else setError(errVer ?? "No se pudo abrir el comprobante.");
+  }
 
   async function onAprobar() {
     setPending(true);
@@ -71,9 +84,15 @@ function Fila({ s }: { s: SolicitudConContexto }) {
         {s.referencia && <span>Referencia: {s.referencia}</span>}
         {s.observaciones && <span>Observaciones: {s.observaciones}</span>}
         {s.comprobante_nombre_archivo && (
-          <span className="flex items-center gap-1 text-white/60">
-            <Paperclip size={13} /> {s.comprobante_nombre_archivo}
-          </span>
+          <button
+            type="button"
+            onClick={onVerComprobante}
+            disabled={cargandoComprobante}
+            className="flex items-center gap-1 text-white/60 hover:text-white disabled:opacity-50"
+          >
+            <Paperclip size={13} />
+            {cargandoComprobante ? "Abriendo…" : `Ver comprobante (${s.comprobante_nombre_archivo})`}
+          </button>
         )}
       </div>
 

@@ -466,7 +466,9 @@ export function DetalleContrato({
                 className={ui.input}
               />
             ) : (
-              <p className="text-sm text-white/90">{contrato.observaciones}</p>
+              <p className="whitespace-pre-wrap break-words text-sm text-white/90">
+                {contrato.observaciones}
+              </p>
             )}
           </div>
         )}

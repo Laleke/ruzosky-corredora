@@ -39,6 +39,7 @@ export default async function DetalleCargoPage({
   if (!cargo || !profile) notFound();
 
   const saldo = Number(cargo.saldo_pendiente);
+  const pagado = Number(cargo.monto) - saldo;
 
   return (
     <div className="flex flex-col gap-6">
@@ -64,18 +65,29 @@ export default async function DetalleCargoPage({
             </button>
           </form>
         </div>
-        <div className="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-3">
-          <div className="rounded-lg bg-burgundy-strong px-4 py-3">
-            <p className="text-xs text-white/60">Monto</p>
-            <p className="text-lg font-semibold text-white">{monto(cargo.monto)}</p>
+        <div className="mt-5 rounded-lg bg-burgundy-strong px-4 py-3">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div>
+              <p className="text-xs text-white/60">Monto</p>
+              <p className="text-lg font-semibold text-white">{monto(cargo.monto)}</p>
+            </div>
+            {pagado > 0 && (
+              <div>
+                <p className="text-xs text-white/60">Pagado</p>
+                <p className="text-lg font-semibold text-emerald-400">{monto(pagado)}</p>
+              </div>
+            )}
           </div>
-          <div className="rounded-lg bg-burgundy-strong px-4 py-3">
-            <p className="text-xs text-white/60">Saldo pendiente</p>
-            <p className="text-lg font-semibold text-white">{monto(saldo)}</p>
-          </div>
-          <div className="rounded-lg bg-burgundy-strong px-4 py-3">
-            <p className="text-xs text-white/60">Vence</p>
-            <p className="text-lg font-semibold text-white">{formatearFecha(cargo.fecha_vencimiento)}</p>
+          <div className="my-3 border-t border-white/10" />
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div>
+              <p className="text-xs text-white/60">Saldo pendiente</p>
+              <p className="text-lg font-semibold text-white">{monto(saldo)}</p>
+            </div>
+            <div>
+              <p className="text-xs text-white/60">Vence</p>
+              <p className="text-lg font-semibold text-white">{formatearFecha(cargo.fecha_vencimiento)}</p>
+            </div>
           </div>
         </div>
         {(cargo.fecha_consumo_desde || cargo.fecha_consumo_hasta) && (

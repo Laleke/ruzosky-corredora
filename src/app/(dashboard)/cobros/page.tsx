@@ -248,6 +248,12 @@ export default async function CobrosPage({
                             </summary>
                             <div className="mt-2 flex flex-col gap-1 text-sm text-white/80">
                               <span>Monto: {monto(c.monto)}</span>
+                              {Number(c.monto) - Number(c.saldo_pendiente) > 0 && (
+                                <span className="text-emerald-400">
+                                  Pagado: {monto(Number(c.monto) - Number(c.saldo_pendiente))}
+                                </span>
+                              )}
+                              <div className="my-1 border-t border-white/10" />
                               <span>Saldo: {monto(c.saldo_pendiente)}</span>
                               {c.fecha_vencimiento && <span>Vence: {formatearFecha(c.fecha_vencimiento)}</span>}
                               {(c.fecha_consumo_desde || c.fecha_consumo_hasta) && (

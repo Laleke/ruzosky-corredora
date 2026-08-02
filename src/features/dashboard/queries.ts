@@ -7,13 +7,14 @@ import {
   listContratosConDesfazadoPendiente,
 } from "@/features/cobros/queries";
 import { listContratosConReajustePendiente } from "@/features/contratos/queries";
+import { solicitudesPendientes } from "@/features/solicitudes-pago/queries";
 
 export type DashboardStats = {
   propiedadesTotal: number;
   propiedadesArrendadas: number;
   deudaPendiente: number;
   cargosMorosos: number;
-  pagosGeneradosMesMonto: number;
+  pagosRecibidosMesMonto: number;
 };
 
 /** Métricas para el dashboard. Conteos y sumas acotados al tenant por RLS. */
@@ -22,7 +23,7 @@ export async function getDashboardStats(): Promise<DashboardStats> {
   const hoy = new Date().toISOString().slice(0, 10);
   const inicioMes = `${hoy.slice(0, 7)}-01`;
 
-  const [propiedadesTotal, propiedadesArrendadas, cargos, pagosMes] = await Promise.all([
+  const [propiedadesTotal, propiedadesArrendadas, cargos, cargosDelPeriodo] = await Promise.all([
     supabase
       .from("propiedades")
       .select("*", { count: "exact", head: true })
@@ -35,11 +36,11 @@ export async function getDashboardStats(): Promise<DashboardStats> {
       .from("cargos")
       .select("saldo_pendiente, fecha_vencimiento")
       .gt("saldo_pendiente", 0),
-    supabase
-      .from("pagos")
-      .select("monto_pagado")
-      .gte("fecha_pago", inicioMes)
-      .lte("fecha_pago", hoy),
+    // "Pagos recibidos" se mide por el período del cargo (no por la fecha en
+    // que se registró el pago): el arriendo se paga por adelantado, así que
+    // filtrar por fecha_pago dejaría afuera pagos hechos antes de que empiece
+    // el mes que en realidad cubren.
+    supabase.from("cargos").select("id").eq("periodo", inicioMes),
   ]);
 
   const filas = cargos.data ?? [];
@@ -50,7 +51,13 @@ export async function getDashboardStats(): Promise<DashboardStats> {
   const cargosMorosos = filas.filter(
     (c) => c.fecha_vencimiento && c.fecha_vencimiento < hoy
   ).length;
-  const pagosGeneradosMesMonto = (pagosMes.data ?? []).reduce(
+
+  const idsCargosPeriodo = (cargosDelPeriodo.data ?? []).map((c) => c.id);
+  const pagosPeriodo =
+    idsCargosPeriodo.length > 0
+      ? await supabase.from("pagos").select("monto_pagado").in("cargo_id", idsCargosPeriodo)
+      : { data: [] as { monto_pagado: number }[] };
+  const pagosRecibidosMesMonto = (pagosPeriodo.data ?? []).reduce(
     (acc, p) => acc + Number(p.monto_pagado),
     0
   );
@@ -60,7 +67,7 @@ export async function getDashboardStats(): Promise<DashboardStats> {
     propiedadesArrendadas: propiedadesArrendadas.count ?? 0,
     deudaPendiente,
     cargosMorosos,
-    pagosGeneradosMesMonto,
+    pagosRecibidosMesMonto,
   };
 }
 
@@ -91,6 +98,7 @@ export async function getTareasPendientes(): Promise<TareaPendiente[]> {
     contratosPorVencer,
     contratosConReajustePendiente,
     contratosConDesfazadoPendiente,
+    solicitudesPagoPendientes,
   ] = await Promise.all([
     listPendientesLiquidar(`${periodoActual}-01`),
     debeAvisarGeneracionAsistida()
@@ -116,9 +124,17 @@ export async function getTareasPendientes(): Promise<TareaPendiente[]> {
       .lte("fecha_termino", en30dias),
     listContratosConReajustePendiente(),
     listContratosConDesfazadoPendiente(),
+    solicitudesPendientes(),
   ]);
 
   return [
+    {
+      key: "solicitudes_pago",
+      label: "Solicitudes de pago por aprobar",
+      cantidad: solicitudesPagoPendientes.length,
+      href: "/cobros/solicitudes",
+      alerta: solicitudesPagoPendientes.length > 0,
+    },
     {
       key: "liquidaciones",
       label: "Liquidaciones pendientes de generar",

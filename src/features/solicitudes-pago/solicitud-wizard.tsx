@@ -207,6 +207,16 @@ export function SolicitudPagoWizard({ cargoId, saldoPendiente }: { cargoId: stri
         onSubmit={() => {
           enviado.current = true;
         }}
+        onKeyDown={(e) => {
+          // Con un solo campo de texto visible por paso, el navegador puede
+          // hacer submit implícito al presionar Enter (o "Ir" en el teclado
+          // del celular) aunque el paso actual no tenga botón de submit —
+          // enviaría la solicitud antes de llegar al paso de comprobante.
+          if (e.key === "Enter" && e.target instanceof HTMLElement && e.target.tagName !== "TEXTAREA") {
+            e.preventDefault();
+            if (!esUltimo) siguiente();
+          }
+        }}
         className="flex flex-col items-center gap-4 text-center"
       >
         <p className="text-xs text-white/60">Saldo pendiente: ${saldoPendiente.toLocaleString("es-CL")}</p>

@@ -205,6 +205,43 @@ export async function aprobarSolicitudPago(solicitudId: string): Promise<Solicit
   return { error: null };
 }
 
+/**
+ * Signed URL (60s) del comprobante adjuntado a una solicitud pendiente de
+ * revisar. Usa el cliente admin para leer Storage (el path no está ligado
+ * todavía a un `documento_versiones` — eso recién se crea al aprobar, ver
+ * `aprobarSolicitudPago`), pero primero confirma con el cliente normal que
+ * el solicitante puede ver esta fila (RLS `solicitudes_pago_select_*`).
+ */
+export async function getComprobanteUrlSolicitud(
+  solicitudId: string
+): Promise<{ url: string | null; error: string | null }> {
+  const profile = await getCurrentProfile();
+  if (!profile || (profile.rol !== "admin" && profile.rol !== "propietario")) {
+    return { url: null, error: "No autorizado." };
+  }
+
+  const supabase = await createClient();
+  const { data: solicitud } = await supabase
+    .from("solicitudes_pago")
+    .select("comprobante_storage_path, comprobante_nombre_archivo")
+    .eq("id", solicitudId)
+    .single();
+  if (!solicitud) return { url: null, error: "No autorizado o no encontrado." };
+  if (!solicitud.comprobante_storage_path) {
+    return { url: null, error: "Esta solicitud no tiene comprobante adjunto." };
+  }
+
+  const admin = createAdminClient();
+  const { data, error } = await admin.storage
+    .from("documentos")
+    .createSignedUrl(solicitud.comprobante_storage_path, 60, {
+      download: solicitud.comprobante_nombre_archivo ?? undefined,
+    });
+
+  if (error || !data) return { url: null, error: "No se pudo generar el enlace." };
+  return { url: data.signedUrl, error: null };
+}
+
 /** Rechaza una solicitud con motivo — mismo gate de autorización que aprobar. */
 export async function rechazarSolicitudPago(
   solicitudId: string,

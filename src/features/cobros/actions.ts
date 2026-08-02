@@ -12,7 +12,7 @@ export type CobroFormState = { error: string | null; mensaje?: string | null };
 type DB = SupabaseClient<Database>;
 
 const TIPOS: TipoCargo[] = [
-  "arriendo", "gasto_comun", "administracion", "multa", "ajuste", "otro",
+  "arriendo", "gasto_comun", "administracion", "multa", "ajuste", "luz", "agua", "internet", "otro",
 ];
 const MEDIOS: MedioPago[] = [
   "transferencia", "efectivo", "cheque", "tarjeta", "otro",

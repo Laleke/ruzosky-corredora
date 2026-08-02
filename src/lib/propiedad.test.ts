@@ -2,7 +2,7 @@ import { describe, it, expect } from "vitest";
 import { etiquetaPropiedad, etiquetaContrato } from "./propiedad";
 
 describe("etiquetaPropiedad", () => {
-  it("combina código, calle+número y unidad", () => {
+  it("combina calle+número y unidad, sin el código interno", () => {
     expect(
       etiquetaPropiedad({
         codigo_interno: "PRD0001",
@@ -10,7 +10,7 @@ describe("etiquetaPropiedad", () => {
         numero: "742",
         departamento: "12B",
       })
-    ).toBe("PRD0001 · Av. Siempre Viva 742 · Depto/Unidad 12B");
+    ).toBe("Av. Siempre Viva 742 · Depto/Unidad 12B");
   });
 
   it("omite las partes ausentes", () => {
@@ -21,7 +21,13 @@ describe("etiquetaPropiedad", () => {
         numero: null,
         departamento: null,
       })
-    ).toBe("PRD0002 · Calle Uno");
+    ).toBe("Calle Uno");
+  });
+
+  it("usa el código interno como respaldo si no hay dirección cargada", () => {
+    expect(
+      etiquetaPropiedad({ codigo_interno: "PRD0003", direccion: null })
+    ).toBe("PRD0003");
   });
 
   it("devuelve — cuando no hay datos", () => {
@@ -41,7 +47,7 @@ describe("etiquetaContrato", () => {
         numero: "5",
         departamento: null,
       })
-    ).toBe("N°123 · PRD0001 · Calle Uno 5");
+    ).toBe("N°123 · Calle Uno 5");
   });
 
   it("usa 'Contrato' si no hay número", () => {

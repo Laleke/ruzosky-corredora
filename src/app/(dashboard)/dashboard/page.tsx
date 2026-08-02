@@ -121,9 +121,10 @@ export default async function DashboardPage() {
         />
         <Kpi
           icon={Receipt}
-          label="Pagos generados"
-          valor={clp(stats.pagosGeneradosMesMonto)}
-          sub="este mes"
+          label="Pagos recibidos"
+          valor={clp(stats.pagosRecibidosMesMonto)}
+          sub="de arrendatarios, período actual"
+          href="/cobros"
         />
       </div>
 
