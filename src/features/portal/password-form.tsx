@@ -106,7 +106,7 @@ export function PasswordForm({
               onClick={() => setVerPassword((v) => !v)}
               tabIndex={-1}
               aria-label={verPassword ? "Ocultar contraseña" : "Ver contraseña"}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-white/60 hover:text-white"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted hover:text-ink"
             >
               {verPassword ? <EyeOff size={16} /> : <Eye size={16} />}
             </button>
