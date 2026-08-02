@@ -5,7 +5,7 @@ import { useActionState } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, ArrowRight, Check, Paperclip } from "lucide-react";
 import { ui } from "@/components/ui";
-import { SelectStyled } from "@/components/select-styled";
+import { ComboboxOpcion } from "@/components/combobox-opcion";
 import { MAX_TAMANO_BYTES } from "@/features/documentos/constants";
 import { crearSolicitudPago, editarSolicitudPago, subirComprobanteSolicitud } from "./actions";
 import type { SolicitudFormState, SolicitudPago } from "./types";
@@ -204,18 +204,13 @@ export function SolicitudPagoWizard({
     }
     if (p.tipo === "select") {
       return (
-        <SelectStyled
+        <ComboboxOpcion
           name={p.key}
+          options={MEDIO_OPCIONES.map((o) => ({ id: o.value, label: o.label }))}
           value={val}
-          onChange={(e) => set(p.key, e.target.value)}
-          className="text-base"
-        >
-          {MEDIO_OPCIONES.map((o) => (
-            <option key={o.value} value={o.value}>
-              {o.label}
-            </option>
-          ))}
-        </SelectStyled>
+          onChange={(v) => set(p.key, v)}
+          placeholder="Selecciona…"
+        />
       );
     }
     return (
