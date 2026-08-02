@@ -5,6 +5,7 @@ import { useActionState } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, Clock, Pencil, RefreshCw, Trash2 } from "lucide-react";
 import { badge, ui } from "@/components/ui";
+import { SelectStyled } from "@/components/select-styled";
 import { formatearFecha } from "@/lib/fecha";
 import {
   eliminarContrato,
@@ -205,18 +206,18 @@ export function DetalleContrato({
           {editando ? (
             <div>
               <dt className="text-xs uppercase tracking-wide text-white/50">Propiedad</dt>
-              <select
+              <SelectStyled
                 name="propiedad_id"
                 defaultValue={contrato.propiedad_id}
                 required
-                className={`${ui.input} mt-1`}
+                className="mt-1"
               >
                 {propiedades.map((p) => (
                   <option key={p.id} value={p.id}>
                     {p.label}
                   </option>
                 ))}
-              </select>
+              </SelectStyled>
             </div>
           ) : (
             <Dato label="Propiedad" value={propiedadLabel} />
@@ -224,13 +225,13 @@ export function DetalleContrato({
           {editando ? (
             <div>
               <dt className="text-xs uppercase tracking-wide text-white/50">Estado</dt>
-              <select name="estado" defaultValue={contrato.estado} className={`${ui.input} mt-1`}>
+              <SelectStyled name="estado" defaultValue={contrato.estado} className="mt-1">
                 {ESTADO_OPCIONES.map((o) => (
                   <option key={o.value} value={o.value}>
                     {o.label}
                   </option>
                 ))}
-              </select>
+              </SelectStyled>
             </div>
           ) : (
             <Dato label="Estado" value={ESTADO_LABEL[contrato.estado] ?? contrato.estado} />
@@ -286,10 +287,10 @@ export function DetalleContrato({
           {editando ? (
             <div>
               <dt className="text-xs uppercase tracking-wide text-white/50">Moneda</dt>
-              <select name="canon_moneda" defaultValue={contrato.canon_moneda} className={`${ui.input} mt-1`}>
+              <SelectStyled name="canon_moneda" defaultValue={contrato.canon_moneda} className="mt-1">
                 <option value="CLP">CLP</option>
                 <option value="UF">UF</option>
-              </select>
+              </SelectStyled>
             </div>
           ) : (
             <Dato label="Moneda" value={contrato.canon_moneda} />
@@ -297,18 +298,18 @@ export function DetalleContrato({
           {editando ? (
             <div>
               <dt className="text-xs uppercase tracking-wide text-white/50">Reajuste</dt>
-              <select
+              <SelectStyled
                 name="reajuste_tipo"
                 value={reajusteTipo}
                 onChange={(e) => setReajusteTipo(e.target.value as Contrato["reajuste_tipo"])}
-                className={`${ui.input} mt-1`}
+                className="mt-1"
               >
                 {REAJUSTE_OPCIONES.map((o) => (
                   <option key={o.value} value={o.value}>
                     {o.label}
                   </option>
                 ))}
-              </select>
+              </SelectStyled>
             </div>
           ) : (
             <Dato
@@ -394,18 +395,18 @@ export function DetalleContrato({
           {editando ? (
             <div>
               <dt className="text-xs uppercase tracking-wide text-white/50">Tipo de comisión</dt>
-              <select
+              <SelectStyled
                 name="tipo_comision"
                 value={tipoComision}
                 onChange={(e) => setTipoComision(e.target.value)}
-                className={`${ui.input} mt-1`}
+                className="mt-1"
               >
                 {TIPO_COMISION_OPCIONES.map((o) => (
                   <option key={o.value} value={o.value}>
                     {o.label}
                   </option>
                 ))}
-              </select>
+              </SelectStyled>
             </div>
           ) : (
             <Dato

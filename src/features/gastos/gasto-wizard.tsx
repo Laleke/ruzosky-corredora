@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { ArrowLeft, ArrowRight, Check } from "lucide-react";
 import { ui } from "@/components/ui";
 import { ComboboxOpcion } from "@/components/combobox-opcion";
+import { SelectStyled } from "@/components/select-styled";
 import { CATEGORIAS_GASTO, ESTADOS_GASTO } from "./constants";
 import { crearGasto, type GastoFormState } from "./actions";
 import type { ContextoPropiedad } from "@/features/documentos/queries";
@@ -160,11 +161,11 @@ export function GastoWizard({
     if (p.tipo === "select") {
       const opciones = p.key === "categoria" ? CATEGORIAS_GASTO : ESTADOS_GASTO.filter((e) => e.value !== "anulado");
       return (
-        <select
+        <SelectStyled
           name={p.key}
           value={String(val)}
           onChange={(e) => set(p.key, e.target.value)}
-          className={`${ui.input} text-base`}
+          className="text-base"
           autoFocus
         >
           {opciones.map((o) => (
@@ -172,7 +173,7 @@ export function GastoWizard({
               {o.label}
             </option>
           ))}
-        </select>
+        </SelectStyled>
       );
     }
 
@@ -371,10 +372,9 @@ function SelectorPropiedadWizard({
       {contratos.length > 1 && (
         <div className="flex flex-col gap-1.5">
           <label className="text-sm font-medium text-white">Contrato</label>
-          <select
+          <SelectStyled
             value={String(valores.contrato_id)}
             onChange={(e) => set("contrato_id", e.target.value)}
-            className={ui.input}
           >
             <option value="">Selecciona…</option>
             {contratos.map((c) => (
@@ -382,7 +382,7 @@ function SelectorPropiedadWizard({
                 {c.contratoLabel}
               </option>
             ))}
-          </select>
+          </SelectStyled>
         </div>
       )}
     </div>

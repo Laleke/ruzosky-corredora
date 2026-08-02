@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Filter, X } from "lucide-react";
 import { ui } from "@/components/ui";
+import { SelectStyled } from "@/components/select-styled";
 
 const TIPO_OPCIONES = [
   { value: "departamento", label: "Departamento" },
@@ -70,11 +71,10 @@ export function FiltroPropiedades({
         >
           <label className="flex flex-col gap-1 text-sm">
             <span className="font-medium text-canvas-fg">Tipo</span>
-            <select
+            <SelectStyled
               name="tipo"
               value={campos.tipo}
               onChange={(e) => set("tipo", e.target.value)}
-              className={ui.input}
             >
               <option value="">Todos</option>
               {TIPO_OPCIONES.map((o) => (
@@ -82,15 +82,14 @@ export function FiltroPropiedades({
                   {o.label}
                 </option>
               ))}
-            </select>
+            </SelectStyled>
           </label>
           <label className="flex flex-col gap-1 text-sm">
             <span className="font-medium text-canvas-fg">Comuna</span>
-            <select
+            <SelectStyled
               name="comuna"
               value={campos.comuna}
               onChange={(e) => set("comuna", e.target.value)}
-              className={ui.input}
             >
               <option value="">Todas</option>
               {comunas.map((c) => (
@@ -98,15 +97,14 @@ export function FiltroPropiedades({
                   {c}
                 </option>
               ))}
-            </select>
+            </SelectStyled>
           </label>
           <label className="flex flex-col gap-1 text-sm">
             <span className="font-medium text-canvas-fg">Estado</span>
-            <select
+            <SelectStyled
               name="estado"
               value={campos.estado}
               onChange={(e) => set("estado", e.target.value)}
-              className={ui.input}
             >
               <option value="">Todos</option>
               {ESTADO_OPCIONES.map((o) => (
@@ -114,20 +112,19 @@ export function FiltroPropiedades({
                   {o.label}
                 </option>
               ))}
-            </select>
+            </SelectStyled>
           </label>
           <label className="flex flex-col gap-1 text-sm">
             <span className="font-medium text-canvas-fg">Activo</span>
-            <select
+            <SelectStyled
               name="activo"
               value={campos.activo}
               onChange={(e) => set("activo", e.target.value)}
-              className={ui.input}
             >
               <option value="">Todos</option>
               <option value="true">Activo</option>
               <option value="false">Inactivo</option>
-            </select>
+            </SelectStyled>
           </label>
           <div className="flex items-end gap-2">
             <button type="submit" className={ui.btnSecondary}>

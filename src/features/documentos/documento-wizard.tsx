@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { ArrowLeft, ArrowRight, Check, UploadCloud } from "lucide-react";
 import { ui } from "@/components/ui";
 import { ComboboxOpcion } from "@/components/combobox-opcion";
+import { SelectStyled } from "@/components/select-styled";
 import { CATEGORIAS, MAX_TAMANO_BYTES, formatearTamano } from "./constants";
 import { subirArchivo, limpiarArchivo } from "./storage-client";
 import { registrarDocumento } from "./actions";
@@ -168,10 +169,10 @@ export function DocumentoWizard({
 
     if (actual.tipo === "select") {
       return (
-        <select
+        <SelectStyled
           value={valores.categoria}
           onChange={(e) => set("categoria", e.target.value)}
-          className={`${ui.input} text-base`}
+          className="text-base"
           autoFocus
         >
           {CATEGORIAS.map((c) => (
@@ -179,7 +180,7 @@ export function DocumentoWizard({
               {c.label}
             </option>
           ))}
-        </select>
+        </SelectStyled>
       );
     }
 
@@ -218,14 +219,13 @@ export function DocumentoWizard({
           {contratos.length > 1 && (
             <div className="flex flex-col gap-1.5">
               <label className="text-sm font-medium text-white">Contrato</label>
-              <select
+              <SelectStyled
                 value={valores.contrato_id}
                 onChange={(e) => {
                   const id = e.target.value;
                   set("contrato_id", id);
                   set("arrendatario_id", contratos.find((c) => c.contratoId === id)?.arrendatarioId ?? "");
                 }}
-                className={ui.input}
               >
                 <option value="">Selecciona…</option>
                 {contratos.map((c) => (
@@ -234,7 +234,7 @@ export function DocumentoWizard({
                     {c.arrendatario ? ` · ${c.arrendatario}` : ""}
                   </option>
                 ))}
-              </select>
+              </SelectStyled>
             </div>
           )}
         </div>

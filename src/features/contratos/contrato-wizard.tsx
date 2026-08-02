@@ -5,6 +5,7 @@ import { useActionState } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, ArrowRight, Check } from "lucide-react";
 import { ui } from "@/components/ui";
+import { SelectStyled } from "@/components/select-styled";
 import type { ContratoFormState } from "./actions";
 
 type Action = (
@@ -219,11 +220,11 @@ export function ContratoWizard({
 
     if (p.tipo === "propiedad") {
       return (
-        <select
+        <SelectStyled
           name={p.key}
           value={String(val)}
           onChange={(e) => set(p.key, e.target.value)}
-          className={`${ui.input} text-base`}
+          className="text-base"
           autoFocus
         >
           <option value="">Selecciona…</option>
@@ -232,17 +233,17 @@ export function ContratoWizard({
               {o.label}
             </option>
           ))}
-        </select>
+        </SelectStyled>
       );
     }
 
     if (p.tipo === "select") {
       return (
-        <select
+        <SelectStyled
           name={p.key}
           value={String(val)}
           onChange={(e) => set(p.key, e.target.value)}
-          className={`${ui.input} text-base`}
+          className="text-base"
           autoFocus
         >
           {p.opciones!.map((o) => (
@@ -250,7 +251,7 @@ export function ContratoWizard({
               {o.label}
             </option>
           ))}
-        </select>
+        </SelectStyled>
       );
     }
 

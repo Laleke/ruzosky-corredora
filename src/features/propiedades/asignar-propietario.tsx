@@ -2,6 +2,7 @@
 
 import { useActionState } from "react";
 import { ui } from "@/components/ui";
+import { SelectStyled } from "@/components/select-styled";
 import type { PropiedadFormState } from "./actions";
 
 type Action = (
@@ -30,14 +31,14 @@ export function AsignarPropietario({
     <form action={formAction} className="flex flex-wrap items-end gap-3">
       <label className="flex flex-col gap-1 text-sm">
         <span className="font-medium">Propietario</span>
-        <select name="propietario_id" required className={ui.input}>
+        <SelectStyled name="propietario_id" required>
           <option value="">Selecciona…</option>
           {opciones.map((o) => (
             <option key={o.id} value={o.id}>
               {o.label}
             </option>
           ))}
-        </select>
+        </SelectStyled>
       </label>
       <label className="flex flex-col gap-1 text-sm">
         <span className="font-medium">Participación %</span>

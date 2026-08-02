@@ -16,6 +16,17 @@ const ESTADO: Record<string, { label: string; tone: Parameters<typeof badge>[0] 
   renovado: { label: "Renovado", tone: "info" },
 };
 
+const TIPO_PROPIEDAD_LABEL: Record<string, string> = {
+  departamento: "Departamento",
+  casa: "Casa",
+  oficina: "Oficina",
+  local_comercial: "Local comercial",
+  bodega: "Bodega",
+  estacionamiento: "Estacionamiento",
+  terreno: "Terreno",
+  otro: "Otro",
+};
+
 function formatoCanon(monto: number, moneda: string): string {
   return moneda === "UF"
     ? `UF ${monto.toLocaleString("es-CL")}`
@@ -55,8 +66,10 @@ export default async function ContratosPage({
               <div key={c.id} className={`${ui.listCard} ${!c.activo ? "opacity-60" : ""}`}>
                 <div className="flex items-start justify-between gap-2">
                   <div>
-                    <p className="text-xs text-white/60">{c.numero_contrato ?? "—"}</p>
-                    <p className="font-medium text-white">{c.propiedad_direccion}</p>
+                    <p className="text-xs text-white/60">
+                      {TIPO_PROPIEDAD_LABEL[c.propiedad_tipo] ?? c.propiedad_tipo}
+                    </p>
+                    <p className="font-medium text-white">{c.propiedad_label}</p>
                   </div>
                   <span className={badge(est.tone)}>{est.label}</span>
                 </div>
@@ -67,6 +80,7 @@ export default async function ContratosPage({
                       <Info size={14} /> Ver más información
                     </summary>
                     <div className="mt-2 flex flex-col gap-1 text-sm text-white/80">
+                      <span>N° contrato: {c.numero_contrato ?? "—"}</span>
                       <span>Arrendatario: {c.arrendatarios_nombres.join(", ") || "—"}</span>
                       <span>Inicio: {formatearFecha(c.fecha_inicio)}</span>
                       <span>Término: {formatearFecha(c.fecha_termino)}</span>

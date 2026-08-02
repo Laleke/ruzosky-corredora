@@ -4,6 +4,7 @@ import { useActionState } from "react";
 import { ui } from "@/components/ui";
 import { MoneyInput } from "@/components/money-input";
 import { SelectorPropiedadContrato } from "@/components/selector-propiedad-contrato";
+import { SelectStyled } from "@/components/select-styled";
 import { CATEGORIAS_GASTO, ESTADOS_GASTO } from "./constants";
 import type { GastoFormState } from "./actions";
 import type { Gasto } from "./types";
@@ -46,17 +47,13 @@ export function GastoForm({
 
         <div className="flex flex-col gap-1.5">
           <label className={ui.label}>Categoría *</label>
-          <select
-            name="categoria"
-            defaultValue={gasto?.categoria ?? "mantencion"}
-            className={ui.input}
-          >
+          <SelectStyled name="categoria" defaultValue={gasto?.categoria ?? "mantencion"}>
             {CATEGORIAS_GASTO.map((c) => (
               <option key={c.value} value={c.value}>
                 {c.label}
               </option>
             ))}
-          </select>
+          </SelectStyled>
         </div>
 
         <div className="flex flex-col gap-1.5">
@@ -81,17 +78,13 @@ export function GastoForm({
 
         <div className="flex flex-col gap-1.5">
           <label className={ui.label}>Estado</label>
-          <select
-            name="estado"
-            defaultValue={gasto?.estado ?? "pendiente"}
-            className={ui.input}
-          >
+          <SelectStyled name="estado" defaultValue={gasto?.estado ?? "pendiente"}>
             {ESTADOS_GASTO.filter((e) => e.value !== "anulado").map((e) => (
               <option key={e.value} value={e.value}>
                 {e.label}
               </option>
             ))}
-          </select>
+          </SelectStyled>
         </div>
 
         <SelectorPropiedadContrato

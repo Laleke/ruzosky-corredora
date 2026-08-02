@@ -5,9 +5,10 @@ import { useActionState } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, ArrowRight, Check, Paperclip } from "lucide-react";
 import { ui } from "@/components/ui";
+import { SelectStyled } from "@/components/select-styled";
 import { MAX_TAMANO_BYTES } from "@/features/documentos/constants";
-import { crearSolicitudPago, subirComprobanteSolicitud } from "./actions";
-import type { SolicitudFormState } from "./types";
+import { crearSolicitudPago, editarSolicitudPago, subirComprobanteSolicitud } from "./actions";
+import type { SolicitudFormState, SolicitudPago } from "./types";
 
 const MEDIO_OPCIONES = [
   { value: "transferencia", label: "Transferencia" },
@@ -36,29 +37,54 @@ function fmt(digits: string): string {
   return digits === "" ? "" : Number(digits).toLocaleString("es-CL");
 }
 
-export function SolicitudPagoWizard({ cargoId, saldoPendiente }: { cargoId: string; saldoPendiente: number }) {
+export function SolicitudPagoWizard({
+  cargoId,
+  saldoPendiente,
+  solicitudExistente,
+}: {
+  cargoId: string;
+  saldoPendiente: number;
+  /** Si ya tiene una solicitud "pendiente" para este cargo, edita esa en vez de crear una nueva. */
+  solicitudExistente?: SolicitudPago;
+}) {
   const router = useRouter();
-  const [state, formAction, pending] = useActionState(crearSolicitudPago.bind(null, cargoId), {
+  const editando = Boolean(solicitudExistente);
+  const accion = solicitudExistente
+    ? editarSolicitudPago.bind(null, solicitudExistente.id, cargoId)
+    : crearSolicitudPago.bind(null, cargoId);
+  const [state, formAction, pending] = useActionState(accion, {
     error: null,
   } as SolicitudFormState);
   const [paso, setPaso] = useState(0);
   const [valores, setValores] = useState<Record<string, string>>({
-    monto_pagado: "",
-    fecha_pago: hoyISO(),
-    medio_pago: "transferencia",
-    referencia: "",
+    monto_pagado: solicitudExistente ? String(solicitudExistente.monto) : "",
+    fecha_pago: solicitudExistente?.fecha_pago ?? hoyISO(),
+    medio_pago: solicitudExistente?.medio_pago ?? "transferencia",
+    referencia: solicitudExistente?.referencia ?? "",
   });
-  const [archivoNombre, setArchivoNombre] = useState<string | null>(null);
+  const [archivoNombre, setArchivoNombre] = useState<string | null>(
+    solicitudExistente?.comprobante_nombre_archivo ?? null
+  );
   const [comprobante, setComprobante] = useState<{
     path: string;
     nombre: string;
     tamano: number;
     mime: string | null;
-  } | null>(null);
+  } | null>(
+    solicitudExistente?.comprobante_storage_path
+      ? {
+          path: solicitudExistente.comprobante_storage_path,
+          nombre: solicitudExistente.comprobante_nombre_archivo ?? "comprobante",
+          tamano: solicitudExistente.comprobante_tamano_bytes ?? 0,
+          mime: solicitudExistente.comprobante_mime_type,
+        }
+      : null
+  );
   const [subiendoArchivo, setSubiendoArchivo] = useState(false);
   const [errorArchivo, setErrorArchivo] = useState<string | null>(null);
   const [errorPaso, setErrorPaso] = useState<string | null>(null);
   const [confirmandoCancelar, setConfirmandoCancelar] = useState(false);
+  const formRef = useRef<HTMLFormElement>(null);
   const enviado = useRef(false);
 
   const actual = PASOS[paso];
@@ -171,18 +197,18 @@ export function SolicitudPagoWizard({ cargoId, saldoPendiente }: { cargoId: stri
     }
     if (p.tipo === "select") {
       return (
-        <select
+        <SelectStyled
           name={p.key}
           value={val}
           onChange={(e) => set(p.key, e.target.value)}
-          className={`${ui.input} text-base`}
+          className="text-base"
         >
           {MEDIO_OPCIONES.map((o) => (
             <option key={o.value} value={o.value}>
               {o.label}
             </option>
           ))}
-        </select>
+        </SelectStyled>
       );
     }
     return (
@@ -216,19 +242,24 @@ export function SolicitudPagoWizard({ cargoId, saldoPendiente }: { cargoId: stri
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
           <div className="flex w-full max-w-sm flex-col items-center gap-3 rounded-xl bg-burgundy-strong p-5 shadow-lg">
             <p className="text-center text-sm text-white">
-              Se perderá el avance de esta solicitud. ¿Cancelar de todas formas?
+              ¿Deseas guardar {editando ? "los cambios" : "esta solicitud"} como está antes de salir?
             </p>
             <div className="flex gap-2">
               <button
                 type="button"
-                onClick={() => router.push("/portal/cargos")}
-                className="inline-flex items-center gap-1.5 rounded-lg bg-white px-4 py-2 text-sm font-medium text-burgundy shadow-sm transition-colors hover:bg-white/90"
+                onClick={() => {
+                  enviado.current = true;
+                  setConfirmandoCancelar(false);
+                  formRef.current?.requestSubmit();
+                }}
+                disabled={subiendoArchivo}
+                className="inline-flex items-center gap-1.5 rounded-lg bg-white px-4 py-2 text-sm font-medium text-burgundy shadow-sm transition-colors hover:bg-white/90 disabled:pointer-events-none disabled:opacity-50"
               >
-                Sí, cancelar
+                Sí, guardar
               </button>
               <button
                 type="button"
-                onClick={() => setConfirmandoCancelar(false)}
+                onClick={() => router.push("/portal/cargos")}
                 className="inline-flex items-center gap-1.5 rounded-lg bg-white/10 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-white/20"
               >
                 No
@@ -239,6 +270,7 @@ export function SolicitudPagoWizard({ cargoId, saldoPendiente }: { cargoId: stri
       )}
 
       <form
+        ref={formRef}
         action={formAction}
         onSubmit={() => {
           enviado.current = true;
@@ -256,9 +288,6 @@ export function SolicitudPagoWizard({ cargoId, saldoPendiente }: { cargoId: stri
         className="flex flex-col items-center gap-4 text-center"
       >
         <p className="text-xs text-white/60">Saldo pendiente: ${saldoPendiente.toLocaleString("es-CL")}</p>
-        <p className="text-xs text-white/50">
-          Este pago quedará pendiente de validación del propietario antes de reflejarse en tu saldo.
-        </p>
 
         {PASOS.filter((p) => p.tipo !== "archivo").map((p, i) => {
           const idx = PASOS.indexOf(p);
@@ -293,7 +322,7 @@ export function SolicitudPagoWizard({ cargoId, saldoPendiente }: { cargoId: stri
           )}
 
         {errorPaso && <p className="text-sm text-amber-200">{errorPaso}</p>}
-        {esUltimo && state.error && <p className="text-sm text-amber-200">{state.error}</p>}
+        {state.error && <p className="text-sm text-amber-200">{state.error}</p>}
 
         <div className="grid w-full grid-cols-3 items-center gap-2">
           <button
@@ -329,7 +358,8 @@ export function SolicitudPagoWizard({ cargoId, saldoPendiente }: { cargoId: stri
               disabled={pending || subiendoArchivo}
               className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-white px-3 py-2 text-sm font-medium text-burgundy shadow-sm transition-colors hover:bg-white/90 disabled:pointer-events-none disabled:opacity-50"
             >
-              <Check size={15} /> {pending ? "Enviando…" : "Informar pago"}
+              <Check size={15} />{" "}
+              {pending ? "Guardando…" : editando ? "Guardar cambios" : "Informar pago"}
             </button>
           )}
         </div>

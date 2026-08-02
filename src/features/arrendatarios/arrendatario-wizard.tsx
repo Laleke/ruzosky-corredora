@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { ArrowLeft, ArrowRight, Check } from "lucide-react";
 import { ui } from "@/components/ui";
 import { Combobox } from "@/components/combobox";
+import { SelectStyled } from "@/components/select-styled";
 import { NOMBRES_REGIONES, comunasDeRegion } from "@/data/chile";
 import { formatearRut } from "@/lib/rut";
 import { formatearTelefono, esEmailValido } from "@/lib/contacto";
@@ -187,11 +188,11 @@ export function ArrendatarioWizard({
 
     if (p.tipo === "select") {
       return (
-        <select
+        <SelectStyled
           name={p.key}
           value={val}
           onChange={(e) => set(p.key, e.target.value)}
-          className={`${ui.input} text-base`}
+          className="text-base"
           autoFocus
         >
           {p.opciones!.map((o) => (
@@ -199,7 +200,7 @@ export function ArrendatarioWizard({
               {o.label}
             </option>
           ))}
-        </select>
+        </SelectStyled>
       );
     }
     if (p.tipo === "region") {

@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { ArrowLeft, ArrowRight, Check } from "lucide-react";
 import { ui } from "@/components/ui";
 import { ComboboxOpcion } from "@/components/combobox-opcion";
+import { SelectStyled } from "@/components/select-styled";
 import { crearCargo, type CobroFormState } from "./actions";
 import { esTipoDesfazado } from "./constants";
 import type { ContextoPropiedad } from "@/features/documentos/queries";
@@ -184,11 +185,11 @@ export function CargoWizard({
 
     if (p.tipo === "select") {
       return (
-        <select
+        <SelectStyled
           name={p.key}
           value={val}
           onChange={(e) => set(p.key, e.target.value)}
-          className={`${ui.input} text-base`}
+          className="text-base"
           autoFocus
         >
           {TIPO_OPCIONES.map((o) => (
@@ -196,7 +197,7 @@ export function CargoWizard({
               {o.label}
             </option>
           ))}
-        </select>
+        </SelectStyled>
       );
     }
 
@@ -403,10 +404,9 @@ function SelectorPropiedadContratoWizard({
       {contratos.length > 1 && (
         <div className="flex flex-col gap-1.5">
           <label className="text-sm font-medium text-white">Contrato</label>
-          <select
+          <SelectStyled
             value={valores.contrato_id}
             onChange={(e) => onContrato(e.target.value)}
-            className={ui.input}
           >
             <option value="">Selecciona…</option>
             {contratos.map((c) => (
@@ -415,7 +415,7 @@ function SelectorPropiedadContratoWizard({
                 {c.arrendatario ? ` · ${c.arrendatario}` : ""}
               </option>
             ))}
-          </select>
+          </SelectStyled>
         </div>
       )}
 

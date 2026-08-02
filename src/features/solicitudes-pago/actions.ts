@@ -136,6 +136,73 @@ export async function crearSolicitudPago(
 }
 
 /**
+ * El arrendatario edita su propia solicitud MIENTRAS siga "pendiente" — la
+ * política RLS `solicitudes_pago_update_arrendatario` (migración 0033) es la
+ * que realmente bloquea la escritura si ya fue aprobada/rechazada o no es
+ * suya; el chequeo de estado acá es solo para devolver un mensaje claro en
+ * vez de un error genérico de Postgres.
+ */
+export async function editarSolicitudPago(
+  solicitudId: string,
+  cargoId: string,
+  _prev: SolicitudFormState,
+  formData: FormData
+): Promise<SolicitudFormState> {
+  const profile = await getCurrentProfile();
+  if (!profile || profile.rol !== "arrendatario") return { error: "No autorizado." };
+
+  const supabase = await createClient();
+  const { data: solicitud } = await supabase
+    .from("solicitudes_pago")
+    .select("id, estado")
+    .eq("id", solicitudId)
+    .single();
+  if (!solicitud) return { error: "No autorizado o no encontrada." };
+  if (solicitud.estado !== "pendiente") {
+    return { error: "Esta solicitud ya fue revisada — ya no se puede editar." };
+  }
+
+  const { data: cargo } = await supabase
+    .from("cargos")
+    .select("id, saldo_pendiente")
+    .eq("id", cargoId)
+    .single();
+  if (!cargo) return { error: "No autorizado para este cargo." };
+
+  const monto = decimal(formData, "monto_pagado");
+  if (monto === null || monto <= 0) {
+    return { error: "El monto del pago debe ser mayor a 0." };
+  }
+  const excedeSaldo = monto > Number(cargo.saldo_pendiente) + 0.01;
+
+  const fecha_pago = texto(formData, "fecha_pago") ?? new Date().toISOString().slice(0, 10);
+  const medioRaw = texto(formData, "medio_pago");
+  const medio_pago =
+    medioRaw && (MEDIOS as string[]).includes(medioRaw) ? (medioRaw as MedioPago) : null;
+
+  const { error } = await supabase
+    .from("solicitudes_pago")
+    .update({
+      monto,
+      fecha_pago,
+      medio_pago,
+      referencia: texto(formData, "referencia"),
+      observaciones: texto(formData, "observaciones"),
+      excede_saldo: excedeSaldo,
+      comprobante_storage_path: texto(formData, "comprobante_path"),
+      comprobante_nombre_archivo: texto(formData, "comprobante_nombre"),
+      comprobante_tamano_bytes: decimal(formData, "comprobante_tamano"),
+      comprobante_mime_type: texto(formData, "comprobante_mime"),
+    })
+    .eq("id", solicitudId);
+
+  if (error) return { error: "No se pudo guardar la edición." };
+
+  revalidatePath("/portal/cargos");
+  redirect("/portal/cargos");
+}
+
+/**
  * Aprueba una solicitud: crea el `pago` real (mismo efecto que
  * `registrarPago`) y recalcula el cargo. Autorizado para admin, o para el
  * propietario dueño de la propiedad del cargo — esto último ya lo garantiza

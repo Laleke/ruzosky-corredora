@@ -7,6 +7,7 @@ import { ArrowLeft, Pencil, Trash2 } from "lucide-react";
 import { badge, ui } from "@/components/ui";
 import { Combobox } from "@/components/combobox";
 import { FechaInput } from "@/components/fecha-input";
+import { SelectStyled } from "@/components/select-styled";
 import { formatearFecha } from "@/lib/fecha";
 import { NOMBRES_REGIONES, comunasDeRegion } from "@/data/chile";
 import { eliminarPropiedad, type actualizarPropiedad } from "./actions";
@@ -219,17 +220,13 @@ export function PropiedadDetalle({
               </div>
               <div>
                 <dt className="text-xs uppercase tracking-wide text-white/50">Tipo</dt>
-                <select
-                  name="tipo"
-                  defaultValue={propiedad.tipo}
-                  className={`${ui.input} mt-1`}
-                >
+                <SelectStyled name="tipo" defaultValue={propiedad.tipo} className="mt-1">
                   {TIPO_OPCIONES.map((o) => (
                     <option key={o.value} value={o.value}>
                       {o.label}
                     </option>
                   ))}
-                </select>
+                </SelectStyled>
               </div>
             </>
           ) : (
@@ -358,20 +355,20 @@ export function PropiedadDetalle({
             <>
               <div>
                 <dt className="text-xs uppercase tracking-wide text-white/50">Estado</dt>
-                <select name="estado" defaultValue={propiedad.estado} className={`${ui.input} mt-1`}>
+                <SelectStyled name="estado" defaultValue={propiedad.estado} className="mt-1">
                   {ESTADO_OPCIONES.map((o) => (
                     <option key={o.value} value={o.value}>
                       {o.label}
                     </option>
                   ))}
-                </select>
+                </SelectStyled>
               </div>
               <div>
                 <dt className="text-xs uppercase tracking-wide text-white/50">Moneda</dt>
-                <select name="moneda" defaultValue={propiedad.moneda} className={`${ui.input} mt-1`}>
+                <SelectStyled name="moneda" defaultValue={propiedad.moneda} className="mt-1">
                   <option value="CLP">CLP</option>
                   <option value="UF">UF</option>
-                </select>
+                </SelectStyled>
               </div>
             </>
           ) : (

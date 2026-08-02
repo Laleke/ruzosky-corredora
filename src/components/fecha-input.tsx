@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { ui } from "@/components/ui";
+import { SelectStyled } from "@/components/select-styled";
 
 const MESES = [
   "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
@@ -61,10 +61,9 @@ export function FechaInput({
   return (
     <div className="grid grid-cols-3 gap-2">
       <input type="hidden" name={name} value={actual} />
-      <select
+      <SelectStyled
         value={d}
         onChange={(e) => actualizar(e.target.value, m, a)}
-        className={ui.input}
         aria-label="Día"
       >
         <option value="">Día</option>
@@ -73,11 +72,10 @@ export function FechaInput({
             {x}
           </option>
         ))}
-      </select>
-      <select
+      </SelectStyled>
+      <SelectStyled
         value={m}
         onChange={(e) => actualizar(d, e.target.value, a)}
-        className={ui.input}
         aria-label="Mes"
       >
         <option value="">Mes</option>
@@ -86,11 +84,10 @@ export function FechaInput({
             {label}
           </option>
         ))}
-      </select>
-      <select
+      </SelectStyled>
+      <SelectStyled
         value={a}
         onChange={(e) => actualizar(d, m, e.target.value)}
-        className={ui.input}
         aria-label="Año"
       >
         <option value="">Año</option>
@@ -99,7 +96,7 @@ export function FechaInput({
             {x}
           </option>
         ))}
-      </select>
+      </SelectStyled>
     </div>
   );
 }

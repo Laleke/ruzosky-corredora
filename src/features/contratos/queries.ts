@@ -33,7 +33,7 @@ export async function listContratos(
   let query = supabase
     .from("contratos")
     .select(
-      "*, propiedades(codigo_interno, direccion, numero, departamento), contratos_arrendatarios(arrendatarios(nombre, apellido, razon_social, tipo_persona))"
+      "*, propiedades(codigo_interno, direccion, numero, departamento, tipo), contratos_arrendatarios(arrendatarios(nombre, apellido, razon_social, tipo_persona))"
     );
 
   if (filtros.estado) query = query.eq("estado", filtros.estado as EstadoContrato);
@@ -50,6 +50,7 @@ export async function listContratos(
       direccion: string | null;
       numero: string | null;
       departamento: string | null;
+      tipo: string | null;
     } | null;
     contratos_arrendatarios: { arrendatarios: ArrendatarioResumen | null }[];
   };
@@ -58,6 +59,7 @@ export async function listContratos(
     ...c,
     propiedad_direccion: c.propiedades?.direccion ?? "—",
     propiedad_label: etiquetaPropiedad(c.propiedades),
+    propiedad_tipo: c.propiedades?.tipo ?? "otro",
     arrendatarios_nombres: c.contratos_arrendatarios.map((v) =>
       nombreArrendatario(v.arrendatarios)
     ),

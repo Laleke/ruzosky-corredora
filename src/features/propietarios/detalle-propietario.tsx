@@ -7,6 +7,7 @@ import { ArrowLeft, Pencil, Trash2 } from "lucide-react";
 import { badge, ui } from "@/components/ui";
 import { Combobox } from "@/components/combobox";
 import { SelectCombo } from "@/components/select-combo";
+import { SelectStyled } from "@/components/select-styled";
 import { EmailTexto } from "@/components/email-texto";
 import { NOMBRES_REGIONES, comunasDeRegion } from "@/data/chile";
 import { BANCOS_CHILE } from "@/data/bancos";
@@ -187,17 +188,17 @@ export function DetallePropietario({
           {editando ? (
             <div>
               <dt className="text-xs uppercase tracking-wide text-white/50">Tipo de persona</dt>
-              <select
+              <SelectStyled
                 name="tipo_persona"
                 value={tipoPersona}
                 onChange={(e) =>
                   setTipoPersona(e.target.value as Propietario["tipo_persona"])
                 }
-                className={`${ui.input} mt-1`}
+                className="mt-1"
               >
                 <option value="persona_natural">Persona natural</option>
                 <option value="persona_juridica">Persona jurídica</option>
-              </select>
+              </SelectStyled>
             </div>
           ) : (
             <Dato

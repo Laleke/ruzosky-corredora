@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Filter, X } from "lucide-react";
 import { ui } from "@/components/ui";
 import { ComboboxOpcion } from "@/components/combobox-opcion";
+import { SelectStyled } from "@/components/select-styled";
 
 type Opcion = { id: string; label: string };
 type Campos = { anio: string; propiedad: string; propietario: string };
@@ -49,18 +50,17 @@ export function FiltroReportes({
         >
           <label className="flex flex-col gap-1 text-sm">
             <span className="font-medium text-canvas-fg">Año</span>
-            <select
+            <SelectStyled
               name="anio"
               value={campos.anio}
               onChange={(e) => set("anio", e.target.value)}
-              className={ui.input}
             >
               {anios.map((a) => (
                 <option key={a} value={a}>
                   {a}
                 </option>
               ))}
-            </select>
+            </SelectStyled>
           </label>
           <label className="flex flex-col gap-1 text-sm">
             <span className="font-medium text-canvas-fg">Propiedad</span>

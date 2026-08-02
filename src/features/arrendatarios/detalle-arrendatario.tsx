@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { ArrowLeft, Pencil, Trash2 } from "lucide-react";
 import { badge, ui } from "@/components/ui";
 import { Combobox } from "@/components/combobox";
+import { SelectStyled } from "@/components/select-styled";
 import { EmailTexto } from "@/components/email-texto";
 import { NOMBRES_REGIONES, comunasDeRegion } from "@/data/chile";
 import { formatearRut } from "@/lib/rut";
@@ -171,17 +172,17 @@ export function DetalleArrendatario({
           {editando ? (
             <div>
               <dt className="text-xs uppercase tracking-wide text-white/50">Tipo de persona</dt>
-              <select
+              <SelectStyled
                 name="tipo_persona"
                 value={tipoPersona}
                 onChange={(e) =>
                   setTipoPersona(e.target.value as Arrendatario["tipo_persona"])
                 }
-                className={`${ui.input} mt-1`}
+                className="mt-1"
               >
                 <option value="persona_natural">Persona natural</option>
                 <option value="persona_juridica">Persona jurídica</option>
-              </select>
+              </SelectStyled>
             </div>
           ) : (
             <Dato

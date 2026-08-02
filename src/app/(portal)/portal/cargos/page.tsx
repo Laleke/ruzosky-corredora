@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Send } from "lucide-react";
+import { Pencil, Send } from "lucide-react";
 import { misCargos } from "@/features/portal/queries";
 import { misSolicitudes } from "@/features/solicitudes-pago/queries";
 import { ui, badge } from "@/components/ui";
@@ -107,10 +107,19 @@ export default async function PortalCargosPage() {
                     >
                       <Send size={15} /> Informar pago
                     </Link>
-                    <p className="text-center text-xs text-white/50">
+                    <p className="text-center text-xs font-semibold text-white/80">
                       Quedará pendiente de validación del propietario.
                     </p>
                   </div>
+                )}
+
+                {solicitudActiva && (
+                  <Link
+                    href={`/portal/cargos/${c.id}/solicitar-pago`}
+                    className="mt-1 flex items-center justify-center gap-2 rounded-lg bg-white/10 px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-white/20"
+                  >
+                    <Pencil size={15} /> Editar pago informado
+                  </Link>
                 )}
               </div>
             );

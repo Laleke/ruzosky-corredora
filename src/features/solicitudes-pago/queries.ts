@@ -49,6 +49,22 @@ export async function misSolicitudes(): Promise<SolicitudConContexto[]> {
 }
 
 /**
+ * La solicitud pendiente del arrendatario para este cargo, si tiene una — se
+ * usa para ofrecerle editarla en vez de crear una duplicada. RLS
+ * (`solicitudes_pago_select_arrendatario`) ya filtra a sus propias filas.
+ */
+export async function miSolicitudPendiente(cargoId: string): Promise<SolicitudPago | null> {
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("solicitudes_pago")
+    .select("*")
+    .eq("cargo_id", cargoId)
+    .eq("estado", "pendiente")
+    .maybeSingle();
+  return data ?? null;
+}
+
+/**
  * Solicitudes pendientes de revisar. RLS filtra automáticamente el alcance:
  * admin ve todas las de la empresa; propietario solo las de sus propiedades.
  */

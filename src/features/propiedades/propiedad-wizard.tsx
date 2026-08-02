@@ -7,6 +7,7 @@ import { ArrowLeft, ArrowRight, Check } from "lucide-react";
 import { ui } from "@/components/ui";
 import { Combobox } from "@/components/combobox";
 import { FechaInput } from "@/components/fecha-input";
+import { SelectStyled } from "@/components/select-styled";
 import { NOMBRES_REGIONES, comunasDeRegion } from "@/data/chile";
 import type { PropiedadFormState } from "./actions";
 
@@ -214,11 +215,11 @@ export function PropiedadWizard({ action }: { action: Action }) {
     switch (p.tipo) {
       case "select":
         return visible ? (
-          <select
+          <SelectStyled
             name={p.key}
             value={String(val)}
             onChange={(e) => set(p.key, e.target.value)}
-            className={`${ui.input} text-base`}
+            className="text-base"
             autoFocus
           >
             {p.opciones!.map((o) => (
@@ -226,7 +227,7 @@ export function PropiedadWizard({ action }: { action: Action }) {
                 {o.label}
               </option>
             ))}
-          </select>
+          </SelectStyled>
         ) : (
           <input type="hidden" name={p.key} value={String(val)} />
         );

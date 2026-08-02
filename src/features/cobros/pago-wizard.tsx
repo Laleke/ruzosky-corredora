@@ -5,6 +5,7 @@ import { useActionState } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, ArrowRight, Check, Paperclip } from "lucide-react";
 import { ui } from "@/components/ui";
+import { SelectStyled } from "@/components/select-styled";
 import { MAX_TAMANO_BYTES } from "@/features/documentos/constants";
 import { subirArchivo, limpiarArchivo } from "@/features/documentos/storage-client";
 import { registrarDocumento } from "@/features/documentos/actions";
@@ -167,11 +168,11 @@ export function PagoWizard({
     }
     if (p.tipo === "select") {
       return (
-        <select
+        <SelectStyled
           name={p.key}
           value={val}
           onChange={(e) => set(p.key, e.target.value)}
-          className={`${ui.input} text-base`}
+          className="text-base"
           autoFocus
         >
           {MEDIO_OPCIONES.map((o) => (
@@ -179,7 +180,7 @@ export function PagoWizard({
               {o.label}
             </option>
           ))}
-        </select>
+        </SelectStyled>
       );
     }
     if (p.tipo === "archivo") {

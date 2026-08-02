@@ -3,6 +3,7 @@
 import { useActionState, useState } from "react";
 import { Plus, Trash2 } from "lucide-react";
 import { ui } from "@/components/ui";
+import { SelectStyled } from "@/components/select-styled";
 import type { LiquidacionFormState } from "./actions";
 
 type Action = (
@@ -80,14 +81,13 @@ export function ConfirmarForm({
             key={i}
             className="grid grid-cols-1 gap-2 rounded-lg border border-line p-3 sm:grid-cols-[7rem_1fr_8rem_auto]"
           >
-            <select
+            <SelectStyled
               value={a.tipo}
               onChange={(e) => actualizar(i, "tipo", e.target.value)}
-              className={ui.input}
             >
               <option value="ingreso">Ingreso</option>
               <option value="descuento">Descuento</option>
-            </select>
+            </SelectStyled>
             <input
               value={a.concepto}
               onChange={(e) => actualizar(i, "concepto", e.target.value)}

@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Filter, X } from "lucide-react";
 import { ui } from "@/components/ui";
 import { ComboboxOpcion } from "@/components/combobox-opcion";
+import { SelectStyled } from "@/components/select-styled";
 import { CATEGORIAS } from "./constants";
 
 type Opcion = { id: string; label: string };
@@ -77,11 +78,10 @@ export function FiltroDocumentos({
           </label>
           <label className="flex flex-col gap-1 text-sm">
             <span className="font-medium text-canvas-fg">Categoría</span>
-            <select
+            <SelectStyled
               name="categoria"
               value={campos.categoria}
               onChange={(e) => set("categoria", e.target.value)}
-              className={ui.input}
             >
               <option value="">Todas</option>
               {CATEGORIAS.map((c) => (
@@ -89,7 +89,7 @@ export function FiltroDocumentos({
                   {c.label}
                 </option>
               ))}
-            </select>
+            </SelectStyled>
           </label>
           <label className="flex flex-col gap-1 text-sm">
             <span className="font-medium text-canvas-fg">Propiedad</span>

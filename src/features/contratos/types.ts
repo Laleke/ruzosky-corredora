@@ -9,6 +9,8 @@ export type ContratoConPropiedad = Contrato & {
   propiedad_direccion: string;
   /** Etiqueta descriptiva unificada (código · calle número · unidad). */
   propiedad_label: string;
+  /** Tipo de la propiedad (departamento, casa, etc.) — para el listado. */
+  propiedad_tipo: string;
   /** Nombres de los arrendatarios vinculados (para el listado). */
   arrendatarios_nombres: string[];
 };

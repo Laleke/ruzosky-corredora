@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { ui } from "@/components/ui";
+import { SelectStyled } from "@/components/select-styled";
 import type { ContextoPropiedad } from "@/features/documentos/queries";
 
 type Opcion = { id: string; label: string };
@@ -49,29 +50,21 @@ export function SelectorPropiedadContrato({
     <>
       <div className="flex flex-col gap-1.5">
         <label className={labelCls}>Propiedad *</label>
-        <select
-          value={prop}
-          onChange={(e) => onProp(e.target.value)}
-          className={ui.input}
-        >
+        <SelectStyled value={prop} onChange={(e) => onProp(e.target.value)}>
           <option value="">Selecciona…</option>
           {propiedades.map((o) => (
             <option key={o.id} value={o.id}>
               {o.label}
             </option>
           ))}
-        </select>
+        </SelectStyled>
       </div>
 
       {/* Contrato: solo se pide si hay más de un contrato vigente. */}
       {contratos.length > 1 && (
         <div className="flex flex-col gap-1.5">
           <label className={labelCls}>Contrato *</label>
-          <select
-            value={contratoSel}
-            onChange={(e) => setContratoSel(e.target.value)}
-            className={ui.input}
-          >
+          <SelectStyled value={contratoSel} onChange={(e) => setContratoSel(e.target.value)}>
             <option value="">Selecciona…</option>
             {contratos.map((c) => (
               <option key={c.contratoId} value={c.contratoId}>
@@ -79,7 +72,7 @@ export function SelectorPropiedadContrato({
                 {c.arrendatario ? ` · ${c.arrendatario}` : ""}
               </option>
             ))}
-          </select>
+          </SelectStyled>
         </div>
       )}
 
