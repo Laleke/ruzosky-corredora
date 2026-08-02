@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState } from "react";
+import Link from "next/link";
 import { signIn, type LoginState } from "./actions";
 import { ui } from "@/components/ui";
 
@@ -37,6 +38,9 @@ export function LoginForm() {
           required
           className={ui.input}
         />
+        <Link href="/recuperar-clave" className="self-end text-xs text-white/70 hover:text-white">
+          ¿Olvidaste tu contraseña?
+        </Link>
       </div>
 
       {state.error && (

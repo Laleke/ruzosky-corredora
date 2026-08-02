@@ -11,6 +11,7 @@ import {
   Receipt,
   FolderOpen,
   ClipboardCheck,
+  KeyRound,
   LogOut,
   Menu,
   X,
@@ -18,6 +19,7 @@ import {
 import type { EntidadPortal } from "./types";
 
 const NAV_BASE = [{ href: "/portal", label: "Inicio", icon: LayoutDashboard }];
+const NAV_FINAL = [{ href: "/portal/cuenta", label: "Mi cuenta", icon: KeyRound }];
 
 const NAV_POR_ROL: Record<EntidadPortal, typeof NAV_BASE> = {
   propietario: [
@@ -36,7 +38,7 @@ const NAV_POR_ROL: Record<EntidadPortal, typeof NAV_BASE> = {
 
 function NavLinks({ rol, onNavigate }: { rol: EntidadPortal; onNavigate?: () => void }) {
   const pathname = usePathname();
-  const nav = [...NAV_BASE, ...NAV_POR_ROL[rol]];
+  const nav = [...NAV_BASE, ...NAV_POR_ROL[rol], ...NAV_FINAL];
   return (
     <nav className="flex flex-1 flex-col gap-1 px-3">
       {nav.map(({ href, label, icon: Icon }) => {

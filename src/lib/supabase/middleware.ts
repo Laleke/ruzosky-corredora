@@ -42,6 +42,13 @@ export async function updateSession(request: NextRequest) {
     pathname.startsWith("/login") ||
     pathname.startsWith("/auth") ||
     pathname.startsWith("/invitacion") ||
+    pathname.startsWith("/recuperar-clave") ||
+    // La sesión de recuperación la establece el cliente en el navegador
+    // desde el fragmento de la URL (#access_token=...) — en el primer
+    // request al servidor todavía no hay cookie de sesión, así que esta
+    // ruta tiene que ser pública o el middleware redirigiría a /login
+    // antes de que el JS del cliente alcance a detectarla.
+    pathname.startsWith("/actualizar-clave") ||
     pathname === "/";
 
   // Sin sesión y ruta privada → redirige a login.

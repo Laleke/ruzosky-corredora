@@ -5,7 +5,8 @@ import { useActionState } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, ArrowRight, Check, Paperclip } from "lucide-react";
 import { ui } from "@/components/ui";
-import { crearSolicitudPago } from "./actions";
+import { MAX_TAMANO_BYTES } from "@/features/documentos/constants";
+import { crearSolicitudPago, subirComprobanteSolicitud } from "./actions";
 import type { SolicitudFormState } from "./types";
 
 const MEDIO_OPCIONES = [
@@ -48,6 +49,14 @@ export function SolicitudPagoWizard({ cargoId, saldoPendiente }: { cargoId: stri
     referencia: "",
   });
   const [archivoNombre, setArchivoNombre] = useState<string | null>(null);
+  const [comprobante, setComprobante] = useState<{
+    path: string;
+    nombre: string;
+    tamano: number;
+    mime: string | null;
+  } | null>(null);
+  const [subiendoArchivo, setSubiendoArchivo] = useState(false);
+  const [errorArchivo, setErrorArchivo] = useState<string | null>(null);
   const [errorPaso, setErrorPaso] = useState<string | null>(null);
   const [confirmandoCancelar, setConfirmandoCancelar] = useState(false);
   const enviado = useRef(false);
@@ -64,6 +73,31 @@ export function SolicitudPagoWizard({ cargoId, saldoPendiente }: { cargoId: stri
   function set(key: string, value: string) {
     setValores((v) => ({ ...v, [key]: value }));
     setErrorPaso(null);
+  }
+
+  async function onArchivo(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file) return;
+    setErrorArchivo(null);
+
+    if (file.size > MAX_TAMANO_BYTES) {
+      setErrorArchivo("El comprobante supera el tamaño máximo (25 MB).");
+      return;
+    }
+
+    setSubiendoArchivo(true);
+    const formData = new FormData();
+    formData.set("comprobante", file);
+    const res = await subirComprobanteSolicitud(formData);
+    setSubiendoArchivo(false);
+
+    if ("error" in res) {
+      setErrorArchivo(res.error);
+      return;
+    }
+    setComprobante(res);
+    setArchivoNombre(file.name);
   }
 
   function puedeAvanzar(): boolean {
@@ -85,22 +119,24 @@ export function SolicitudPagoWizard({ cargoId, saldoPendiente }: { cargoId: stri
   }
 
   function renderInput(p: Paso, visible: boolean) {
-    // El input de archivo se mantiene siempre montado (solo oculto por CSS)
-    // para que su File sobreviva el cambio de paso — un input hidden no
-    // puede cargar un File.
+    // El archivo se sube de inmediato al elegirlo (ver `onArchivo`), así que
+    // acá solo se guarda su metadata en inputs hidden — no queda un `File`
+    // crudo esperando el submit final del wizard.
     if (p.tipo === "archivo") {
       return (
         <div className={visible ? "flex flex-col items-center gap-2" : "hidden"}>
+          <input type="hidden" name="comprobante_path" value={comprobante?.path ?? ""} />
+          <input type="hidden" name="comprobante_nombre" value={comprobante?.nombre ?? ""} />
+          <input type="hidden" name="comprobante_tamano" value={comprobante?.tamano ?? ""} />
+          <input type="hidden" name="comprobante_mime" value={comprobante?.mime ?? ""} />
           <label className="flex cursor-pointer items-center gap-2 rounded-lg bg-white/10 px-4 py-2 text-sm text-white hover:bg-white/20">
             <Paperclip size={15} />
-            {archivoNombre ?? "Adjuntar comprobante (opcional)"}
-            <input
-              type="file"
-              name="comprobante"
-              className="hidden"
-              onChange={(e) => setArchivoNombre(e.target.files?.[0]?.name ?? null)}
-            />
+            {subiendoArchivo
+              ? "Subiendo…"
+              : archivoNombre ?? "Adjuntar comprobante (opcional)"}
+            <input type="file" className="hidden" onChange={onArchivo} disabled={subiendoArchivo} />
           </label>
+          {errorArchivo && <p className="text-xs text-amber-200">{errorArchivo}</p>}
         </div>
       );
     }
@@ -282,14 +318,15 @@ export function SolicitudPagoWizard({ cargoId, saldoPendiente }: { cargoId: stri
             <button
               type="button"
               onClick={siguiente}
-              className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-white px-3 py-2 text-sm font-medium text-burgundy shadow-sm transition-colors hover:bg-white/90"
+              disabled={subiendoArchivo}
+              className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-white px-3 py-2 text-sm font-medium text-burgundy shadow-sm transition-colors hover:bg-white/90 disabled:pointer-events-none disabled:opacity-50"
             >
               Siguiente <ArrowRight size={15} />
             </button>
           ) : (
             <button
               type="submit"
-              disabled={pending}
+              disabled={pending || subiendoArchivo}
               className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-white px-3 py-2 text-sm font-medium text-burgundy shadow-sm transition-colors hover:bg-white/90 disabled:pointer-events-none disabled:opacity-50"
             >
               <Check size={15} /> {pending ? "Enviando…" : "Informar pago"}

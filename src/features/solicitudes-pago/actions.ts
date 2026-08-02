@@ -6,11 +6,11 @@ import { getCurrentProfile } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { recalcularCargo } from "@/features/cobros/actions";
+import { MAX_TAMANO_BYTES } from "@/features/documentos/constants";
 import type { MedioPago } from "@/types/database.types";
 import type { SolicitudFormState } from "./types";
 
 const MEDIOS: MedioPago[] = ["transferencia", "efectivo", "cheque", "tarjeta", "otro"];
-const MAX_TAMANO_BYTES = 25 * 1024 * 1024;
 
 function decimal(formData: FormData, campo: string): number | null {
   const v = String(formData.get(campo) ?? "").trim();
@@ -24,12 +24,54 @@ function texto(formData: FormData, campo: string): string | null {
   return v === "" ? null : v;
 }
 
+export type ComprobanteSubido =
+  | { path: string; nombre: string; tamano: number; mime: string | null }
+  | { error: string };
+
+/**
+ * Sube el comprobante apenas el arrendatario lo selecciona (no espera al
+ * submit final del wizard). El arrendatario no tiene permiso de escribir en
+ * Storage directamente (por diseño del portal, ver migración 0015), por eso
+ * usa el cliente admin — la autorización real está en el chequeo de rol de
+ * abajo, no en RLS de Storage.
+ *
+ * Subir de inmediato (en vez de arrastrar el `File` crudo hasta el submit
+ * final) evita que el navegador quede con un input de archivo "vivo" en un
+ * paso intermedio del wizard — en el celular, abrir la cámara/galería desde
+ * ahí llegó a disparar un submit del formulario antes de que el usuario
+ * terminara de elegir el archivo.
+ */
+export async function subirComprobanteSolicitud(formData: FormData): Promise<ComprobanteSubido> {
+  const profile = await getCurrentProfile();
+  if (!profile || profile.rol !== "arrendatario") return { error: "No autorizado." };
+
+  const archivo = formData.get("comprobante");
+  if (!(archivo instanceof File) || archivo.size === 0) {
+    return { error: "Selecciona un archivo." };
+  }
+  if (archivo.size > MAX_TAMANO_BYTES) {
+    return { error: "El comprobante supera el tamaño máximo (25 MB)." };
+  }
+
+  const admin = createAdminClient();
+  const ext = archivo.name.includes(".")
+    ? archivo.name.slice(archivo.name.lastIndexOf(".") + 1).toLowerCase()
+    : "";
+  const path = `${profile.empresa_id}/${crypto.randomUUID()}${ext ? `.${ext}` : ""}`;
+  const { error: errUp } = await admin.storage.from("documentos").upload(path, archivo, {
+    contentType: archivo.type || undefined,
+    upsert: false,
+  });
+  if (errUp) return { error: "No se pudo subir el comprobante." };
+
+  return { path, nombre: archivo.name, tamano: archivo.size, mime: archivo.type || null };
+}
+
 /**
  * El arrendatario reporta un pago desde el portal. Queda "pendiente" — NO
  * crea un `pago` real todavía (eso solo pasa al aprobar, ver
- * `aprobarSolicitudPago`). El comprobante (si lo adjunta) se sube server-side
- * con el cliente admin porque el arrendatario no tiene permiso de escribir en
- * Storage directamente (por diseño del portal, ver migración 0015).
+ * `aprobarSolicitudPago`). El comprobante (si lo adjuntó) ya fue subido antes
+ * por `subirComprobanteSolicitud` — acá solo se leen sus datos.
  */
 export async function crearSolicitudPago(
   cargoId: string,
@@ -70,25 +112,6 @@ export async function crearSolicitudPago(
   const medio_pago =
     medioRaw && (MEDIOS as string[]).includes(medioRaw) ? (medioRaw as MedioPago) : null;
 
-  let comprobante: { path: string; nombre: string; tamano: number; mime: string | null } | null = null;
-  const archivo = formData.get("comprobante");
-  if (archivo instanceof File && archivo.size > 0) {
-    if (archivo.size > MAX_TAMANO_BYTES) {
-      return { error: "El comprobante supera el tamaño máximo (25 MB)." };
-    }
-    const admin = createAdminClient();
-    const ext = archivo.name.includes(".")
-      ? archivo.name.slice(archivo.name.lastIndexOf(".") + 1).toLowerCase()
-      : "";
-    const path = `${profile.empresa_id}/${crypto.randomUUID()}${ext ? `.${ext}` : ""}`;
-    const { error: errUp } = await admin.storage.from("documentos").upload(path, archivo, {
-      contentType: archivo.type || undefined,
-      upsert: false,
-    });
-    if (errUp) return { error: "No se pudo subir el comprobante." };
-    comprobante = { path, nombre: archivo.name, tamano: archivo.size, mime: archivo.type || null };
-  }
-
   const { error } = await supabase.from("solicitudes_pago").insert({
     empresa_id: profile.empresa_id,
     cargo_id: cargoId,
@@ -100,10 +123,10 @@ export async function crearSolicitudPago(
     observaciones: texto(formData, "observaciones"),
     excede_saldo: excedeSaldo,
     saldo_pendiente_al_crear: cargo.saldo_pendiente,
-    comprobante_storage_path: comprobante?.path ?? null,
-    comprobante_nombre_archivo: comprobante?.nombre ?? null,
-    comprobante_tamano_bytes: comprobante?.tamano ?? null,
-    comprobante_mime_type: comprobante?.mime ?? null,
+    comprobante_storage_path: texto(formData, "comprobante_path"),
+    comprobante_nombre_archivo: texto(formData, "comprobante_nombre"),
+    comprobante_tamano_bytes: decimal(formData, "comprobante_tamano"),
+    comprobante_mime_type: texto(formData, "comprobante_mime"),
   });
 
   if (error) return { error: "No se pudo enviar la solicitud." };

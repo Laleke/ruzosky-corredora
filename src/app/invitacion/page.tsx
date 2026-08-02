@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
+import { getCurrentProfile } from "@/lib/auth";
 
 /**
  * Página de aterrizaje del link de invitación compartido por WhatsApp.
@@ -7,12 +9,20 @@ import Link from "next/link";
  * en `src/features/portal/actions.ts` para el motivo: WhatsApp precarga la
  * URL compartida para la vista previa, y como el token es de un solo uso,
  * esa precarga lo dejaba inválido antes de que la persona lo tocara).
+ *
+ * Quien ya tiene sesión activa en este navegador (típicamente porque siempre
+ * vuelve a abrir la app tocando el mismo link de WhatsApp, en vez de buscar
+ * el ícono de la PWA instalada) no necesita "registrarse" de nuevo — se le
+ * manda derecho a su app.
  */
 export default async function InvitacionPage({
   searchParams,
 }: {
   searchParams: Promise<{ token_hash?: string; type?: string; next?: string }>;
 }) {
+  const profile = await getCurrentProfile();
+  if (profile) redirect(profile.rol === "admin" ? "/dashboard" : "/portal");
+
   const sp = await searchParams;
   const valido = Boolean(sp.token_hash && sp.type);
 
