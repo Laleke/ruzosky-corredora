@@ -64,6 +64,18 @@ async function resolverContratoScope(
   return conjuntos.reduce((acc, set) => acc.filter((id) => set.includes(id)));
 }
 
+/** true si el llamador no fijó ningún filtro — activa el acotado por defecto. */
+function sinFiltros(filtros: FiltrosCargos): boolean {
+  return !(
+    filtros.propiedadId ||
+    filtros.arrendatarioId ||
+    filtros.estado ||
+    filtros.periodo ||
+    filtros.venceDesde ||
+    filtros.venceHasta
+  );
+}
+
 export async function listCargos(
   filtros: FiltrosCargos = {}
 ): Promise<CargoConContexto[]> {
@@ -83,6 +95,14 @@ export async function listCargos(
   if (filtros.venceHasta) q = q.lte("fecha_vencimiento", filtros.venceHasta);
   if (filtros.estado && filtros.estado !== "vencido") {
     q = q.eq("estado", filtros.estado);
+  }
+  // Sin filtros del usuario: acotar a deuda viva + período actual, en vez de
+  // traer el historial completo de cargos (incluidos los ya pagados hace
+  // años) en cada carga de la página. Con filtros explícitos (estado, período,
+  // etc.) se respeta lo que el usuario pidió, sin este acotado.
+  if (sinFiltros(filtros)) {
+    const periodoActualISO = `${new Date().toISOString().slice(0, 7)}-01`;
+    q = q.or(`saldo_pendiente.gt.0,periodo.eq.${periodoActualISO}`);
   }
 
   const { data, error } = await q;
