@@ -64,6 +64,13 @@ export function PagoWizard({
   const [errorPaso, setErrorPaso] = useState<string | null>(null);
   const [confirmandoCancelar, setConfirmandoCancelar] = useState(false);
   const enviado = useRef(false);
+  // Con un solo campo visible por paso, algunos teclados móviles disparan el
+  // submit implícito del formulario (tecla "Ir"/"Done") sin que llegue a
+  // pasar por un evento de teclado que JS pueda interceptar a tiempo — guardó
+  // el pago antes de terminar de adjuntar el comprobante. Bloquear en
+  // onKeyDown no fue suficiente; acá se exige una marca explícita puesta SOLO
+  // por el botón real de guardar antes de dejar pasar el submit.
+  const permitirSubmit = useRef(false);
 
   const [archivoNombre, setArchivoNombre] = useState<string | null>(null);
   const [subiendoArchivo, setSubiendoArchivo] = useState(false);
@@ -253,17 +260,24 @@ export function PagoWizard({
 
       <form
         action={formAction}
-        onSubmit={() => {
+        onSubmit={(e) => {
+          if (!permitirSubmit.current) {
+            e.preventDefault();
+            return;
+          }
           enviado.current = true;
         }}
         onKeyDown={(e) => {
-          // Con un solo campo de texto visible por paso, el navegador puede
-          // hacer submit implícito al presionar Enter (o "Ir" en el teclado
-          // del celular) aunque el paso actual no tenga botón de submit —
-          // guardaría el pago antes de llegar al paso de comprobante.
-          if (e.key === "Enter" && e.target instanceof HTMLElement && e.target.tagName !== "TEXTAREA") {
+          // Solo para conveniencia (avanzar con Enter) — la protección real
+          // contra el submit implícito es el chequeo de permitirSubmit arriba.
+          if (
+            e.key === "Enter" &&
+            !esUltimo &&
+            e.target instanceof HTMLElement &&
+            e.target.tagName !== "TEXTAREA"
+          ) {
             e.preventDefault();
-            if (!esUltimo) siguiente();
+            siguiente();
           }
         }}
         className="flex flex-col items-center gap-4 text-center"
@@ -321,6 +335,9 @@ export function PagoWizard({
           ) : (
             <button
               type="submit"
+              onClick={() => {
+                permitirSubmit.current = true;
+              }}
               disabled={pending || subiendoArchivo}
               className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-white px-3 py-2 text-sm font-medium text-burgundy shadow-sm transition-colors hover:bg-white/90 disabled:pointer-events-none disabled:opacity-50"
             >
