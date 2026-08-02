@@ -6,7 +6,7 @@ import Link from "next/link";
 import { Pencil, Paperclip, Eye, Send } from "lucide-react";
 import { badge, ui } from "@/components/ui";
 import { BotonVolver } from "@/components/boton-volver";
-import { SelectStyled } from "@/components/select-styled";
+import { ComboboxOpcion } from "@/components/combobox-opcion";
 import { FechaInput } from "@/components/fecha-input";
 import { formatearFecha, formatearPeriodo } from "@/lib/fecha";
 import { MAX_TAMANO_BYTES } from "@/features/documentos/constants";
@@ -49,6 +49,10 @@ function clp(n: number): string {
   return `$${Math.round(n).toLocaleString("es-CL")}`;
 }
 
+function fmtMonto(digits: string): string {
+  return digits === "" ? "" : Number(digits).toLocaleString("es-CL");
+}
+
 function Campo({
   editando,
   label,
@@ -56,6 +60,7 @@ function Campo({
   value,
   displayValue,
   type = "text",
+  full = false,
 }: {
   editando: boolean;
   label: string;
@@ -63,13 +68,15 @@ function Campo({
   value?: string | number | null;
   displayValue?: React.ReactNode;
   type?: "text" | "date";
+  /** Ocupa el ancho completo de la grilla — para campos que necesitan más espacio (ej. selector de fecha). */
+  full?: boolean;
 }) {
   return (
-    <div>
+    <div className={full ? "col-span-2 sm:col-span-3" : undefined}>
       <dt className="text-xs uppercase tracking-wide text-white/50">{label}</dt>
       {editando ? (
         type === "date" ? (
-          <div className="mt-1">
+          <div className="mt-1 max-w-xs">
             <FechaInput name={name} defaultValue={value as string | null} />
           </div>
         ) : (
@@ -105,17 +112,17 @@ function BloquePersonas({ titulo, personas }: { titulo: string; personas: Person
       <div className="flex flex-col gap-3">
         {personas.map((p, i) => (
           <dl key={i} className="grid grid-cols-2 gap-x-6 gap-y-2 sm:grid-cols-3">
-            <div>
+            <div className="min-w-0">
               <dt className="text-xs uppercase tracking-wide text-white/50">Nombre</dt>
-              <dd className="mt-0.5 text-sm text-white">{p.nombre}</dd>
+              <dd className="mt-0.5 truncate text-sm text-white">{p.nombre}</dd>
             </div>
-            <div>
+            <div className="min-w-0">
               <dt className="text-xs uppercase tracking-wide text-white/50">Email</dt>
-              <dd className="mt-0.5 text-sm text-white">{p.email ?? "—"}</dd>
+              <dd className="mt-0.5 break-all text-sm text-white">{p.email ?? "—"}</dd>
             </div>
-            <div>
+            <div className="min-w-0">
               <dt className="text-xs uppercase tracking-wide text-white/50">Teléfono</dt>
-              <dd className="mt-0.5 text-sm text-white">{p.telefono ?? "—"}</dd>
+              <dd className="mt-0.5 truncate text-sm text-white">{p.telefono ?? "—"}</dd>
             </div>
           </dl>
         ))}
@@ -146,6 +153,9 @@ export function CargoDetalle({
   const [state, formAction, pending] = useActionState(accion, {
     error: null,
   } as SolicitudFormState);
+
+  const [montoDigitos, setMontoDigitos] = useState(solicitud ? String(solicitud.monto) : "");
+  const [medioPago, setMedioPago] = useState(solicitud?.medio_pago ?? "");
 
   const [comprobante, setComprobante] = useState<{
     path: string;
@@ -269,31 +279,50 @@ export function CargoDetalle({
           ) : (
             <>
               <dl className="grid grid-cols-2 gap-x-6 gap-y-4 sm:grid-cols-3">
-                <Campo
-                  editando={editando}
-                  label="Monto pagado"
-                  name="monto_pagado"
-                  value={solicitud.monto}
-                  displayValue={clp(Number(solicitud.monto))}
-                />
+                {editando ? (
+                  <div>
+                    <dt className="text-xs uppercase tracking-wide text-white/50">Monto pagado</dt>
+                    <div className="relative mt-1">
+                      <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted">
+                        $
+                      </span>
+                      <input
+                        inputMode="numeric"
+                        value={fmtMonto(montoDigitos)}
+                        onChange={(e) => setMontoDigitos(e.target.value.replace(/\D/g, ""))}
+                        className={`${ui.input} pl-6`}
+                      />
+                      <input type="hidden" name="monto_pagado" value={montoDigitos} />
+                    </div>
+                  </div>
+                ) : (
+                  <Campo
+                    editando={false}
+                    label="Monto pagado"
+                    name="monto_pagado"
+                    displayValue={clp(Number(solicitud.monto))}
+                  />
+                )}
                 <Campo
                   editando={editando}
                   label="Fecha de pago"
                   name="fecha_pago"
                   type="date"
                   value={solicitud.fecha_pago}
+                  full
                 />
                 {editando ? (
                   <div>
                     <dt className="text-xs uppercase tracking-wide text-white/50">Medio de pago</dt>
-                    <SelectStyled name="medio_pago" defaultValue={solicitud.medio_pago ?? ""} className="mt-1">
-                      <option value="">—</option>
-                      {MEDIO_OPCIONES.map((o) => (
-                        <option key={o.value} value={o.value}>
-                          {o.label}
-                        </option>
-                      ))}
-                    </SelectStyled>
+                    <div className="mt-1">
+                      <ComboboxOpcion
+                        name="medio_pago"
+                        options={MEDIO_OPCIONES.map((o) => ({ id: o.value, label: o.label }))}
+                        value={medioPago}
+                        onChange={setMedioPago}
+                        placeholder="Selecciona…"
+                      />
+                    </div>
                   </div>
                 ) : (
                   <Campo
@@ -379,7 +408,11 @@ export function CargoDetalle({
                   </button>
                   <button
                     type="button"
-                    onClick={() => setEditando(false)}
+                    onClick={() => {
+                      setEditando(false);
+                      setMontoDigitos(String(solicitud.monto));
+                      setMedioPago(solicitud.medio_pago ?? "");
+                    }}
                     className="inline-flex items-center justify-center gap-2 rounded-lg bg-white/10 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-white/20"
                   >
                     Cancelar
