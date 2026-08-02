@@ -237,12 +237,9 @@ export default async function CobrosPage({
                       <div key={c.id} className="flex flex-col gap-3 py-4 first:pt-0">
                         <div className="flex items-start justify-between gap-2">
                           <div>
-                            <p className="text-xs text-white/60">
-                              {TIPO_LABEL[c.tipo_cargo] ?? c.tipo_cargo}
-                            </p>
+                            <p className="text-xs text-white/60">{c.propiedad_direccion}</p>
                             <p className="font-medium text-white">
-                              {c.numero_contrato ? `${c.numero_contrato} · ` : ""}
-                              {c.propiedad_direccion}
+                              {TIPO_LABEL[c.tipo_cargo] ?? c.tipo_cargo}
                             </p>
                           </div>
                           <span className={badge(est.tone)}>{est.label}</span>
@@ -255,7 +252,6 @@ export default async function CobrosPage({
                             </summary>
                             <div className="mt-2 flex flex-col gap-1 text-sm text-white/80">
                               <span>Deuda pendiente: {monto(c.saldo_pendiente)}</span>
-                              <span>Monto: {monto(c.monto)}</span>
                               {Number(c.monto) - Number(c.saldo_pendiente) > 0 && (
                                 <span className="text-emerald-400">
                                   Pagado: {monto(Number(c.monto) - Number(c.saldo_pendiente))}

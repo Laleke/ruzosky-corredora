@@ -77,17 +77,20 @@ export async function misCargos(): Promise<CargoConContexto[]> {
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("cargos")
-    .select("*, contratos(numero_contrato, propiedades(direccion))")
+    .select("*, contratos(numero_contrato, propiedades(direccion, numero, departamento))")
     .order("periodo", { ascending: false });
   if (error) throw new Error(error.message);
 
   type Row = Cargo & {
-    contratos: { numero_contrato: string | null; propiedades: { direccion: string | null } | null } | null;
+    contratos: {
+      numero_contrato: string | null;
+      propiedades: { direccion: string | null; numero: string | null; departamento: string | null } | null;
+    } | null;
   };
   return ((data ?? []) as unknown as Row[]).map((c) => ({
     ...c,
     numero_contrato: c.contratos?.numero_contrato ?? null,
-    propiedad_direccion: c.contratos?.propiedades?.direccion ?? "—",
+    propiedad_direccion: etiquetaPropiedad(c.contratos?.propiedades),
   }));
 }
 

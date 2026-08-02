@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/server";
+import { etiquetaPropiedad } from "@/lib/propiedad";
 import type { Database } from "@/types/database.types";
 import type { Cargo, CargoConContexto, FiltrosCargos, Pago } from "./types";
 import { TIPOS_DESFAZADOS } from "./constants";
@@ -86,7 +87,7 @@ export async function listCargos(
 
   let q = supabase
     .from("cargos")
-    .select("*, contratos(numero_contrato, propiedades(direccion))")
+    .select("*, contratos(numero_contrato, propiedades(direccion, numero, departamento))")
     .order("periodo", { ascending: false });
 
   if (scope) q = q.in("contrato_id", scope);
@@ -111,14 +112,14 @@ export async function listCargos(
   type Row = Cargo & {
     contratos: {
       numero_contrato: string | null;
-      propiedades: { direccion: string } | null;
+      propiedades: { direccion: string; numero: string | null; departamento: string | null } | null;
     } | null;
   };
 
   let filas = ((data ?? []) as unknown as Row[]).map((c) => ({
     ...c,
     numero_contrato: c.contratos?.numero_contrato ?? null,
-    propiedad_direccion: c.contratos?.propiedades?.direccion ?? "—",
+    propiedad_direccion: etiquetaPropiedad(c.contratos?.propiedades),
   }));
 
   // "Vencido" es derivado (saldo pendiente + fecha de vencimiento pasada), no una columna.
@@ -253,7 +254,7 @@ export async function getCargo(id: string): Promise<CargoConContexto | null> {
   const supabase = await createClient();
   const { data } = await supabase
     .from("cargos")
-    .select("*, contratos(numero_contrato, propiedades(direccion))")
+    .select("*, contratos(numero_contrato, propiedades(direccion, numero, departamento))")
     .eq("id", id)
     .single();
 
@@ -262,14 +263,14 @@ export async function getCargo(id: string): Promise<CargoConContexto | null> {
   type Row = Cargo & {
     contratos: {
       numero_contrato: string | null;
-      propiedades: { direccion: string } | null;
+      propiedades: { direccion: string; numero: string | null; departamento: string | null } | null;
     } | null;
   };
   const c = data as unknown as Row;
   return {
     ...c,
     numero_contrato: c.contratos?.numero_contrato ?? null,
-    propiedad_direccion: c.contratos?.propiedades?.direccion ?? "—",
+    propiedad_direccion: etiquetaPropiedad(c.contratos?.propiedades),
   };
 }
 
