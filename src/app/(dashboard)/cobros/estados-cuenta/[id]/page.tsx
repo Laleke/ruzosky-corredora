@@ -23,7 +23,7 @@ export default async function EstadoCuentaArrendatarioPage({
   ]);
   if (!datos) notFound();
 
-  const sinDatosBancarios = !datos.empresa.banco || !datos.empresa.numero_cuenta;
+  const destinosIncompletos = datos.destinos.filter((d) => !d.completa);
 
   return (
     <div className="flex flex-col gap-5">
@@ -33,16 +33,25 @@ export default async function EstadoCuentaArrendatarioPage({
         </Link>
       </div>
 
-      {sinDatosBancarios && (
-        <p className="no-print rounded-lg bg-amber-500/20 px-4 py-2.5 text-sm text-amber-200">
-          El informe no muestra la sección &quot;Cómo regularizar&quot; porque faltan los datos
-          bancarios de la corredora.{" "}
-          <Link href="/configuracion" className="font-medium underline">
-            Configurarlos ahora
-          </Link>
+      {destinosIncompletos.map((d) => (
+        <p
+          key={d.clave}
+          className="no-print rounded-lg bg-amber-500/20 px-4 py-2.5 text-sm text-amber-200"
+        >
+          El informe omite la cuenta de <strong>{d.titulo}</strong> ({d.propiedades.join(" · ")})
+          porque le faltan banco o número de cuenta.{" "}
+          {d.clave === "corredora" ? (
+            <Link href="/configuracion" className="font-medium underline">
+              Configurar datos de la corredora
+            </Link>
+          ) : (
+            <Link href="/propietarios" className="font-medium underline">
+              Completar la ficha del propietario
+            </Link>
+          )}
           .
         </p>
-      )}
+      ))}
 
       <AccionesEstadoCuenta
         arrendatarioId={id}

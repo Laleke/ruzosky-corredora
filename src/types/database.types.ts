@@ -234,6 +234,7 @@ export type Database = {
           numero_contrato: string | null
           observaciones: string | null
           periodicidad_reajuste_meses: number | null
+          pago_directo_propietario: boolean
           propiedad_id: string
           reajuste_tipo: Database["public"]["Enums"]["reajuste_tipo"]
           tipo_comision: Database["public"]["Enums"]["tipo_comision"] | null
@@ -261,6 +262,7 @@ export type Database = {
           numero_contrato?: string | null
           observaciones?: string | null
           periodicidad_reajuste_meses?: number | null
+          pago_directo_propietario?: boolean
           propiedad_id: string
           reajuste_tipo?: Database["public"]["Enums"]["reajuste_tipo"]
           tipo_comision?: Database["public"]["Enums"]["tipo_comision"] | null
@@ -288,6 +290,7 @@ export type Database = {
           numero_contrato?: string | null
           observaciones?: string | null
           periodicidad_reajuste_meses?: number | null
+          pago_directo_propietario?: boolean
           propiedad_id?: string
           reajuste_tipo?: Database["public"]["Enums"]["reajuste_tipo"]
           tipo_comision?: Database["public"]["Enums"]["tipo_comision"] | null

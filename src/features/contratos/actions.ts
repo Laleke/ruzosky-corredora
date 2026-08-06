@@ -199,6 +199,7 @@ function parse(
       cobra_administracion,
       administracion_monto,
       administracion_porcentaje,
+      pago_directo_propietario: formData.get("pago_directo_propietario") === "on",
       estado,
       observaciones: texto(formData, "observaciones"),
     },

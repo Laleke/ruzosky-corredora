@@ -454,6 +454,28 @@ export function DetalleContrato({
               value={contrato.administracion_porcentaje}
             />
           )}
+          {editando ? (
+            <label className="col-span-2 flex items-start gap-2 text-sm text-white sm:col-span-3">
+              <input
+                type="checkbox"
+                name="pago_directo_propietario"
+                defaultChecked={contrato.pago_directo_propietario}
+                className="mt-0.5"
+              />
+              <span>
+                El arrendatario paga directo al propietario
+                <span className="block text-xs text-white/60">
+                  Define qué cuenta bancaria aparece en el estado de cuenta. Sin marcar, se muestra
+                  la cuenta de la corredora.
+                </span>
+              </span>
+            </label>
+          ) : (
+            <Dato
+              label="Destino del pago"
+              value={contrato.pago_directo_propietario ? "Directo al propietario" : "A la corredora"}
+            />
+          )}
         </Bloque>
 
         {(contrato.observaciones || editando) && (

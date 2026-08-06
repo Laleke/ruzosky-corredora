@@ -26,9 +26,12 @@ function Dato({ rotulo, valor }: { rotulo: string; valor: string }) {
  * completa (ver `@media print` en globals.css).
  */
 export function EstadoCuentaDocumento({ datos }: { datos: EstadoCuenta }) {
-  const { arrendatario, empresa, cargos, total, total_vencido, dias_mora_maxima } = datos;
+  const { arrendatario, empresa, cargos, destinos, total, total_vencido, dias_mora_maxima } = datos;
   const hayVencido = total_vencido > 0;
-  const hayDatosBancarios = Boolean(empresa.banco && empresa.numero_cuenta);
+  // Una cuenta incompleta se omite en vez de mostrarse a medias: un informe con
+  // "Banco: —" es peor que no incluir la sección (la vista de admin avisa aparte).
+  const destinosVisibles = destinos.filter((d) => d.completa);
+  const variosDestinos = destinosVisibles.length > 1;
 
   return (
     <article className="mx-auto w-full max-w-3xl overflow-hidden rounded-xl bg-white shadow-sm print:max-w-none print:rounded-none print:shadow-none">
@@ -161,20 +164,53 @@ export function EstadoCuentaDocumento({ datos }: { datos: EstadoCuenta }) {
         )}
       </section>
 
-      {/* Cómo pagar */}
-      {cargos.length > 0 && hayDatosBancarios && (
+      {/* Cómo pagar — un bloque por cuenta de destino */}
+      {destinosVisibles.length > 0 && (
         <section className="border-t border-line bg-stone-50 px-6 py-5 sm:px-8">
           <h2 className="mb-3 text-[10px] font-semibold uppercase tracking-wider text-muted">
             Cómo regularizar
           </h2>
-          <dl className="grid grid-cols-2 gap-x-6 gap-y-3 sm:grid-cols-3">
-            <Dato rotulo="Banco" valor={empresa.banco ?? "—"} />
-            {empresa.tipo_cuenta && <Dato rotulo="Tipo de cuenta" valor={empresa.tipo_cuenta} />}
-            <Dato rotulo="N° de cuenta" valor={empresa.numero_cuenta ?? "—"} />
-            {empresa.titular_nombre && <Dato rotulo="Titular" valor={empresa.titular_nombre} />}
-            {empresa.rut_titular && <Dato rotulo="RUT titular" valor={empresa.rut_titular} />}
-            {empresa.email_pagos && <Dato rotulo="Enviar comprobante a" valor={empresa.email_pagos} />}
-          </dl>
+
+          {variosDestinos && (
+            <p className="mb-4 text-xs text-muted">
+              Tus cargos se pagan en {destinosVisibles.length} cuentas distintas. Transfiere el
+              monto indicado a cada una.
+            </p>
+          )}
+
+          <div className="flex flex-col gap-4">
+            {destinosVisibles.map((d) => (
+              <div
+                key={d.clave}
+                className={variosDestinos ? "rounded-lg border border-line bg-white p-4" : undefined}
+              >
+                {variosDestinos && (
+                  <div className="mb-3 flex flex-wrap items-baseline justify-between gap-2 border-b border-line pb-2">
+                    <div>
+                      <p className="text-sm font-semibold text-ink">{d.titulo}</p>
+                      <p className="text-xs text-muted">{d.propiedades.join(" · ")}</p>
+                    </div>
+                    <p className="text-sm font-semibold tabular-nums text-ink">{clp(d.subtotal)}</p>
+                  </div>
+                )}
+                <dl className="grid grid-cols-2 gap-x-6 gap-y-3 sm:grid-cols-3">
+                  <Dato rotulo="Banco" valor={d.cuenta.banco ?? "—"} />
+                  {d.cuenta.tipo_cuenta && (
+                    <Dato rotulo="Tipo de cuenta" valor={d.cuenta.tipo_cuenta} />
+                  )}
+                  <Dato rotulo="N° de cuenta" valor={d.cuenta.numero_cuenta ?? "—"} />
+                  {d.cuenta.titular_nombre && (
+                    <Dato rotulo="Titular" valor={d.cuenta.titular_nombre} />
+                  )}
+                  {d.cuenta.rut_titular && <Dato rotulo="RUT titular" valor={d.cuenta.rut_titular} />}
+                  {d.cuenta.email_pagos && (
+                    <Dato rotulo="Enviar comprobante a" valor={d.cuenta.email_pagos} />
+                  )}
+                </dl>
+              </div>
+            ))}
+          </div>
+
           <p className="mt-4 text-xs text-muted">
             Al transferir, indica tu RUT en el mensaje y envíanos el comprobante. Si ya realizaste
             el pago en los últimos días, es posible que aún no esté registrado — avísanos para
