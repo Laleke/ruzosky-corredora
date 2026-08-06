@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { AlertTriangle, Eye, Info } from "lucide-react";
+import { AlertTriangle, Eye, FileText, Info } from "lucide-react";
 import {
   listCargos,
   listContratosSinArriendo,
@@ -8,6 +8,7 @@ import {
   listContratosConDesfazadoPendiente,
 } from "@/features/cobros/queries";
 import { listContratosConReajustePendiente } from "@/features/contratos/queries";
+import { etiquetaTipoCargo } from "@/features/cobros/constants";
 import { solicitudesPendientes } from "@/features/solicitudes-pago/queries";
 import { GenerarArriendos } from "@/features/cobros/generar-arriendos";
 import { FiltroCobros } from "@/features/cobros/filtro-cobros";
@@ -24,18 +25,6 @@ type SP = {
   periodo?: string;
   venceDesde?: string;
   venceHasta?: string;
-};
-
-const TIPO_LABEL: Record<string, string> = {
-  arriendo: "Arriendo",
-  gasto_comun: "Gasto común",
-  administracion: "Administración",
-  luz: "Luz",
-  agua: "Agua",
-  internet: "Internet",
-  multa: "Multa",
-  ajuste: "Ajuste",
-  otro: "Otro",
 };
 
 function monto(n: number): string {
@@ -107,6 +96,16 @@ export default async function CobrosPage({
           <AlertTriangle size={16} />
           {solicitudes.length} solicitud{solicitudes.length === 1 ? "" : "es"} de pago pendiente
           {solicitudes.length === 1 ? "" : "s"} de revisar
+        </Link>
+      )}
+
+      {deudaTotal > 0 && (
+        <Link
+          href="/cobros/estados-cuenta"
+          className="mb-5 flex items-center gap-2 rounded-lg bg-white/10 px-4 py-2.5 text-sm font-medium text-canvas-fg transition-colors hover:bg-white/20"
+        >
+          <FileText size={16} />
+          Estados de cuenta — enviar informe de deuda por WhatsApp
         </Link>
       )}
 
@@ -239,7 +238,7 @@ export default async function CobrosPage({
                           <div>
                             <p className="text-xs text-white/60">{c.propiedad_direccion}</p>
                             <p className="font-medium text-white">
-                              {TIPO_LABEL[c.tipo_cargo] ?? c.tipo_cargo}
+                              {etiquetaTipoCargo(c.tipo_cargo)}
                             </p>
                           </div>
                           <span className={badge(est.tone)}>{est.label}</span>

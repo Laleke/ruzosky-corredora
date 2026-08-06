@@ -506,26 +506,92 @@ export type Database = {
       empresas: {
         Row: {
           activa: boolean
+          banco: string | null
           created_at: string
+          email_pagos: string | null
           id: string
           nombre: string
+          numero_cuenta: string | null
           rut: string | null
+          rut_titular: string | null
+          tipo_cuenta: string | null
+          titular_nombre: string | null
         }
         Insert: {
           activa?: boolean
+          banco?: string | null
           created_at?: string
+          email_pagos?: string | null
           id?: string
           nombre: string
+          numero_cuenta?: string | null
           rut?: string | null
+          rut_titular?: string | null
+          tipo_cuenta?: string | null
+          titular_nombre?: string | null
         }
         Update: {
           activa?: boolean
+          banco?: string | null
           created_at?: string
+          email_pagos?: string | null
           id?: string
           nombre?: string
+          numero_cuenta?: string | null
           rut?: string | null
+          rut_titular?: string | null
+          tipo_cuenta?: string | null
+          titular_nombre?: string | null
         }
         Relationships: []
+      }
+      estado_cuenta_links: {
+        Row: {
+          arrendatario_id: string
+          creado_por: string | null
+          created_at: string
+          empresa_id: string
+          expira_en: string | null
+          id: string
+          revocado: boolean
+          token: string
+        }
+        Insert: {
+          arrendatario_id: string
+          creado_por?: string | null
+          created_at?: string
+          empresa_id: string
+          expira_en?: string | null
+          id?: string
+          revocado?: boolean
+          token: string
+        }
+        Update: {
+          arrendatario_id?: string
+          creado_por?: string | null
+          created_at?: string
+          empresa_id?: string
+          expira_en?: string | null
+          id?: string
+          revocado?: boolean
+          token?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "estado_cuenta_links_arrendatario_id_fkey"
+            columns: ["arrendatario_id"]
+            isOneToOne: false
+            referencedRelation: "arrendatarios"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "estado_cuenta_links_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       gastos: {
         Row: {

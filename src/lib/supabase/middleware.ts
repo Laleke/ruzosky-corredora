@@ -49,6 +49,10 @@ export async function updateSession(request: NextRequest) {
     // ruta tiene que ser pública o el middleware redirigiría a /login
     // antes de que el JS del cliente alcance a detectarla.
     pathname.startsWith("/actualizar-clave") ||
+    // Estado de cuenta compartido con el arrendatario por WhatsApp: se abre
+    // sin sesión. La autorización es el token de la URL, validado
+    // server-side en `estadoCuentaPorToken` (revocable y con expiración).
+    pathname.startsWith("/e/") ||
     pathname === "/";
 
   // Sin sesión y ruta privada → redirige a login.

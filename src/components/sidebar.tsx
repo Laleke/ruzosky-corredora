@@ -15,6 +15,7 @@ import {
   BarChart3,
   FolderOpen,
   UserCog,
+  Settings,
   LogOut,
   Menu,
   X,
@@ -32,6 +33,7 @@ const NAV = [
   { href: "/documentos", label: "Documentos", icon: FolderOpen },
   { href: "/usuarios", label: "Usuarios del portal", icon: UserCog },
   { href: "/reportes", label: "Reportes", icon: BarChart3 },
+  { href: "/configuracion", label: "Configuración", icon: Settings },
 ];
 
 function NavLinks({ onNavigate }: { onNavigate?: () => void }) {
