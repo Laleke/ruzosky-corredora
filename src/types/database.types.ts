@@ -585,6 +585,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "estado_cuenta_links_creado_por_fkey"
+            columns: ["creado_por"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "estado_cuenta_links_empresa_id_fkey"
             columns: ["empresa_id"]
             isOneToOne: false
@@ -1292,6 +1299,14 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      arrendatario_tiene_contrato_en_propiedad: {
+        Args: { p_propiedad_id: string }
+        Returns: boolean
+      }
+      arrendatario_ve_propietario: {
+        Args: { p_propietario_id: string }
+        Returns: boolean
+      }
       auth_empresa_id: { Args: never; Returns: string }
       auth_rol: {
         Args: never
