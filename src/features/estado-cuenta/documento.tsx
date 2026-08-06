@@ -6,6 +6,19 @@ function clp(n: number): string {
   return `$${Math.round(n).toLocaleString("es-CL")}`;
 }
 
+/** Texto del isotipo, igual al de los sidebars (`components/sidebar.tsx`). */
+const BADGE = "RZK";
+
+/**
+ * Nombre de la empresa sin la palabra que ya muestra el isotipo, para que el
+ * membrete diga "[RZK] Prop" y no "[RZK] RZK Prop". Si el nombre no empieza con
+ * el badge (otra empresa en el futuro), se devuelve tal cual.
+ */
+function nombreJuntoAlBadge(nombre: string): string {
+  const sinBadge = nombre.trim().replace(new RegExp(`^${BADGE}\\s+`, "i"), "");
+  return sinBadge || nombre;
+}
+
 function Dato({ rotulo, valor }: { rotulo: string; valor: string }) {
   return (
     <div className="min-w-0">
@@ -39,10 +52,14 @@ export function EstadoCuentaDocumento({ datos }: { datos: EstadoCuenta }) {
       <header className="flex items-start justify-between gap-4 border-b-2 border-burgundy px-6 py-5 sm:px-8">
         <div className="flex items-center gap-3">
           <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-burgundy text-sm font-bold text-white">
-            RZK
+            {BADGE}
           </span>
           <div className="leading-tight">
-            <p className="text-base font-semibold text-ink">{empresa.nombre}</p>
+            {/* Solo la parte del nombre que NO repite el badge: la empresa se
+                llama "RZK Prop" y el isotipo ya dice "RZK" — imprimir el nombre
+                completo acá rendería "RZK RZK Prop". El nombre legal entero se
+                mantiene en el pie del documento. */}
+            <p className="text-base font-semibold text-ink">{nombreJuntoAlBadge(empresa.nombre)}</p>
             <p className="text-xs text-muted">Administración de arriendos</p>
             {empresa.rut && <p className="text-xs text-muted">RUT {empresa.rut}</p>}
           </div>
