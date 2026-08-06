@@ -3,19 +3,8 @@ import { Eye, Send } from "lucide-react";
 import { misCargos } from "@/features/portal/queries";
 import { misSolicitudes } from "@/features/solicitudes-pago/queries";
 import { ui, badge } from "@/components/ui";
+import { etiquetaTipoCargo } from "@/features/cobros/constants";
 import { formatearFecha, formatearPeriodo } from "@/lib/fecha";
-
-const TIPO_LABEL: Record<string, string> = {
-  arriendo: "Arriendo",
-  gasto_comun: "Gasto común",
-  administracion: "Administración",
-  luz: "Luz",
-  agua: "Agua",
-  internet: "Internet",
-  multa: "Multa",
-  ajuste: "Ajuste",
-  otro: "Otro",
-};
 
 function estadoMostrar(
   estado: string,
@@ -82,7 +71,7 @@ export default async function PortalCargosPage() {
                   <div>
                     <p className="text-xs text-white/60">{formatearPeriodo(c.periodo)}</p>
                     <p className="font-medium text-white">
-                      {TIPO_LABEL[c.tipo_cargo] ?? c.tipo_cargo}
+                      {etiquetaTipoCargo(c.tipo_cargo)}
                     </p>
                     <p className="text-xs text-white/60">{c.propiedad_direccion}</p>
                   </div>

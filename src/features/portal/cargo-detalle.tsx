@@ -9,6 +9,7 @@ import { BotonVolver } from "@/components/boton-volver";
 import { ComboboxOpcion } from "@/components/combobox-opcion";
 import { FechaInput } from "@/components/fecha-input";
 import { formatearFecha, formatearPeriodo } from "@/lib/fecha";
+import { etiquetaTipoCargo } from "@/features/cobros/constants";
 import { MAX_TAMANO_BYTES } from "@/features/documentos/constants";
 import {
   editarSolicitudPago,
@@ -18,18 +19,6 @@ import {
 import type { SolicitudFormState, SolicitudPago } from "@/features/solicitudes-pago/types";
 import type { CargoConContexto } from "@/features/cobros/types";
 import type { PersonaResumen } from "./queries";
-
-const TIPO_LABEL: Record<string, string> = {
-  arriendo: "Arriendo",
-  gasto_comun: "Gasto común",
-  administracion: "Administración",
-  luz: "Luz",
-  agua: "Agua",
-  internet: "Internet",
-  multa: "Multa",
-  ajuste: "Ajuste",
-  otro: "Otro",
-};
 
 const MEDIO_OPCIONES = [
   { value: "transferencia", label: "Transferencia" },
@@ -215,7 +204,7 @@ export function CargoDetalle({
 
       <div className="mt-4 flex flex-col items-center gap-3 text-center">
         <h1 className="text-2xl font-semibold tracking-tight text-white">
-          {TIPO_LABEL[cargo.tipo_cargo] ?? cargo.tipo_cargo} · {formatearPeriodo(cargo.periodo)}
+          {etiquetaTipoCargo(cargo.tipo_cargo)} · {formatearPeriodo(cargo.periodo)}
         </h1>
         <p className="text-sm text-white/70">{cargo.propiedad_direccion}</p>
       </div>
