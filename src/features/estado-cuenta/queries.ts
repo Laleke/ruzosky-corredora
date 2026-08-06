@@ -198,10 +198,15 @@ async function contratosDeArrendatario(db: DB, arrendatarioId: string): Promise<
 }
 
 /**
- * Estado de cuenta completo de un arrendatario: TODOS sus cargos con saldo
- * pendiente (no solo los vencidos — los por vencer también se informan, pero
- * quedan marcados aparte), más los datos de la corredora para la sección de
- * pago.
+ * Estado de cuenta de cobranza: SOLO los cargos vencidos con saldo pendiente,
+ * más la cuenta donde transferir. Decisión de negocio (Eduardo, 2026-08-06):
+ * el informe es un documento de cobranza, no un resumen de cuenta — un cargo
+ * que todavía no vence no se reclama, y uno ya pagado no aparece nunca
+ * (`saldo_pendiente > 0` lo excluye; con abono parcial se informa el resto).
+ *
+ * El filtro por vencimiento va en la consulta (`fecha_vencimiento < hoy`), que
+ * además descarta los cargos sin fecha de vencimiento — sin fecha no hay mora
+ * posible, mismo criterio que `diasMora`.
  *
  * `db` se recibe por parámetro para poder reutilizar esta misma función desde
  * la página pública `/e/[token]`, que corre con el cliente service_role (no
@@ -237,14 +242,12 @@ export async function estadoCuentaDeArrendatario(
       .select(SELECT_CARGO_DEUDA)
       .in("contrato_id", contratoIds)
       .gt("saldo_pendiente", 0)
-      .order("fecha_vencimiento", { ascending: true, nullsFirst: false });
+      .lt("fecha_vencimiento", hoy)
+      .order("fecha_vencimiento", { ascending: true });
     cargos = ((data ?? []) as unknown as CargoRow[]).map((c) => mapCargo(c, hoy));
   }
 
   const total = cargos.reduce((acc, c) => acc + c.saldo, 0);
-  const total_vencido = cargos
-    .filter((c) => c.dias_mora > 0)
-    .reduce((acc, c) => acc + c.saldo, 0);
   const destinos = cargos.length > 0 ? await resolverDestinos(supabase, cargos, empresa) : [];
 
   return {
@@ -259,14 +262,15 @@ export async function estadoCuentaDeArrendatario(
     cargos,
     destinos,
     total,
-    total_vencido,
     dias_mora_maxima: cargos.reduce((max, c) => Math.max(max, c.dias_mora), 0),
     emitido: hoy,
   };
 }
 
 /**
- * Arrendatarios con al menos un cargo pendiente — punto de entrada del módulo.
+ * Arrendatarios en mora — punto de entrada del módulo. Solo aparecen los que
+ * tienen algún cargo vencido, porque son los únicos con un informe que enviar;
+ * el saldo por vencer se acumula aparte como contexto para el admin.
  * Una sola pasada sobre los cargos con saldo (RLS de admin ya acota a la
  * empresa), en vez de N+1 consultas por arrendatario.
  */
@@ -312,9 +316,9 @@ export async function arrendatariosConDeuda(): Promise<ArrendatarioConDeuda[]> {
       rut: p.rut,
       telefono: p.telefono,
       propiedades: [],
-      total: 0,
       total_vencido: 0,
-      cargos_pendientes: 0,
+      total_por_vencer: 0,
+      cargos_morosos: 0,
       dias_mora_maxima: 0,
     });
   }
@@ -323,17 +327,23 @@ export async function arrendatariosConDeuda(): Promise<ArrendatarioConDeuda[]> {
     for (const arrendatarioId of arrendatariosPorContrato.get(c.contrato_id) ?? []) {
       const fila = acumulado.get(arrendatarioId);
       if (!fila) continue;
-      fila.total += c.saldo;
-      if (c.dias_mora > 0) fila.total_vencido += c.saldo;
-      fila.cargos_pendientes += 1;
-      fila.dias_mora_maxima = Math.max(fila.dias_mora_maxima, c.dias_mora);
-      if (!fila.propiedades.includes(c.propiedad_label)) fila.propiedades.push(c.propiedad_label);
+      // Los cargos por vencer se cuentan aparte: no van al informe, pero le
+      // sirven al admin para saber qué se viene antes de llamar a cobrar.
+      if (c.dias_mora > 0) {
+        fila.total_vencido += c.saldo;
+        fila.cargos_morosos += 1;
+        fila.dias_mora_maxima = Math.max(fila.dias_mora_maxima, c.dias_mora);
+        if (!fila.propiedades.includes(c.propiedad_label)) fila.propiedades.push(c.propiedad_label);
+      } else {
+        fila.total_por_vencer += c.saldo;
+      }
     }
   }
 
+  // Solo quien tiene mora: para el resto el informe saldría vacío.
   return [...acumulado.values()]
-    .filter((f) => f.cargos_pendientes > 0)
-    .sort((a, b) => b.total_vencido - a.total_vencido || b.total - a.total);
+    .filter((f) => f.cargos_morosos > 0)
+    .sort((a, b) => b.total_vencido - a.total_vencido);
 }
 
 /** Link vigente (no revocado ni expirado) de un arrendatario, si tiene uno. */

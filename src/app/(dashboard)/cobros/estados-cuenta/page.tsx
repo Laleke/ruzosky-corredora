@@ -10,24 +10,24 @@ function clp(n: number): string {
 
 export default async function EstadosCuentaPage() {
   const deudores = await arrendatariosConDeuda();
-  const totalGeneral = deudores.reduce((acc, d) => acc + d.total, 0);
+  const totalGeneral = deudores.reduce((acc, d) => acc + d.total_vencido, 0);
 
   return (
     <div>
       <PageHeader
         titulo="Estados de cuenta"
-        descripcion="Arrendatarios con saldo pendiente. Genera el informe para enviarlo por WhatsApp."
+        descripcion="Arrendatarios con deuda vencida. Genera el informe de cobranza para enviarlo por WhatsApp."
       />
 
       {deudores.length === 0 ? (
         <div className={`${ui.card} p-10 text-center text-sm text-muted`}>
-          No hay arrendatarios con deuda pendiente.
+          No hay arrendatarios con deuda vencida.
         </div>
       ) : (
         <>
           <p className="mb-5 text-sm text-canvas-muted">
-            {deudores.length} {deudores.length === 1 ? "arrendatario" : "arrendatarios"} con deuda ·
-            Total {clp(totalGeneral)}
+            {deudores.length} {deudores.length === 1 ? "arrendatario" : "arrendatarios"} en mora ·
+            Total vencido {clp(totalGeneral)}
           </p>
 
           <div className={ui.cardGrid}>
@@ -38,20 +38,17 @@ export default async function EstadosCuentaPage() {
                     <p className="text-xs text-white/60">{d.rut}</p>
                     <p className="truncate font-medium text-white">{d.nombre}</p>
                   </div>
-                  <span className={badge(d.total_vencido > 0 ? "danger" : "neutral")}>
-                    {clp(d.total)}
-                  </span>
+                  <span className={badge("danger")}>{clp(d.total_vencido)}</span>
                 </div>
 
                 <div className="flex flex-col gap-1 text-sm text-white/80">
                   <span>
-                    {d.cargos_pendientes} {d.cargos_pendientes === 1 ? "cargo" : "cargos"} pendiente
-                    {d.cargos_pendientes === 1 ? "" : "s"}
+                    {d.cargos_morosos} {d.cargos_morosos === 1 ? "cargo vencido" : "cargos vencidos"}{" "}
+                    · {d.dias_mora_maxima} {d.dias_mora_maxima === 1 ? "día" : "días"} de atraso
                   </span>
-                  {d.total_vencido > 0 && (
-                    <span className="text-amber-200">
-                      Vencido: {clp(d.total_vencido)} · {d.dias_mora_maxima}{" "}
-                      {d.dias_mora_maxima === 1 ? "día" : "días"} de atraso
+                  {d.total_por_vencer > 0 && (
+                    <span className="text-xs text-white/60">
+                      + {clp(d.total_por_vencer)} por vencer (no va en el informe)
                     </span>
                   )}
                   {d.propiedades.length > 0 && (

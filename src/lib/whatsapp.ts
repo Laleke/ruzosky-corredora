@@ -29,8 +29,8 @@ export function mensajeEstadoCuenta(opciones: {
   const lineas = [
     `Hola ${primerNombre}, te comparto el estado de cuenta${propiedad ? ` de ${propiedad}` : ""}.`,
     "",
-    `Total pendiente: ${monto}`,
-    `${cantidadCargos} ${cantidadCargos === 1 ? "cargo" : "cargos"}${
+    `Total vencido: ${monto}`,
+    `${cantidadCargos} ${cantidadCargos === 1 ? "cargo vencido" : "cargos vencidos"}${
       diasMora > 0 ? ` · ${diasMora} ${diasMora === 1 ? "día" : "días"} de atraso` : ""
     }`,
   ];

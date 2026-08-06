@@ -105,7 +105,7 @@ export default async function CobrosPage({
           className="mb-5 flex items-center gap-2 rounded-lg bg-white/10 px-4 py-2.5 text-sm font-medium text-canvas-fg transition-colors hover:bg-white/20"
         >
           <FileText size={16} />
-          Estados de cuenta — enviar informe de deuda por WhatsApp
+          Estados de cuenta — enviar informe de cobranza por WhatsApp
         </Link>
       )}
 

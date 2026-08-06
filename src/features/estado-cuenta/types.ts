@@ -55,23 +55,26 @@ export type EstadoCuenta = {
   cargos: CargoDeuda[];
   /** Cuentas donde transferir, con su subtotal. Vacío si no hay cargos. */
   destinos: DestinoPago[];
+  /** Deuda vencida total. Los cargos por vencer no entran al informe. */
   total: number;
-  total_vencido: number;
   /** Mora del cargo más antiguo — encabeza el resumen del informe. */
   dias_mora_maxima: number;
   /** Fecha de emisión del informe (YYYY-MM-DD). */
   emitido: string;
 };
 
-/** Fila del listado de arrendatarios con deuda. */
+/** Fila del listado de arrendatarios en mora (los únicos con informe que enviar). */
 export type ArrendatarioConDeuda = {
   id: string;
   nombre: string;
   rut: string;
   telefono: string | null;
+  /** Propiedades con cargos vencidos. */
   propiedades: string[];
-  total: number;
+  /** Deuda vencida: lo que sale en el informe. */
   total_vencido: number;
-  cargos_pendientes: number;
+  /** Saldo aún no vencido — contexto interno para el admin, no va al informe. */
+  total_por_vencer: number;
+  cargos_morosos: number;
   dias_mora_maxima: number;
 };

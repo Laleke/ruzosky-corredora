@@ -69,24 +69,17 @@ function BloquePago({ destino, mostrarEncabezado }: { destino: DestinoPago; most
  * pantalla, lo que se imprime y lo que abre el arrendatario sean exactamente lo
  * mismo — sin dos maquetas que puedan desincronizarse.
  *
- * El lenguaje se adapta a los datos: si TODOS los cargos están vencidos, el
- * informe habla de deuda "vencida / morosa"; si además hay cargos por vencer,
- * usa "pendiente". Rotular como moroso un cargo que aún no vence sería
- * incorrecto frente al arrendatario.
+ * Todos los cargos que llegan acá están vencidos y con saldo: es un documento
+ * de cobranza (ver `estadoCuentaDeArrendatario`), así que el lenguaje es
+ * siempre de mora y no hay estados intermedios que representar.
  */
 export function EstadoCuentaDocumento({ datos }: { datos: EstadoCuenta }) {
-  const { arrendatario, empresa, cargos, destinos, total, total_vencido, dias_mora_maxima } = datos;
-  const hayVencido = total_vencido > 0;
-  const soloMorosos = cargos.length > 0 && cargos.every((c) => c.dias_mora > 0);
+  const { arrendatario, empresa, cargos, destinos, total, dias_mora_maxima } = datos;
   // Una cuenta incompleta se omite en vez de mostrarse a medias: un informe con
   // "Banco: —" es peor que no incluir la sección (la vista de admin avisa aparte).
   const destinosVisibles = destinos.filter((d) => d.completa);
   const variosDestinos = destinosVisibles.length > 1;
   const propiedades = [...new Set(cargos.map((c) => c.propiedad_label))];
-
-  const rotuloTotal = soloMorosos ? "Total vencido / moroso" : "Total pendiente";
-  const rotuloDetalle = soloMorosos ? "Detalle de cargos morosos" : "Detalle de cargos pendientes";
-  const rotuloTotalFila = soloMorosos ? "Total deuda vencida / morosa:" : "Total deuda pendiente:";
 
   return (
     <article className="doc-print mx-auto w-full max-w-3xl overflow-hidden rounded-xl bg-white shadow-sm print:max-w-none print:rounded-none print:shadow-none">
@@ -161,24 +154,20 @@ export function EstadoCuentaDocumento({ datos }: { datos: EstadoCuenta }) {
 
           <div className="shrink-0 text-left sm:text-right">
             <p className="text-[9px] font-bold uppercase tracking-[0.14em] text-slate-500">
-              {rotuloTotal}
+              Total vencido / moroso
             </p>
             <p className="mt-0.5 text-3xl font-extrabold leading-none tabular-nums text-burgundy">
               {clp(total)}
             </p>
             <p className="mt-1.5 text-[11px] font-bold text-burgundy">
-              {cargos.length} {cargos.length === 1 ? "cargo" : "cargos"}
-              {soloMorosos ? (cargos.length === 1 ? " moroso" : " morosos") : ""} pendiente
+              {cargos.length} {cargos.length === 1 ? "cargo moroso" : "cargos morosos"} pendiente
               {cargos.length === 1 ? "" : "s"}
             </p>
-            {hayVencido && !soloMorosos && (
-              <p className="text-[11px] text-slate-500">{clp(total_vencido)} vencido</p>
-            )}
           </div>
         </div>
       </section>
 
-      {hayVencido && (
+      {cargos.length > 0 && (
         <div className="doc-sin-corte mx-6 mt-4 flex items-start gap-2.5 rounded-lg border-l-4 border-red-400 bg-red-50 px-4 py-3 sm:mx-8">
           <AlertTriangle size={15} className="mt-px shrink-0 text-amber-500" />
           <p className="text-[11px] font-bold leading-relaxed text-red-800">
@@ -192,12 +181,12 @@ export function EstadoCuentaDocumento({ datos }: { datos: EstadoCuenta }) {
       {/* Detalle */}
       <section className="px-6 pt-6 sm:px-8">
         <h2 className="mb-3 text-xs font-bold uppercase tracking-[0.08em] text-slate-800">
-          {rotuloDetalle}
+          Detalle de cargos morosos
         </h2>
 
         {cargos.length === 0 ? (
           <p className="rounded-lg bg-slate-50 px-4 py-6 text-center text-sm text-slate-500">
-            No hay cargos pendientes. Tu cuenta está al día.
+            No hay cargos vencidos. Tu cuenta está al día.
           </p>
         ) : (
           <>
@@ -231,23 +220,16 @@ export function EstadoCuentaDocumento({ datos }: { datos: EstadoCuenta }) {
                         <span className="block text-[10px] text-slate-500">{c.propiedad_label}</span>
                       )}
                       <span className="block text-[10px] text-slate-500 sm:hidden print:hidden">
-                        Período {formatearPeriodo(c.periodo)}
-                        {c.dias_mora > 0 ? ` · ${c.dias_mora} d atraso` : ""}
+                        Período {formatearPeriodo(c.periodo)} · {c.dias_mora} d atraso
                       </span>
                     </td>
                     <td className="whitespace-nowrap px-3 py-3 text-xs tabular-nums text-slate-600">
                       {formatearFecha(c.fecha_vencimiento)}
                     </td>
                     <td className="hidden px-3 py-3 sm:table-cell print:table-cell">
-                      {c.dias_mora > 0 ? (
-                        <span className="inline-flex whitespace-nowrap rounded-md bg-red-100 px-2 py-0.5 text-[10px] font-bold text-red-700">
-                          {c.dias_mora} d atraso
-                        </span>
-                      ) : (
-                        <span className="inline-flex whitespace-nowrap rounded-md bg-slate-100 px-2 py-0.5 text-[10px] font-bold text-slate-500">
-                          Al día
-                        </span>
-                      )}
+                      <span className="inline-flex whitespace-nowrap rounded-md bg-red-100 px-2 py-0.5 text-[10px] font-bold text-red-700">
+                        {c.dias_mora} d atraso
+                      </span>
                     </td>
                     <td className="whitespace-nowrap px-3 py-3 text-right text-xs font-bold tabular-nums text-slate-800">
                       {clp(c.saldo)}
@@ -259,7 +241,7 @@ export function EstadoCuentaDocumento({ datos }: { datos: EstadoCuenta }) {
 
             <div className="doc-sin-corte mt-4 flex flex-wrap items-center justify-between gap-2 rounded-lg bg-slate-100 px-5 py-4">
               <p className="text-xs font-bold uppercase tracking-[0.06em] text-slate-800 sm:text-sm">
-                {rotuloTotalFila}
+                Total deuda vencida / morosa:
               </p>
               <p className="text-lg font-extrabold tabular-nums text-burgundy sm:text-xl">
                 {clp(total)} CLP
@@ -272,7 +254,9 @@ export function EstadoCuentaDocumento({ datos }: { datos: EstadoCuenta }) {
       {/* Cómo pagar — un bloque por cuenta de destino */}
       {destinosVisibles.length > 0 && (
         <section className="px-6 pt-6 sm:px-8">
-          <div className="rounded-lg border border-slate-200 p-5">
+          {/* Sin corte: en el PDF de prueba las instrucciones cayeron en la
+              página siguiente, separadas de los datos bancarios. */}
+          <div className="doc-sin-corte rounded-lg border border-slate-200 p-5">
             <h2 className="mb-4 text-xs font-bold uppercase tracking-[0.06em] text-burgundy sm:text-sm">
               ¿Cómo regularizar tu pago?
             </h2>
