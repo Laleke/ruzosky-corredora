@@ -54,4 +54,21 @@ body {
   body {
     background: #fff;
   }
+
+  /*
+   * Documentos que se envían al cliente (estado de cuenta). Sin
+   * `print-color-adjust: exact` el navegador descarta los fondos de color al
+   * imprimir y el PDF sale con los recuadros en blanco — se pierden el bloque
+   * de total, la alerta de mora y las píldoras de atraso.
+   */
+  .doc-print,
+  .doc-print * {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  /* Que una fila o un bloque no quede partido entre dos páginas. */
+  .doc-print tr,
+  .doc-print .doc-sin-corte {
+    break-inside: avoid;
+  }
 }
