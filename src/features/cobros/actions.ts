@@ -142,10 +142,15 @@ export async function crearCargo(
   const monto = decimal(formData, "monto");
   if (monto === null || monto <= 0) return { error: "El monto debe ser mayor a 0." };
 
-  const tipoRaw = String(formData.get("tipo_cargo") ?? "arriendo");
-  const tipo_cargo = (TIPOS as string[]).includes(tipoRaw)
-    ? (tipoRaw as TipoCargo)
-    : "otro";
+  // Antes, un tipo vacío o desconocido se guardaba silenciosamente como "otro"
+  // — así fue como cargos de luz/agua/internet quedaron mal etiquetados en
+  // producción. Ahora el tipo es obligatorio y un valor fuera de la lista se
+  // rechaza en vez de corregirse por cuenta propia.
+  const tipoRaw = String(formData.get("tipo_cargo") ?? "").trim();
+  if (!(TIPOS as string[]).includes(tipoRaw)) {
+    return { error: "Selecciona el tipo de cargo." };
+  }
+  const tipo_cargo = tipoRaw as TipoCargo;
 
   const supabase = await createClient();
   const { error } = await supabase.from("cargos").insert({

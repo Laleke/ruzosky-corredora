@@ -33,7 +33,7 @@ type Paso = {
 
 const PASOS: Paso[] = [
   { key: "propiedad_id", pregunta: "¿A qué propiedad y contrato corresponde el cargo?", tipo: "propiedad", requerido: true },
-  { key: "tipo_cargo", pregunta: "¿Qué tipo de cargo es?", tipo: "select" },
+  { key: "tipo_cargo", pregunta: "¿Qué tipo de cargo es?", tipo: "select", requerido: true },
   { key: "periodo", pregunta: "¿A qué período corresponde (cobro/vencimiento)?", tipo: "periodo", requerido: true },
   {
     key: "fecha_consumo_desde",
@@ -58,7 +58,9 @@ const VALORES_INICIALES: Valores = {
   propiedad_id: "",
   contrato_id: "",
   arrendatario_id: "",
-  tipo_cargo: "gasto_comun",
+  // En blanco a propósito: preseleccionar un tipo hacía que se guardaran
+  // cargos con el tipo por defecto sin que nadie lo eligiera.
+  tipo_cargo: "",
   periodo: "",
   fecha_consumo_desde: "",
   fecha_consumo_hasta: "",
