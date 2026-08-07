@@ -6,7 +6,6 @@ import { useRouter } from "next/navigation";
 import { ArrowLeft, ArrowRight, Check } from "lucide-react";
 import { ui } from "@/components/ui";
 import { ComboboxOpcion } from "@/components/combobox-opcion";
-import { SelectStyled } from "@/components/select-styled";
 import { crearCargo, type CobroFormState } from "./actions";
 import { esTipoDesfazado } from "./constants";
 import type { ContextoPropiedad } from "@/features/documentos/queries";
@@ -185,19 +184,13 @@ export function CargoWizard({
 
     if (p.tipo === "select") {
       return (
-        <SelectStyled
+        <ComboboxOpcion
           name={p.key}
+          options={TIPO_OPCIONES.map((o) => ({ id: o.value, label: o.label }))}
           value={val}
-          onChange={(e) => set(p.key, e.target.value)}
-          className="text-base"
-          autoFocus
-        >
-          {TIPO_OPCIONES.map((o) => (
-            <option key={o.value} value={o.value}>
-              {o.label}
-            </option>
-          ))}
-        </SelectStyled>
+          onChange={(v) => set(p.key, v)}
+          placeholder="Selecciona…"
+        />
       );
     }
 
@@ -404,18 +397,18 @@ function SelectorPropiedadContratoWizard({
       {contratos.length > 1 && (
         <div className="flex flex-col gap-1.5">
           <label className="text-sm font-medium text-white">Contrato</label>
-          <SelectStyled
+          {/* El valor real viaja en el hidden `contrato_id` del paso de
+              propiedad, por eso este buscador usa un name aparte. */}
+          <ComboboxOpcion
+            name="contrato_id_buscador"
+            options={contratos.map((c) => ({
+              id: c.contratoId,
+              label: `${c.contratoLabel}${c.arrendatario ? ` · ${c.arrendatario}` : ""}`,
+            }))}
             value={valores.contrato_id}
-            onChange={(e) => onContrato(e.target.value)}
-          >
-            <option value="">Selecciona…</option>
-            {contratos.map((c) => (
-              <option key={c.contratoId} value={c.contratoId}>
-                {c.contratoLabel}
-                {c.arrendatario ? ` · ${c.arrendatario}` : ""}
-              </option>
-            ))}
-          </SelectStyled>
+            onChange={onContrato}
+            placeholder="Selecciona…"
+          />
         </div>
       )}
 

@@ -6,7 +6,6 @@ import { useRouter } from "next/navigation";
 import { ArrowLeft, ArrowRight, Check } from "lucide-react";
 import { ui } from "@/components/ui";
 import { ComboboxOpcion } from "@/components/combobox-opcion";
-import { SelectStyled } from "@/components/select-styled";
 import { CATEGORIAS_GASTO, ESTADOS_GASTO } from "./constants";
 import { crearGasto, type GastoFormState } from "./actions";
 import type { ContextoPropiedad } from "@/features/documentos/queries";
@@ -161,19 +160,13 @@ export function GastoWizard({
     if (p.tipo === "select") {
       const opciones = p.key === "categoria" ? CATEGORIAS_GASTO : ESTADOS_GASTO.filter((e) => e.value !== "anulado");
       return (
-        <SelectStyled
+        <ComboboxOpcion
           name={p.key}
+          options={opciones.map((o) => ({ id: o.value, label: o.label }))}
           value={String(val)}
-          onChange={(e) => set(p.key, e.target.value)}
-          className="text-base"
-          autoFocus
-        >
-          {opciones.map((o) => (
-            <option key={o.value} value={o.value}>
-              {o.label}
-            </option>
-          ))}
-        </SelectStyled>
+          onChange={(v) => set(p.key, v)}
+          placeholder="Selecciona…"
+        />
       );
     }
 
@@ -372,17 +365,15 @@ function SelectorPropiedadWizard({
       {contratos.length > 1 && (
         <div className="flex flex-col gap-1.5">
           <label className="text-sm font-medium text-white">Contrato</label>
-          <SelectStyled
+          {/* El valor real viaja en el hidden `contrato_id` del paso de
+              propiedad, por eso este buscador usa un name aparte. */}
+          <ComboboxOpcion
+            name="contrato_id_buscador"
+            options={contratos.map((c) => ({ id: c.contratoId, label: c.contratoLabel }))}
             value={String(valores.contrato_id)}
-            onChange={(e) => set("contrato_id", e.target.value)}
-          >
-            <option value="">Selecciona…</option>
-            {contratos.map((c) => (
-              <option key={c.contratoId} value={c.contratoId}>
-                {c.contratoLabel}
-              </option>
-            ))}
-          </SelectStyled>
+            onChange={(v) => set("contrato_id", v)}
+            placeholder="Selecciona…"
+          />
         </div>
       )}
     </div>
