@@ -118,8 +118,8 @@ export default async function CobrosPage({
 
       {!hayFiltros && (
         <p className="mb-5 text-xs text-canvas-muted">
-          Mostrando deuda viva (pendiente/parcial/vencida) más el período actual. Para ver cargos
-          pagados de otros períodos, usa los filtros de Estado o Período.
+          Mostrando los últimos 12 meses más toda la deuda pendiente, sin importar su antigüedad.
+          Para cargos anteriores a eso, usa el filtro de Período.
         </p>
       )}
 

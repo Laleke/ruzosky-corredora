@@ -65,6 +65,22 @@ async function resolverContratoScope(
   return conjuntos.reduce((acc, set) => acc.filter((id) => set.includes(id)));
 }
 
+/** Meses de historial que muestra el listado cuando no hay filtros aplicados. */
+const MESES_HISTORIAL_POR_DEFECTO = 12;
+
+/**
+ * Primer día del período desde el que se muestra historial por defecto.
+ * Misma aritmética de meses pura que `periodoArriendoVigente` — pasar por
+ * `toISOString()` puede retroceder un día (y por lo tanto un mes) en zonas
+ * horarias con offset negativo.
+ */
+function periodoDesde(meses: number, hoy: Date = new Date()): string {
+  const totalMeses = hoy.getFullYear() * 12 + hoy.getMonth() - (meses - 1);
+  const anio = Math.floor(totalMeses / 12);
+  const mes = (totalMeses % 12) + 1;
+  return `${anio}-${String(mes).padStart(2, "0")}-01`;
+}
+
 /** true si el llamador no fijó ningún filtro — activa el acotado por defecto. */
 function sinFiltros(filtros: FiltrosCargos): boolean {
   return !(
@@ -97,13 +113,16 @@ export async function listCargos(
   if (filtros.estado && filtros.estado !== "vencido") {
     q = q.eq("estado", filtros.estado);
   }
-  // Sin filtros del usuario: acotar a deuda viva + período actual, en vez de
-  // traer el historial completo de cargos (incluidos los ya pagados hace
-  // años) en cada carga de la página. Con filtros explícitos (estado, período,
-  // etc.) se respeta lo que el usuario pidió, sin este acotado.
+  // Sin filtros del usuario: se acota el historial para no traer todos los
+  // cargos de la empresa en cada carga, pero la ventana incluye los últimos 12
+  // meses completos ADEMÁS de cualquier cargo con saldo pendiente por antiguo
+  // que sea. Una versión anterior mostraba solo "deuda viva + período actual" y
+  // escondía los cargos ya pagados del mes pasado: un pago recién registrado
+  // desaparecía de la vista del admin (reportado con el agua de julio de
+  // Vicuña Mackenna, 2026-08-06). Con filtros explícitos no se aplica nada de
+  // esto y se consulta lo que el usuario pidió.
   if (sinFiltros(filtros)) {
-    const periodoActualISO = `${new Date().toISOString().slice(0, 7)}-01`;
-    q = q.or(`saldo_pendiente.gt.0,periodo.eq.${periodoActualISO}`);
+    q = q.or(`saldo_pendiente.gt.0,periodo.gte.${periodoDesde(MESES_HISTORIAL_POR_DEFECTO)}`);
   }
 
   const { data, error } = await q;
