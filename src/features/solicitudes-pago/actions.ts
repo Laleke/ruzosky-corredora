@@ -7,6 +7,7 @@ import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { recalcularCargo } from "@/features/cobros/actions";
 import { nombreComprobante } from "@/features/cobros/constants";
+import { notificarAdmins } from "@/features/notificaciones/push";
 import { MAX_TAMANO_BYTES } from "@/features/documentos/constants";
 import type { MedioPago } from "@/types/database.types";
 import type { SolicitudFormState } from "./types";
@@ -18,6 +19,10 @@ function decimal(formData: FormData, campo: string): number | null {
   if (v === "") return null;
   const n = Number(v.replace(",", "."));
   return Number.isFinite(n) ? n : null;
+}
+
+function montoFormateado(n: number): string {
+  return `$${Math.round(n).toLocaleString("es-CL")}`;
 }
 
 function texto(formData: FormData, campo: string): string | null {
@@ -85,10 +90,16 @@ export async function crearSolicitudPago(
   const supabase = await createClient();
   const { data: arrendatario } = await supabase
     .from("arrendatarios")
-    .select("id")
+    .select("id, tipo_persona, nombre, apellido, razon_social")
     .eq("profile_id", profile.id)
     .single();
   if (!arrendatario) return { error: "No se encontró tu ficha de arrendatario." };
+
+  const nombreSolicitante =
+    arrendatario.tipo_persona === "persona_juridica"
+      ? arrendatario.razon_social ?? "Un arrendatario"
+      : [arrendatario.nombre, arrendatario.apellido].filter(Boolean).join(" ") ||
+        "Un arrendatario";
 
   // RLS (`cargos_select_arrendatario`) ya filtra: si el cargo no es de un
   // contrato suyo, esta consulta simplemente no devuelve fila.
@@ -131,6 +142,16 @@ export async function crearSolicitudPago(
   });
 
   if (error) return { error: "No se pudo enviar la solicitud." };
+
+  // Aviso al admin. `notificarAdmins` nunca lanza: si el push falla, la
+  // solicitud ya quedó guardada y el arrendatario no debe ver un error por
+  // algo que no depende de él.
+  await notificarAdmins(profile.empresa_id, {
+    titulo: "Pago informado",
+    cuerpo: `${nombreSolicitante} informó un pago de ${montoFormateado(monto)}.`,
+    url: "/cobros/solicitudes",
+    tag: "solicitud-pago",
+  });
 
   revalidatePath("/portal/cargos");
   redirect("/portal/cargos");

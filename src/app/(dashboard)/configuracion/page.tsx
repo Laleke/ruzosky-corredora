@@ -3,6 +3,7 @@ import { getCurrentProfile } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { PageHeader } from "@/components/page-header";
 import { DatosCobranzaForm } from "@/features/empresa/datos-cobranza-form";
+import { ActivarNotificaciones } from "@/features/notificaciones/activar-notificaciones";
 
 export default async function ConfiguracionPage() {
   const profile = await getCurrentProfile();
@@ -18,9 +19,10 @@ export default async function ConfiguracionPage() {
 
   return (
     <div>
-      <PageHeader titulo="Configuración" descripcion="Datos de la corredora usados en los documentos." />
-      <div className="max-w-3xl">
+      <PageHeader titulo="Configuración" descripcion="Datos de la corredora y avisos." />
+      <div className="flex max-w-3xl flex-col gap-4">
         <DatosCobranzaForm empresa={empresa} />
+        <ActivarNotificaciones />
       </div>
     </div>
   );
