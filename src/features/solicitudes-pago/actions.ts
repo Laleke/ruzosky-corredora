@@ -6,6 +6,7 @@ import { getCurrentProfile } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { recalcularCargo } from "@/features/cobros/actions";
+import { nombreComprobante } from "@/features/cobros/constants";
 import { MAX_TAMANO_BYTES } from "@/features/documentos/constants";
 import type { MedioPago } from "@/types/database.types";
 import type { SolicitudFormState } from "./types";
@@ -228,19 +229,32 @@ export async function aprobarSolicitudPago(solicitudId: string): Promise<Solicit
 
   let documentoId: string | null = null;
   if (solicitud.comprobante_storage_path) {
+    // Se trae también la propiedad y el concepto: el comprobante debe quedar
+    // ligado a `propiedad_id`, no solo al contrato, o el listado de Documentos
+    // lo esconde en cuanto se filtra por propiedad/arrendatario (ese filtro
+    // resuelve por propiedad y los documentos sin ella caen fuera). El nombre
+    // lleva concepto y período porque, si no, todos los comprobantes se llaman
+    // igual y no hay forma de saber a cuál pago corresponde.
     const { data: cargoInfo } = await admin
       .from("cargos")
-      .select("contrato_id")
+      .select("contrato_id, tipo_cargo, periodo, contratos(propiedad_id)")
       .eq("id", solicitud.cargo_id)
       .single();
+
+    const propiedadId =
+      (cargoInfo as { contratos?: { propiedad_id: string } | null } | null)?.contratos
+        ?.propiedad_id ?? null;
 
     const { data: doc, error: errDoc } = await admin
       .from("documentos")
       .insert({
         empresa_id: solicitud.empresa_id,
-        nombre: "Comprobante de pago (solicitud arrendatario)",
+        nombre: nombreComprobante(cargoInfo?.tipo_cargo, cargoInfo?.periodo),
         categoria: "comprobante_pago",
         contrato_id: cargoInfo?.contrato_id ?? null,
+        propiedad_id: propiedadId,
+        arrendatario_id: solicitud.arrendatario_id,
+        fecha_documento: solicitud.fecha_pago,
         version_actual: 1,
       })
       .select("id")

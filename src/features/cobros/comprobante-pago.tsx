@@ -7,6 +7,7 @@ import { MAX_TAMANO_BYTES } from "@/features/documentos/constants";
 import { subirArchivo, limpiarArchivo } from "@/features/documentos/storage-client";
 import { registrarDocumento } from "@/features/documentos/actions";
 import { adjuntarComprobantePago, getComprobanteUrlPago } from "./actions";
+import { nombreComprobante } from "./constants";
 
 /** Adjuntar o ver el comprobante de un pago ya registrado (fuera del wizard de creación). */
 export function ComprobantePago({
@@ -15,12 +16,17 @@ export function ComprobantePago({
   contratoId,
   empresaId,
   tieneComprobante,
+  tipoCargo,
+  periodo,
 }: {
   pagoId: string;
   cargoId: string;
   contratoId: string;
   empresaId: string;
   tieneComprobante: boolean;
+  /** Concepto y período del cargo, para nombrar el comprobante. */
+  tipoCargo: string;
+  periodo: string;
 }) {
   const router = useRouter();
   const inputRef = useRef<HTMLInputElement>(null);
@@ -48,7 +54,7 @@ export function ComprobantePago({
     }
 
     const res = await registrarDocumento({
-      nombre: "Comprobante de pago",
+      nombre: nombreComprobante(tipoCargo, periodo),
       categoria: "comprobante_pago",
       contrato_id: contratoId,
       archivo,

@@ -1,4 +1,5 @@
 import type { TipoCargo } from "@/types/database.types";
+import { formatearPeriodo } from "@/lib/fecha";
 
 /**
  * Cargos "desfazados": el período de consumo real (ej. boleta de luz
@@ -28,4 +29,19 @@ export const TIPO_CARGO_LABEL: Record<string, string> = {
 
 export function etiquetaTipoCargo(tipo: string): string {
   return TIPO_CARGO_LABEL[tipo] ?? tipo;
+}
+
+/**
+ * Nombre visible del comprobante de pago en Documentos. Sin concepto ni período
+ * todos los comprobantes quedan con el mismo nombre y no hay forma de saber a
+ * qué pago corresponde cada uno.
+ */
+export function nombreComprobante(
+  tipoCargo: string | null | undefined,
+  periodo: string | null | undefined
+): string {
+  const concepto = tipoCargo ? etiquetaTipoCargo(tipoCargo) : null;
+  const mesAnio = periodo ? formatearPeriodo(periodo) : null;
+  const detalle = [concepto, mesAnio].filter(Boolean).join(" ");
+  return detalle ? `Comprobante de pago — ${detalle}` : "Comprobante de pago";
 }

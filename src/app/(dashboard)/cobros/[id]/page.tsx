@@ -139,6 +139,8 @@ export default async function DetalleCargoPage({
                         contratoId={cargo.contrato_id}
                         empresaId={profile.empresa_id}
                         tieneComprobante={Boolean(p.documento_id)}
+                        tipoCargo={cargo.tipo_cargo}
+                        periodo={cargo.periodo}
                       />
                     </td>
                     <td className={`${tdOscuro} text-right`}>

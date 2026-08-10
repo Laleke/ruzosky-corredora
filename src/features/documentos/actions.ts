@@ -52,6 +52,19 @@ function limpiar(v: string | null | undefined): string | null {
   return s || null;
 }
 
+/** Propiedad a la que pertenece un contrato, para no dejar el documento suelto. */
+async function derivarPropiedadDeContrato(
+  supabase: DB,
+  contratoId: string
+): Promise<string | null> {
+  const { data } = await supabase
+    .from("contratos")
+    .select("propiedad_id")
+    .eq("id", contratoId)
+    .single();
+  return data?.propiedad_id ?? null;
+}
+
 /** Deriva el propietario desde la propiedad solo si tiene un único dueño (sin copropiedad). */
 async function derivarPropietarioUnico(
   supabase: DB,
@@ -90,7 +103,14 @@ export async function registrarDocumento(
 
   const supabase = await createClient();
 
-  const propiedadId = limpiar(input.propiedad_id);
+  // Si viene el contrato pero no la propiedad, se deriva: un documento sin
+  // `propiedad_id` desaparece del listado en cuanto se filtra por propiedad o
+  // arrendatario (ese filtro resuelve por propiedad). Pasaba con los
+  // comprobantes de pago, que solo se ligaban al contrato.
+  const contratoId = limpiar(input.contrato_id);
+  const propiedadId =
+    limpiar(input.propiedad_id) ??
+    (contratoId ? await derivarPropiedadDeContrato(supabase, contratoId) : null);
   const propietarioId =
     limpiar(input.propietario_id) ??
     (propiedadId ? await derivarPropietarioUnico(supabase, propiedadId) : null);
