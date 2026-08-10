@@ -46,6 +46,11 @@ export default async function EstadosCuentaPage() {
                     {d.cargos_morosos} {d.cargos_morosos === 1 ? "cargo vencido" : "cargos vencidos"}{" "}
                     · {d.dias_mora_maxima} {d.dias_mora_maxima === 1 ? "día" : "días"} de atraso
                   </span>
+                  {d.total_directo > 0 && (
+                    <span className="text-xs text-white/60">
+                      + {clp(d.total_directo)} que paga directo a servicios
+                    </span>
+                  )}
                   {d.total_por_vencer > 0 && (
                     <span className="text-xs text-white/60">
                       + {clp(d.total_por_vencer)} por vencer (no va en el informe)

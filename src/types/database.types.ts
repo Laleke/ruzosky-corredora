@@ -156,6 +156,7 @@ export type Database = {
           monto: number
           observaciones: string | null
           periodo: string
+          pago_directo_servicio: boolean
           saldo_pendiente: number
           tipo_cargo: Database["public"]["Enums"]["tipo_cargo"]
           updated_at: string
@@ -173,6 +174,7 @@ export type Database = {
           monto: number
           observaciones?: string | null
           periodo: string
+          pago_directo_servicio?: boolean
           saldo_pendiente: number
           tipo_cargo?: Database["public"]["Enums"]["tipo_cargo"]
           updated_at?: string
@@ -190,6 +192,7 @@ export type Database = {
           monto?: number
           observaciones?: string | null
           periodo?: string
+          pago_directo_servicio?: boolean
           saldo_pendiente?: number
           tipo_cargo?: Database["public"]["Enums"]["tipo_cargo"]
           updated_at?: string

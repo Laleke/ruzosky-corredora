@@ -52,11 +52,20 @@ export type EstadoCuenta = {
     telefono: string | null;
   };
   empresa: Empresa;
+  /** Cargos vencidos que el arrendatario debe TRANSFERIR (los que se cobran). */
   cargos: CargoDeuda[];
+  /**
+   * Cargos vencidos que el arrendatario paga directo a la empresa de servicios
+   * (luz, agua, etc.). Se informan como recordatorio pero NO suman al total a
+   * transferir — cobrarlos sería pedir dos veces la misma plata.
+   */
+  cargos_directos: CargoDeuda[];
   /** Cuentas donde transferir, con su subtotal. Vacío si no hay cargos. */
   destinos: DestinoPago[];
-  /** Deuda vencida total. Los cargos por vencer no entran al informe. */
+  /** Deuda vencida a transferir. Excluye los pagos directos a servicios. */
   total: number;
+  /** Total vencido de los pagos directos a servicios, informativo. */
+  total_directo: number;
   /** Mora del cargo más antiguo — encabeza el resumen del informe. */
   dias_mora_maxima: number;
   /** Fecha de emisión del informe (YYYY-MM-DD). */
@@ -71,8 +80,10 @@ export type ArrendatarioConDeuda = {
   telefono: string | null;
   /** Propiedades con cargos vencidos. */
   propiedades: string[];
-  /** Deuda vencida: lo que sale en el informe. */
+  /** Deuda vencida a cobrar (excluye lo que paga directo al servicio). */
   total_vencido: number;
+  /** Vencido que paga directo a servicios: no se cobra, solo se informa. */
+  total_directo: number;
   /** Saldo aún no vencido — contexto interno para el admin, no va al informe. */
   total_por_vencer: number;
   cargos_morosos: number;

@@ -74,12 +74,24 @@ function BloquePago({ destino, mostrarEncabezado }: { destino: DestinoPago; most
  * siempre de mora y no hay estados intermedios que representar.
  */
 export function EstadoCuentaDocumento({ datos }: { datos: EstadoCuenta }) {
-  const { arrendatario, empresa, cargos, destinos, total, dias_mora_maxima } = datos;
+  const {
+    arrendatario,
+    empresa,
+    cargos,
+    cargos_directos,
+    destinos,
+    total,
+    total_directo,
+    dias_mora_maxima,
+  } = datos;
+  const hayDirectos = cargos_directos.length > 0;
   // Una cuenta incompleta se omite en vez de mostrarse a medias: un informe con
   // "Banco: —" es peor que no incluir la sección (la vista de admin avisa aparte).
   const destinosVisibles = destinos.filter((d) => d.completa);
   const variosDestinos = destinosVisibles.length > 1;
-  const propiedades = [...new Set(cargos.map((c) => c.propiedad_label))];
+  const propiedades = [
+    ...new Set([...cargos, ...cargos_directos].map((c) => c.propiedad_label)),
+  ];
 
   return (
     <article className="doc-print mx-auto w-full max-w-3xl overflow-hidden rounded-xl bg-white shadow-sm print:max-w-none print:rounded-none print:shadow-none">
@@ -154,7 +166,7 @@ export function EstadoCuentaDocumento({ datos }: { datos: EstadoCuenta }) {
 
           <div className="shrink-0 text-left sm:text-right">
             <p className="text-[9px] font-bold uppercase tracking-[0.14em] text-slate-500">
-              Total vencido / moroso
+              {hayDirectos ? "Total a transferir" : "Total vencido / moroso"}
             </p>
             <p className="mt-0.5 text-3xl font-extrabold leading-none tabular-nums text-burgundy">
               {clp(total)}
@@ -163,11 +175,16 @@ export function EstadoCuentaDocumento({ datos }: { datos: EstadoCuenta }) {
               {cargos.length} {cargos.length === 1 ? "cargo moroso" : "cargos morosos"} pendiente
               {cargos.length === 1 ? "" : "s"}
             </p>
+            {hayDirectos && (
+              <p className="text-[11px] text-slate-500">
+                + {clp(total_directo)} que pagas directo
+              </p>
+            )}
           </div>
         </div>
       </section>
 
-      {cargos.length > 0 && (
+      {(cargos.length > 0 || hayDirectos) && (
         <div className="doc-sin-corte mx-6 mt-4 flex items-start gap-2.5 rounded-lg border-l-4 border-red-400 bg-red-50 px-4 py-3 sm:mx-8">
           <AlertTriangle size={15} className="mt-px shrink-0 text-amber-500" />
           <p className="text-[11px] font-bold leading-relaxed text-red-800">
@@ -181,12 +198,16 @@ export function EstadoCuentaDocumento({ datos }: { datos: EstadoCuenta }) {
       {/* Detalle */}
       <section className="px-6 pt-6 sm:px-8">
         <h2 className="mb-3 text-xs font-bold uppercase tracking-[0.08em] text-slate-800">
-          Detalle de cargos morosos
+          {hayDirectos
+            ? "Detalle de cargos morosos a transferir"
+            : "Detalle de cargos morosos"}
         </h2>
 
         {cargos.length === 0 ? (
           <p className="rounded-lg bg-slate-50 px-4 py-6 text-center text-sm text-slate-500">
-            No hay cargos vencidos. Tu cuenta está al día.
+            {hayDirectos
+              ? "No hay cargos que debas transferir. Revisa abajo los que pagas directo."
+              : "No hay cargos vencidos. Tu cuenta está al día."}
           </p>
         ) : (
           <>
@@ -241,7 +262,7 @@ export function EstadoCuentaDocumento({ datos }: { datos: EstadoCuenta }) {
 
             <div className="doc-sin-corte mt-4 flex flex-wrap items-center justify-between gap-2 rounded-lg bg-slate-100 px-5 py-4">
               <p className="text-xs font-bold uppercase tracking-[0.06em] text-slate-800 sm:text-sm">
-                Total deuda vencida / morosa:
+                {hayDirectos ? "Total a transferir:" : "Total deuda vencida / morosa:"}
               </p>
               <p className="text-lg font-extrabold tabular-nums text-burgundy sm:text-xl">
                 {clp(total)} CLP
@@ -250,6 +271,78 @@ export function EstadoCuentaDocumento({ datos }: { datos: EstadoCuenta }) {
           </>
         )}
       </section>
+
+      {/* Servicios que el arrendatario paga directo: se informan como
+          recordatorio, fuera del total a transferir. */}
+      {hayDirectos && (
+        <section className="px-6 pt-6 sm:px-8">
+          <h2 className="mb-1 text-xs font-bold uppercase tracking-[0.08em] text-slate-800">
+            Servicios que pagas directo
+          </h2>
+          <p className="mb-3 text-[11px] text-slate-500">
+            Estos montos <span className="font-bold">no se transfieren</span>: los pagas
+            directamente a cada empresa de servicios. Se listan solo como recordatorio.
+          </p>
+
+          <table className="w-full border-collapse">
+            <thead>
+              <tr className="bg-slate-100 text-[9px] uppercase tracking-[0.1em] text-slate-500">
+                <th className="hidden rounded-l-md px-3 py-2.5 text-left font-bold sm:table-cell print:table-cell">
+                  Período
+                </th>
+                <th className="rounded-l-md px-3 py-2.5 text-left font-bold sm:rounded-none">
+                  Servicio
+                </th>
+                <th className="px-3 py-2.5 text-left font-bold">Vencimiento</th>
+                <th className="hidden px-3 py-2.5 text-left font-bold sm:table-cell print:table-cell">
+                  Atraso
+                </th>
+                <th className="rounded-r-md px-3 py-2.5 text-right font-bold">Monto</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100">
+              {cargos_directos.map((c) => (
+                <tr key={c.id} className="align-top">
+                  <td className="hidden px-3 py-3 text-xs font-bold tabular-nums text-slate-700 sm:table-cell print:table-cell">
+                    {formatearPeriodo(c.periodo)}
+                  </td>
+                  <td className="px-3 py-3">
+                    <span className="text-xs font-bold text-slate-800">
+                      {etiquetaTipoCargo(c.tipo_cargo)}
+                    </span>
+                    {variosDestinos && (
+                      <span className="block text-[10px] text-slate-500">{c.propiedad_label}</span>
+                    )}
+                    <span className="block text-[10px] text-slate-500 sm:hidden print:hidden">
+                      Período {formatearPeriodo(c.periodo)} · {c.dias_mora} d atraso
+                    </span>
+                  </td>
+                  <td className="whitespace-nowrap px-3 py-3 text-xs tabular-nums text-slate-600">
+                    {formatearFecha(c.fecha_vencimiento)}
+                  </td>
+                  <td className="hidden px-3 py-3 sm:table-cell print:table-cell">
+                    <span className="inline-flex whitespace-nowrap rounded-md bg-amber-100 px-2 py-0.5 text-[10px] font-bold text-amber-700">
+                      {c.dias_mora} d atraso
+                    </span>
+                  </td>
+                  <td className="whitespace-nowrap px-3 py-3 text-right text-xs font-bold tabular-nums text-slate-800">
+                    {clp(c.saldo)}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+
+          <div className="doc-sin-corte mt-4 flex flex-wrap items-center justify-between gap-2 rounded-lg bg-slate-50 px-5 py-3">
+            <p className="text-xs font-bold uppercase tracking-[0.06em] text-slate-600">
+              Total pagos directos (no se transfiere):
+            </p>
+            <p className="text-base font-extrabold tabular-nums text-slate-700">
+              {clp(total_directo)} CLP
+            </p>
+          </div>
+        </section>
+      )}
 
       {/* Cómo pagar — un bloque por cuenta de destino */}
       {destinosVisibles.length > 0 && (

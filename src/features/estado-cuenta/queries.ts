@@ -235,7 +235,7 @@ export async function estadoCuentaDeArrendatario(
 
   const contratoIds = await contratosDeArrendatario(supabase, arrendatarioId);
 
-  let cargos: CargoDeuda[] = [];
+  let vencidos: CargoDeuda[] = [];
   if (contratoIds.length > 0) {
     const { data } = await supabase
       .from("cargos")
@@ -244,10 +244,15 @@ export async function estadoCuentaDeArrendatario(
       .gt("saldo_pendiente", 0)
       .lt("fecha_vencimiento", hoy)
       .order("fecha_vencimiento", { ascending: true });
-    cargos = ((data ?? []) as unknown as CargoRow[]).map((c) => mapCargo(c, hoy));
+    vencidos = ((data ?? []) as unknown as CargoRow[]).map((c) => mapCargo(c, hoy));
   }
 
+  // Los pagos directos a servicios se informan aparte y no suman al total.
+  const cargos = vencidos.filter((c) => !c.pago_directo_servicio);
+  const cargos_directos = vencidos.filter((c) => c.pago_directo_servicio);
+
   const total = cargos.reduce((acc, c) => acc + c.saldo, 0);
+  const total_directo = cargos_directos.reduce((acc, c) => acc + c.saldo, 0);
   const destinos = cargos.length > 0 ? await resolverDestinos(supabase, cargos, empresa) : [];
 
   return {
@@ -260,9 +265,13 @@ export async function estadoCuentaDeArrendatario(
     },
     empresa,
     cargos,
+    cargos_directos,
     destinos,
     total,
-    dias_mora_maxima: cargos.reduce((max, c) => Math.max(max, c.dias_mora), 0),
+    total_directo,
+    // La mora que encabeza el informe considera ambos tipos: un servicio
+    // impago sigue siendo un atraso, aunque no se transfiera.
+    dias_mora_maxima: vencidos.reduce((max, c) => Math.max(max, c.dias_mora), 0),
     emitido: hoy,
   };
 }
@@ -317,6 +326,7 @@ export async function arrendatariosConDeuda(): Promise<ArrendatarioConDeuda[]> {
       telefono: p.telefono,
       propiedades: [],
       total_vencido: 0,
+      total_directo: 0,
       total_por_vencer: 0,
       cargos_morosos: 0,
       dias_mora_maxima: 0,
@@ -330,7 +340,11 @@ export async function arrendatariosConDeuda(): Promise<ArrendatarioConDeuda[]> {
       // Los cargos por vencer se cuentan aparte: no van al informe, pero le
       // sirven al admin para saber qué se viene antes de llamar a cobrar.
       if (c.dias_mora > 0) {
-        fila.total_vencido += c.saldo;
+        // Lo que paga directo al servicio no se cobra: se cuenta aparte para no
+        // inflar el monto a recaudar, pero el arrendatario igual aparece en el
+        // listado porque su informe incluye ese recordatorio.
+        if (c.pago_directo_servicio) fila.total_directo += c.saldo;
+        else fila.total_vencido += c.saldo;
         fila.cargos_morosos += 1;
         fila.dias_mora_maxima = Math.max(fila.dias_mora_maxima, c.dias_mora);
         if (!fila.propiedades.includes(c.propiedad_label)) fila.propiedades.push(c.propiedad_label);

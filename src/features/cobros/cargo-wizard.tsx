@@ -21,6 +21,12 @@ const TIPO_OPCIONES = [
   { value: "otro", label: "Otro" },
 ];
 
+/** Quién recibe la plata de este cargo (ver migración 0038). */
+const DESTINO_OPCIONES = [
+  { value: "transferencia", label: "Me transfiere a mí (corredora / propietario)" },
+  { value: "directo", label: "Paga directo a la empresa de servicios" },
+];
+
 type TipoPaso = "propiedad" | "select" | "periodo" | "monto" | "fecha" | "textarea";
 
 type Paso = {
@@ -47,6 +53,15 @@ const PASOS: Paso[] = [
     tipo: "fecha",
     omitirSi: (v) => !esTipoDesfazado(v.tipo_cargo),
   },
+  {
+    // Solo se pregunta en los cargos de servicios: el arriendo o una multa
+    // siempre se transfieren, preguntarlo ahí sería un paso vacío.
+    key: "destino_pago",
+    pregunta: "¿Cómo paga el arrendatario este cargo?",
+    tipo: "select",
+    requerido: true,
+    omitirSi: (v) => !esTipoDesfazado(v.tipo_cargo),
+  },
   { key: "monto", pregunta: "¿Cuál es el monto?", tipo: "monto", requerido: true },
   { key: "fecha_vencimiento", pregunta: "¿Cuál es la fecha de vencimiento?", tipo: "fecha" },
   { key: "observaciones", pregunta: "¿Alguna observación adicional?", tipo: "textarea" },
@@ -61,6 +76,7 @@ const VALORES_INICIALES: Valores = {
   // En blanco a propósito: preseleccionar un tipo hacía que se guardaran
   // cargos con el tipo por defecto sin que nadie lo eligiera.
   tipo_cargo: "",
+  destino_pago: "transferencia",
   periodo: "",
   fecha_consumo_desde: "",
   fecha_consumo_hasta: "",
@@ -185,10 +201,11 @@ export function CargoWizard({
     }
 
     if (p.tipo === "select") {
+      const opciones = p.key === "destino_pago" ? DESTINO_OPCIONES : TIPO_OPCIONES;
       return (
         <ComboboxOpcion
           name={p.key}
-          options={TIPO_OPCIONES.map((o) => ({ id: o.value, label: o.label }))}
+          options={opciones.map((o) => ({ id: o.value, label: o.label }))}
           value={val}
           onChange={(v) => set(p.key, v)}
           placeholder="Selecciona…"

@@ -152,12 +152,17 @@ export async function crearCargo(
   }
   const tipo_cargo = tipoRaw as TipoCargo;
 
+  // Solo los cargos de servicios ofrecen esta opción en el wizard; en el resto
+  // el campo no viaja y el cargo queda como transferencia (ver migración 0038).
+  const pago_directo_servicio = String(formData.get("destino_pago") ?? "") === "directo";
+
   const supabase = await createClient();
   const { error } = await supabase.from("cargos").insert({
     empresa_id: profile.empresa_id,
     contrato_id,
     periodo: `${ym}-01`,
     tipo_cargo,
+    pago_directo_servicio,
     fecha_emision: hoy(),
     fecha_vencimiento: texto(formData, "fecha_vencimiento"),
     monto,
