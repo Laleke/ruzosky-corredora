@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Info, Eye } from "lucide-react";
 import { misContratos } from "@/features/portal/queries";
 import { ui, badge } from "@/components/ui";
+import { numeroContratoMostrar, terminoMostrar } from "@/features/contratos/vigencia";
 import { formatearFecha } from "@/lib/fecha";
 
 const ESTADO: Record<string, { label: string; tone: Parameters<typeof badge>[0] }> = {
@@ -40,7 +41,9 @@ export default async function PortalContratosPage() {
               <div key={c.id} className={ui.listCard}>
                 <div className="flex items-start justify-between gap-2">
                   <div>
-                    <p className="text-xs text-white/60">{c.numero_contrato ?? "—"}</p>
+                    <p className="text-xs text-white/60">
+                      {numeroContratoMostrar(c.numero_contrato, c.id)}
+                    </p>
                     <p className="font-medium text-white">{c.propiedad_direccion}</p>
                   </div>
                   <span className={badge(est.tone)}>{est.label}</span>
@@ -54,7 +57,7 @@ export default async function PortalContratosPage() {
                     <div className="mt-2 flex flex-col gap-1 text-sm text-white/80">
                       <span>Arrendatario: {c.arrendatarios_nombres.join(", ") || "—"}</span>
                       <span>Inicio: {formatearFecha(c.fecha_inicio)}</span>
-                      <span>Término: {formatearFecha(c.fecha_termino)}</span>
+                      <span>Término: {terminoMostrar(c.fecha_termino, c.estado)}</span>
                       <span>Canon: {formatoCanon(c.canon_actual ?? c.canon_monto, c.canon_moneda)}</span>
                     </div>
                   </details>

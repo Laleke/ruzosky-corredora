@@ -98,19 +98,19 @@ export function PortalSidebar({ nombre, rol }: { nombre: string; rol: EntidadPor
   return (
     <>
       <header className="no-print sticky top-0 z-30 flex items-center justify-between border-b border-white/10 bg-canvas px-4 py-3 md:hidden">
+        <button
+          onClick={() => setAbierto(true)}
+          aria-label="Abrir menú"
+          className="-ml-2 rounded-lg p-2 text-canvas-fg hover:bg-white/10"
+        >
+          <Menu size={22} />
+        </button>
         <div className="flex items-center gap-2">
           <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-burgundy text-[10px] font-bold text-white">
             RZK
           </span>
           <span className="font-semibold text-canvas-fg">Prop</span>
         </div>
-        <button
-          onClick={() => setAbierto(true)}
-          aria-label="Abrir menú"
-          className="rounded-lg p-2 text-canvas-fg hover:bg-white/10"
-        >
-          <Menu size={22} />
-        </button>
       </header>
 
       <aside className="no-print fixed inset-y-0 left-0 z-30 hidden w-64 flex-col bg-ink md:flex">

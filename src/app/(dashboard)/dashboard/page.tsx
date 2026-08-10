@@ -9,6 +9,7 @@ import {
   Receipt,
 } from "lucide-react";
 import { getCurrentProfile } from "@/lib/auth";
+import { GuardiaAtras } from "@/components/guardia-atras";
 import { getDashboardStats, getTareasPendientes } from "@/features/dashboard/queries";
 
 /** Indicadores de futuro desarrollo: la data o la regla de negocio aún no existen. */
@@ -87,6 +88,7 @@ export default async function DashboardPage() {
 
   return (
     <div className="flex flex-col gap-8">
+      <GuardiaAtras />
       <div>
         <h1 className="text-2xl font-semibold tracking-tight text-canvas-fg">
           Hola, {profile?.nombre ?? "administrador"}

@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { miContrato } from "@/features/portal/queries";
 import { BotonVolver } from "@/components/boton-volver";
 import { badge } from "@/components/ui";
+import { numeroContratoMostrar, terminoMostrar } from "@/features/contratos/vigencia";
 import { formatearFecha } from "@/lib/fecha";
 
 const ESTADO: Record<string, { label: string; tone: Parameters<typeof badge>[0] }> = {
@@ -67,21 +68,21 @@ export default async function PortalDetalleContratoPage({
             <h1 className="text-xl font-semibold tracking-tight text-white">
               {contrato.propiedad_direccion}
             </h1>
-            <p className="mt-1 text-sm text-white/70">{contrato.numero_contrato ?? "—"}</p>
+            <p className="mt-1 text-sm text-white/70">{numeroContratoMostrar(contrato.numero_contrato, contrato.id)}</p>
           </div>
           <span className={badge(est.tone)}>{est.label}</span>
         </div>
 
         <div className="mt-5 flex flex-col gap-4">
           <Bloque titulo="Contrato">
-            <Dato label="N° de contrato" value={contrato.numero_contrato} />
+            <Dato label="N° de contrato" value={numeroContratoMostrar(contrato.numero_contrato, contrato.id)} />
             <Dato label="Arrendatario" value={contrato.arrendatarios_nombres.join(", ") || "—"} />
           </Bloque>
 
           <Bloque titulo="Fechas">
             <Dato label="Fecha de firma" value={formatearFecha(contrato.fecha_firma)} />
             <Dato label="Fecha de inicio" value={formatearFecha(contrato.fecha_inicio)} />
-            <Dato label="Fecha de término" value={formatearFecha(contrato.fecha_termino)} />
+            <Dato label="Fecha de término" value={terminoMostrar(contrato.fecha_termino, contrato.estado)} />
           </Bloque>
 
           <Bloque titulo="Canon y reajuste">

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Building2, Wallet, Receipt, FileText } from "lucide-react";
 import { getCurrentProfile } from "@/lib/auth";
+import { GuardiaAtras } from "@/components/guardia-atras";
 import { misCargos, misPropiedades, misLiquidaciones } from "@/features/portal/queries";
 
 function clp(n: number): string {
@@ -45,6 +46,7 @@ export default async function PortalHomePage() {
 
   return (
     <div className="flex flex-col gap-8">
+      <GuardiaAtras />
       <div>
         <h1 className="text-2xl font-semibold tracking-tight text-canvas-fg">
           Hola, {profile?.nombre ?? "bienvenido"}
