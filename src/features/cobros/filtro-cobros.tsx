@@ -4,7 +4,6 @@ import { useState } from "react";
 import { Filter, X } from "lucide-react";
 import { ui } from "@/components/ui";
 import { ComboboxOpcion } from "@/components/combobox-opcion";
-import { SelectStyled } from "@/components/select-styled";
 
 const ESTADO_OPCIONES = [
   { value: "pendiente", label: "Pendiente" },
@@ -91,18 +90,13 @@ export function FiltroCobros({
           </label>
           <label className="flex flex-col gap-1 text-sm">
             <span className="font-medium text-canvas-fg">Estado</span>
-            <SelectStyled
+            <ComboboxOpcion
               name="estado"
+              options={ESTADO_OPCIONES.map((o) => ({ id: o.value, label: o.label }))}
               value={campos.estado}
-              onChange={(e) => set("estado", e.target.value)}
-            >
-              <option value="">Todos</option>
-              {ESTADO_OPCIONES.map((o) => (
-                <option key={o.value} value={o.value}>
-                  {o.label}
-                </option>
-              ))}
-            </SelectStyled>
+              onChange={(v) => set("estado", v)}
+              placeholder="Todos"
+            />
           </label>
           <label className="flex flex-col gap-1 text-sm">
             <span className="font-medium text-canvas-fg">Período</span>

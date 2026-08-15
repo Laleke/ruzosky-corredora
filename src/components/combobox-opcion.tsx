@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ChevronDown } from "lucide-react";
 import { ui } from "@/components/ui";
 
@@ -32,6 +32,7 @@ export function ComboboxOpcion({
 }) {
   const [open, setOpen] = useState(false);
   const [texto, setTexto] = useState(() => options.find((o) => o.id === value)?.label ?? "");
+  const contenedorRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     setTexto(options.find((o) => o.id === value)?.label ?? "");
@@ -47,8 +48,28 @@ export function ComboboxOpcion({
     setTexto(options.find((o) => o.id === value)?.label ?? "");
   }
 
+  // El cierre por `onBlur` no es confiable en algunos navegadores/PWA móviles
+  // (queda desplegado aunque se toque fuera) — se refuerza con un listener de
+  // clic/touch fuera del componente.
+  useEffect(() => {
+    if (!open) return;
+    function onFuera(e: MouseEvent | TouchEvent) {
+      if (contenedorRef.current && !contenedorRef.current.contains(e.target as Node)) {
+        revertir();
+        setOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", onFuera);
+    document.addEventListener("touchstart", onFuera);
+    return () => {
+      document.removeEventListener("mousedown", onFuera);
+      document.removeEventListener("touchstart", onFuera);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open]);
+
   return (
-    <div className="relative">
+    <div className="relative" ref={contenedorRef}>
       <input type="hidden" name={name} value={value} required={required} />
       <input
         type="text"

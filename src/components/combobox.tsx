@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ChevronDown } from "lucide-react";
 import { ui } from "@/components/ui";
 
@@ -27,14 +27,33 @@ export function Combobox({
   disabled?: boolean;
 }) {
   const [open, setOpen] = useState(false);
+  const contenedorRef = useRef<HTMLDivElement>(null);
 
   const q = value.trim().toLowerCase();
   const filtradas = (
     q ? options.filter((o) => o.toLowerCase().includes(q)) : options
   ).slice(0, 80);
 
+  // El cierre por `onBlur` no es confiable en algunos navegadores/PWA móviles
+  // (queda desplegado aunque se toque fuera) — se refuerza con un listener de
+  // clic/touch fuera del componente.
+  useEffect(() => {
+    if (!open) return;
+    function onFuera(e: MouseEvent | TouchEvent) {
+      if (contenedorRef.current && !contenedorRef.current.contains(e.target as Node)) {
+        setOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", onFuera);
+    document.addEventListener("touchstart", onFuera);
+    return () => {
+      document.removeEventListener("mousedown", onFuera);
+      document.removeEventListener("touchstart", onFuera);
+    };
+  }, [open]);
+
   return (
-    <div className="relative">
+    <div className="relative" ref={contenedorRef}>
       {/* Valor real para el formulario */}
       <input type="hidden" name={name} value={value} />
       {/* Campo de búsqueda (no se autocompleta) */}

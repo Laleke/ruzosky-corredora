@@ -63,9 +63,13 @@ function NavLinks({ rol, onNavigate }: { rol: EntidadPortal; onNavigate?: () => 
   );
 }
 
-function Marca() {
+function Marca({ onNavigate }: { onNavigate?: () => void }) {
   return (
-    <div className="flex items-center gap-2.5 px-5 py-5">
+    <Link
+      href="/portal"
+      onClick={onNavigate}
+      className="flex items-center gap-2.5 px-5 py-5"
+    >
       <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-burgundy text-xs font-bold text-white">
         RZK
       </span>
@@ -73,7 +77,7 @@ function Marca() {
         <p className="text-sm font-semibold text-white">Prop</p>
         <p className="text-xs text-white/50">Portal</p>
       </div>
-    </div>
+    </Link>
   );
 }
 
@@ -105,12 +109,12 @@ export function PortalSidebar({ nombre, rol }: { nombre: string; rol: EntidadPor
         >
           <Menu size={22} />
         </button>
-        <div className="flex items-center gap-2">
+        <Link href="/portal" className="flex items-center gap-2">
           <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-burgundy text-[10px] font-bold text-white">
             RZK
           </span>
           <span className="font-semibold text-canvas-fg">Prop</span>
-        </div>
+        </Link>
       </header>
 
       <aside className="no-print fixed inset-y-0 left-0 z-30 hidden w-64 flex-col bg-ink md:flex">
@@ -128,7 +132,7 @@ export function PortalSidebar({ nombre, rol }: { nombre: string; rol: EntidadPor
           <div className="absolute inset-0 bg-black/40" onClick={() => setAbierto(false)} />
           <div className="absolute inset-y-0 left-0 flex w-64 flex-col bg-ink">
             <div className="flex items-center justify-between pr-3">
-              <Marca />
+              <Marca onNavigate={() => setAbierto(false)} />
               <button
                 onClick={() => setAbierto(false)}
                 aria-label="Cerrar menú"

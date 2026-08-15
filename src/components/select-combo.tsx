@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ChevronDown } from "lucide-react";
 import { ui } from "@/components/ui";
 
@@ -27,6 +27,7 @@ export function SelectCombo({
 }) {
   const [open, setOpen] = useState(false);
   const [texto, setTexto] = useState("");
+  const contenedorRef = useRef<HTMLDivElement>(null);
 
   const actual = opciones.find((o) => o.value === value);
   const mostrado = open ? texto : (actual?.label ?? "");
@@ -34,8 +35,26 @@ export function SelectCombo({
   const q = texto.trim().toLowerCase();
   const filtradas = q ? opciones.filter((o) => o.label.toLowerCase().includes(q)) : opciones;
 
+  // El cierre por `onBlur` no es confiable en algunos navegadores/PWA móviles
+  // (queda desplegado aunque se toque fuera) — se refuerza con un listener de
+  // clic/touch fuera del componente.
+  useEffect(() => {
+    if (!open) return;
+    function onFuera(e: MouseEvent | TouchEvent) {
+      if (contenedorRef.current && !contenedorRef.current.contains(e.target as Node)) {
+        setOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", onFuera);
+    document.addEventListener("touchstart", onFuera);
+    return () => {
+      document.removeEventListener("mousedown", onFuera);
+      document.removeEventListener("touchstart", onFuera);
+    };
+  }, [open]);
+
   return (
-    <div className="relative">
+    <div className="relative" ref={contenedorRef}>
       <input type="hidden" name={name} value={value} />
       <input
         type="text"

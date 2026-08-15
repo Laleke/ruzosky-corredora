@@ -231,8 +231,14 @@ export default async function CobrosPage({
               <details key={periodo} className="rounded-xl bg-burgundy overflow-hidden">
                 <summary className="flex cursor-pointer list-none items-center justify-between p-5 [&::-webkit-details-marker]:hidden">
                   <span className="font-semibold text-white">{formatearPeriodo(periodo)}</span>
-                  <span className="flex items-center gap-2 text-white/70">
-                    Deuda vencida: {monto(deudaVencidaPeriodo)}
+                  <span
+                    className={`flex items-center gap-2 ${
+                      deudaVencidaPeriodo === 0 ? "text-emerald-400" : "text-white/70"
+                    }`}
+                  >
+                    {deudaVencidaPeriodo === 0
+                      ? "Deuda pagada"
+                      : `Deuda vencida: ${monto(deudaVencidaPeriodo)}`}
                   </span>
                 </summary>
                 <div className="flex flex-col divide-y-2 divide-white/20 px-5 pb-5">
