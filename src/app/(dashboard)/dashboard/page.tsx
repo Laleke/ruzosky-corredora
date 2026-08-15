@@ -3,7 +3,6 @@ import {
   Building2,
   Wallet,
   AlertTriangle,
-  ArrowRight,
   ArrowUpRight,
   ListChecks,
   Receipt,
@@ -130,38 +129,31 @@ export default async function DashboardPage() {
         />
       </div>
 
-      <div className="rounded-2xl bg-burgundy p-6">
-        <div className="mb-4 flex items-center gap-2 text-white">
-          <ListChecks size={18} />
-          <h2 className="font-semibold">Tareas pendientes</h2>
-        </div>
-        {tareasConPendiente.length === 0 ? (
-          <p className="text-sm text-white/60">No hay tareas pendientes por ahora.</p>
-        ) : (
-          <ul className="flex flex-col divide-y divide-white/15">
+      {tareasConPendiente.length > 0 && (
+        <div>
+          <div className="mb-3 flex items-center gap-2 text-canvas-fg">
+            <ListChecks size={18} />
+            <h2 className="font-semibold">Tareas pendientes</h2>
+          </div>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
             {tareasConPendiente.map((t) => (
-              <li key={t.key} className="flex items-center justify-between gap-3 py-2.5">
-                <span className="flex items-center gap-2 text-sm text-white/90">
-                  {t.alerta && <AlertTriangle size={15} className="text-amber-300" />}
-                  {t.label}
-                </span>
-                <Link
-                  href={t.href}
-                  className="flex items-center gap-1 text-sm font-medium text-white hover:underline"
-                >
-                  {t.cantidad}
-                  <ArrowRight size={14} />
-                </Link>
-              </li>
+              <Kpi
+                key={t.key}
+                icon={t.alerta ? AlertTriangle : ListChecks}
+                label={t.label}
+                valor={String(t.cantidad)}
+                alerta={t.alerta}
+                href={t.href}
+              />
             ))}
-          </ul>
-        )}
-        {TAREAS_PROXIMAMENTE.length > 0 && (
-          <p className="mt-3 text-xs text-white/50">
-            Próximamente: {TAREAS_PROXIMAMENTE.join("; ")}.
-          </p>
-        )}
-      </div>
+          </div>
+          {TAREAS_PROXIMAMENTE.length > 0 && (
+            <p className="mt-3 text-xs text-canvas-muted">
+              Próximamente: {TAREAS_PROXIMAMENTE.join("; ")}.
+            </p>
+          )}
+        </div>
+      )}
     </div>
   );
 }
