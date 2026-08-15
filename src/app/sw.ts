@@ -1,6 +1,6 @@
-import { defaultCache, PAGES_CACHE_NAME } from "@serwist/next/worker";
-import type { PrecacheEntry, RuntimeCaching, SerwistGlobalConfig } from "serwist";
-import { ExpirationPlugin, NetworkFirst, Serwist } from "serwist";
+import { defaultCache } from "@serwist/next/worker";
+import type { PrecacheEntry, SerwistGlobalConfig } from "serwist";
+import { Serwist } from "serwist";
 
 declare global {
   interface WorkerGlobalScope extends SerwistGlobalConfig {
@@ -11,51 +11,6 @@ declare global {
 
 declare const self: ServiceWorkerGlobalScope;
 
-/**
- * `defaultCache` usa `NetworkFirst` SIN `networkTimeoutSeconds` para
- * navegación (HTML/RSC): si la conexión del celular se cuelga (red móvil
- * intermitente, típico en el uso real), Workbox espera esa respuesta para
- * siempre en vez de caer al cache — la app queda "pegada" en la pantalla
- * anterior (o en el `loading.tsx`) indefinidamente. Se antepone una copia de
- * esas mismas reglas con un timeout, para que a los 8s caiga al cache en vez
- * de colgarse. Van ANTES de `defaultCache` en el arreglo: Workbox usa la
- * primera regla que matchee.
- */
-const NAVEGACION_CON_TIMEOUT: RuntimeCaching[] = [
-  {
-    matcher: ({ request, url: { pathname }, sameOrigin }) =>
-      request.headers.get("RSC") === "1" &&
-      request.headers.get("Next-Router-Prefetch") === "1" &&
-      sameOrigin &&
-      !pathname.startsWith("/api/"),
-    handler: new NetworkFirst({
-      cacheName: PAGES_CACHE_NAME.rscPrefetch,
-      networkTimeoutSeconds: 8,
-      plugins: [new ExpirationPlugin({ maxEntries: 32, maxAgeSeconds: 24 * 60 * 60 })],
-    }),
-  },
-  {
-    matcher: ({ request, url: { pathname }, sameOrigin }) =>
-      request.headers.get("RSC") === "1" && sameOrigin && !pathname.startsWith("/api/"),
-    handler: new NetworkFirst({
-      cacheName: PAGES_CACHE_NAME.rsc,
-      networkTimeoutSeconds: 8,
-      plugins: [new ExpirationPlugin({ maxEntries: 32, maxAgeSeconds: 24 * 60 * 60 })],
-    }),
-  },
-  {
-    matcher: ({ request, url: { pathname }, sameOrigin }) =>
-      request.headers.get("Content-Type")?.includes("text/html") === true &&
-      sameOrigin &&
-      !pathname.startsWith("/api/"),
-    handler: new NetworkFirst({
-      cacheName: PAGES_CACHE_NAME.html,
-      networkTimeoutSeconds: 8,
-      plugins: [new ExpirationPlugin({ maxEntries: 32, maxAgeSeconds: 24 * 60 * 60 })],
-    }),
-  },
-];
-
 const serwist = new Serwist({
   precacheEntries: self.__SW_MANIFEST,
   // false: el SW nuevo espera la orden del cliente (banner "Actualizar")
@@ -63,7 +18,7 @@ const serwist = new Serwist({
   skipWaiting: false,
   clientsClaim: true,
   navigationPreload: true,
-  runtimeCaching: [...NAVEGACION_CON_TIMEOUT, ...defaultCache],
+  runtimeCaching: defaultCache,
 });
 
 serwist.addEventListeners();
