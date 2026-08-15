@@ -27,12 +27,22 @@ export function Combobox({
   disabled?: boolean;
 }) {
   const [open, setOpen] = useState(false);
+  // Si aún no se escribió nada desde que se abrió, se muestran todas las
+  // opciones — si no, reabrir un combo con un valor ya elegido solo mostraba
+  // ese mismo valor (filtraba la lista contra el texto ya cargado).
+  const [buscando, setBuscando] = useState(false);
   const contenedorRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
 
-  const q = value.trim().toLowerCase();
+  const q = buscando ? value.trim().toLowerCase() : "";
   const filtradas = (
     q ? options.filter((o) => o.toLowerCase().includes(q)) : options
   ).slice(0, 80);
+
+  function abrir() {
+    setOpen(true);
+    setBuscando(false);
+  }
 
   // El cierre por `onBlur` no es confiable en algunos navegadores/PWA móviles
   // (queda desplegado aunque se toque fuera) — se refuerza con un listener de
@@ -58,6 +68,7 @@ export function Combobox({
       <input type="hidden" name={name} value={value} />
       {/* Campo de búsqueda (no se autocompleta) */}
       <input
+        ref={inputRef}
         type="text"
         role="combobox"
         aria-expanded={open}
@@ -73,9 +84,21 @@ export function Combobox({
         placeholder={placeholder}
         onChange={(e) => {
           onChange(e.target.value);
+          setBuscando(true);
           setOpen(true);
         }}
-        onFocus={() => setOpen(true)}
+        onFocus={abrir}
+        onMouseDown={() => {
+          // El input ya estaba enfocado (por eso `onFocus` no vuelve a
+          // disparar): este clic es para alternar abrir/cerrar el desplegable.
+          if (document.activeElement === inputRef.current) {
+            setOpen((o) => {
+              if (o) return false;
+              setBuscando(false);
+              return true;
+            });
+          }
+        }}
         onBlur={() => setTimeout(() => setOpen(false), 150)}
         className={`${ui.input} pr-9`}
       />

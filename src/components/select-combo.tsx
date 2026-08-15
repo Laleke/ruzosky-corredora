@@ -28,6 +28,7 @@ export function SelectCombo({
   const [open, setOpen] = useState(false);
   const [texto, setTexto] = useState("");
   const contenedorRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   const actual = opciones.find((o) => o.value === value);
   const mostrado = open ? texto : (actual?.label ?? "");
@@ -57,6 +58,7 @@ export function SelectCombo({
     <div className="relative" ref={contenedorRef}>
       <input type="hidden" name={name} value={value} />
       <input
+        ref={inputRef}
         type="text"
         role="combobox"
         aria-expanded={open}
@@ -73,6 +75,13 @@ export function SelectCombo({
         onFocus={() => {
           setTexto("");
           setOpen(true);
+        }}
+        onMouseDown={() => {
+          // El input ya estaba enfocado (por eso `onFocus` no vuelve a
+          // disparar): este clic es para alternar abrir/cerrar el desplegable.
+          if (document.activeElement === inputRef.current) {
+            setOpen((o) => !o);
+          }
         }}
         onBlur={() => setTimeout(() => setOpen(false), 150)}
         className={`${ui.input} pr-9`}

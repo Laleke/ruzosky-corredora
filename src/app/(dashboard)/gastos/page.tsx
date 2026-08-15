@@ -98,9 +98,11 @@ export default async function GastosPage({
                   </div>
 
                   <div className="flex items-center justify-between gap-2">
-                    <details className="min-w-0 flex-1">
+                    <details className="group min-w-0 flex-1">
                       <summary className={ui.listCardDisclosure}>
-                        <Info size={14} /> Ver más información
+                        <Info size={14} />
+                        <span className="group-open:hidden">Ver más información</span>
+                        <span className="hidden group-open:inline">Ocultar información</span>
                       </summary>
                       <div className="mt-2 flex flex-col gap-1 text-sm text-white/80">
                         <span>Propiedad: {g.propiedad_label ?? "—"}</span>

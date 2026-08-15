@@ -65,9 +65,11 @@ export function PagosLista({
             </div>
           </div>
 
-          <details className="min-w-0">
+          <details className="group min-w-0">
             <summary className={ui.listCardDisclosure}>
-              <Info size={14} /> Ver más información
+              <Info size={14} />
+              <span className="group-open:hidden">Ver más información</span>
+              <span className="hidden group-open:inline">Ocultar información</span>
             </summary>
             <div className="mt-2 flex flex-col gap-1.5 text-sm text-white/80">
               <span>Medio: {p.medio_pago ? MEDIO_LABEL[p.medio_pago] ?? p.medio_pago : "—"}</span>

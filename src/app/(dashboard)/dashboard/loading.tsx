@@ -1,0 +1,42 @@
+/**
+ * El logo "RZK Prop" y el ítem "Dashboard" del menú navegan aquí; sin este
+ * loading.tsx la pantalla queda en blanco/congelada mientras se resuelven
+ * las ~13 consultas de KPIs y tareas pendientes (ver getDashboardStats/
+ * getTareasPendientes) — Next.js muestra este esqueleto de inmediato en su
+ * lugar, para que la navegación se sienta instantánea aunque los datos
+ * tarden lo mismo en llegar.
+ */
+export default function DashboardLoading() {
+  return (
+    <div className="flex flex-col gap-8">
+      <div>
+        <div className="h-7 w-56 animate-pulse rounded bg-white/10" />
+        <div className="mt-2 h-4 w-72 animate-pulse rounded bg-white/5" />
+      </div>
+
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        {Array.from({ length: 4 }).map((_, i) => (
+          <div key={i} className="flex items-center gap-3 rounded-xl bg-burgundy p-4 shadow-sm">
+            <span className="h-10 w-10 shrink-0 animate-pulse rounded-lg bg-white/10" />
+            <div className="min-w-0 flex-1">
+              <div className="h-5 w-20 animate-pulse rounded bg-white/15" />
+              <div className="mt-1.5 h-3 w-24 animate-pulse rounded bg-white/10" />
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <div className="rounded-2xl bg-burgundy p-6">
+        <div className="mb-4 h-5 w-40 animate-pulse rounded bg-white/15" />
+        <div className="flex flex-col divide-y divide-white/15">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} className="flex items-center justify-between gap-3 py-2.5">
+              <div className="h-4 w-56 animate-pulse rounded bg-white/10" />
+              <div className="h-4 w-6 animate-pulse rounded bg-white/10" />
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}

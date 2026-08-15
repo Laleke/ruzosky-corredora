@@ -32,20 +32,31 @@ export function ComboboxOpcion({
 }) {
   const [open, setOpen] = useState(false);
   const [texto, setTexto] = useState(() => options.find((o) => o.id === value)?.label ?? "");
+  // Si aún no se escribió nada desde que se abrió, se muestran todas las
+  // opciones — si no, reabrir un combo con un valor ya elegido solo mostraba
+  // ese mismo valor (el texto del campo, que es el label actual, filtraba
+  // la lista contra sí mismo).
+  const [buscando, setBuscando] = useState(false);
   const contenedorRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     setTexto(options.find((o) => o.id === value)?.label ?? "");
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [value]);
 
-  const q = texto.trim().toLowerCase();
+  const q = buscando ? texto.trim().toLowerCase() : "";
   const filtradas = (
     q ? options.filter((o) => o.label.toLowerCase().includes(q)) : options
   ).slice(0, 80);
 
   function revertir() {
     setTexto(options.find((o) => o.id === value)?.label ?? "");
+  }
+
+  function abrir() {
+    setOpen(true);
+    setBuscando(false);
   }
 
   // El cierre por `onBlur` no es confiable en algunos navegadores/PWA móviles
@@ -72,6 +83,7 @@ export function ComboboxOpcion({
     <div className="relative" ref={contenedorRef}>
       <input type="hidden" name={name} value={value} required={required} />
       <input
+        ref={inputRef}
         type="text"
         role="combobox"
         aria-expanded={open}
@@ -87,9 +99,22 @@ export function ComboboxOpcion({
         placeholder={placeholder}
         onChange={(e) => {
           setTexto(e.target.value);
+          setBuscando(true);
           setOpen(true);
         }}
-        onFocus={() => setOpen(true)}
+        onFocus={abrir}
+        onMouseDown={() => {
+          // El input ya estaba enfocado (por eso `onFocus` no vuelve a
+          // disparar): este clic es para alternar abrir/cerrar el desplegable.
+          if (document.activeElement === inputRef.current) {
+            if (open) {
+              revertir();
+              setOpen(false);
+            } else {
+              abrir();
+            }
+          }
+        }}
         onBlur={() => {
           setTimeout(() => {
             revertir();

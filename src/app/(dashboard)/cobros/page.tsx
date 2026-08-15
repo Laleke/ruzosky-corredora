@@ -227,6 +227,10 @@ export default async function CobrosPage({
                   : acc,
               0
             );
+            const pagadoPeriodo = items.reduce(
+              (acc, c) => acc + (Number(c.monto) - Number(c.saldo_pendiente)),
+              0
+            );
             return (
               <details key={periodo} className="rounded-xl bg-burgundy overflow-hidden">
                 <summary className="flex cursor-pointer list-none items-center justify-between p-5 [&::-webkit-details-marker]:hidden">
@@ -237,7 +241,7 @@ export default async function CobrosPage({
                     }`}
                   >
                     {deudaVencidaPeriodo === 0
-                      ? "Deuda pagada"
+                      ? `Deuda pagada: ${monto(pagadoPeriodo)}`
                       : `Deuda vencida: ${monto(deudaVencidaPeriodo)}`}
                   </span>
                 </summary>
@@ -261,9 +265,11 @@ export default async function CobrosPage({
                         </div>
 
                         <div className="flex items-center justify-between gap-2">
-                          <details className="min-w-0 flex-1">
+                          <details className="group min-w-0 flex-1">
                             <summary className={ui.listCardDisclosure}>
-                              <Info size={14} /> Ver más información
+                              <Info size={14} />
+                              <span className="group-open:hidden">Ver más información</span>
+                              <span className="hidden group-open:inline">Ocultar información</span>
                             </summary>
                             <div className="mt-2 flex flex-col gap-1 text-sm text-white/80">
                               <span>Deuda pendiente: {monto(c.saldo_pendiente)}</span>
