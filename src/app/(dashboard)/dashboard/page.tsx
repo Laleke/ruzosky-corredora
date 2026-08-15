@@ -1,16 +1,16 @@
 import Link from "next/link";
 import {
-  Building2,
   Wallet,
-  AlertTriangle,
-  ArrowRight,
+  // Building2,
+  // AlertTriangle,
+  // ArrowRight,
   ArrowUpRight,
-  ListChecks,
-  Receipt,
+  // ListChecks,
+  // Receipt,
 } from "lucide-react";
 import { getCurrentProfile } from "@/lib/auth";
 import { GuardiaAtras } from "@/components/guardia-atras";
-import { getDashboardStats, getTareasPendientes } from "@/features/dashboard/queries";
+import { getDashboardStats /*, getTareasPendientes */ } from "@/features/dashboard/queries";
 
 /** Indicadores de futuro desarrollo: la data o la regla de negocio aún no existen. */
 const TAREAS_PROXIMAMENTE = [
@@ -84,7 +84,11 @@ export default async function DashboardPage() {
   // middleware respondiendo rápido — nunca se ve cuánto demora esta función.
   // Quitar una vez identificado el cuello de botella real.
   const t0 = Date.now();
-  const [profile, stats, tareas] = await Promise.all([
+  // Divide y vencerás: se comentan getTareasPendientes (8 consultas) y el
+  // resto de las tarjetas KPI, dejando solo "Deuda pendiente", para aislar
+  // si el problema de cargas repetidas viene de acá o es independiente de
+  // cuántas consultas dispare la página.
+  const [profile, stats /*, tareas */] = await Promise.all([
     getCurrentProfile().then((r) => {
       console.log(`[dashboard-timing] getCurrentProfile: ${Date.now() - t0}ms`);
       return r;
@@ -93,13 +97,13 @@ export default async function DashboardPage() {
       console.log(`[dashboard-timing] getDashboardStats: ${Date.now() - t0}ms`);
       return r;
     }),
-    getTareasPendientes().then((r) => {
-      console.log(`[dashboard-timing] getTareasPendientes: ${Date.now() - t0}ms`);
-      return r;
-    }),
+    // getTareasPendientes().then((r) => {
+    //   console.log(`[dashboard-timing] getTareasPendientes: ${Date.now() - t0}ms`);
+    //   return r;
+    // }),
   ]);
   console.log(`[dashboard-timing] total: ${Date.now() - t0}ms`);
-  const tareasConPendiente = tareas.filter((t) => t.cantidad > 0);
+  // const tareasConPendiente = tareas.filter((t) => t.cantidad > 0);
 
   return (
     <div className="flex flex-col gap-8">
@@ -114,13 +118,13 @@ export default async function DashboardPage() {
       </div>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <Kpi
+        {/* <Kpi
           icon={Building2}
           label="Propiedades"
           valor={String(stats.propiedadesTotal)}
           sub={`${stats.propiedadesArrendadas} arrendadas`}
           href="/propiedades"
-        />
+        /> */}
         <Kpi
           icon={Wallet}
           label="Deuda pendiente"
@@ -128,7 +132,7 @@ export default async function DashboardPage() {
           alerta={stats.deudaPendiente > 0}
           href="/cobros"
         />
-        <Kpi
+        {/* <Kpi
           icon={AlertTriangle}
           label="Cargos morosos"
           valor={String(stats.cargosMorosos)}
@@ -142,10 +146,10 @@ export default async function DashboardPage() {
           valor={clp(stats.pagosRecibidosMesMonto)}
           sub="de arrendatarios, período actual"
           href="/cobros"
-        />
+        /> */}
       </div>
 
-      <div className="rounded-2xl bg-burgundy p-6">
+      {/* <div className="rounded-2xl bg-burgundy p-6">
         <div className="mb-4 flex items-center gap-2 text-white">
           <ListChecks size={18} />
           <h2 className="font-semibold">Tareas pendientes</h2>
@@ -176,7 +180,7 @@ export default async function DashboardPage() {
             Próximamente: {TAREAS_PROXIMAMENTE.join("; ")}.
           </p>
         )}
-      </div>
+      </div> */}
     </div>
   );
 }
