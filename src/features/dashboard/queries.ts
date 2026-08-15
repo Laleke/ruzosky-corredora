@@ -90,6 +90,17 @@ export async function getTareasPendientes(): Promise<TareaPendiente[]> {
     .toISOString()
     .slice(0, 10);
 
+  // Instrumentación temporal (ver page.tsx del Dashboard): mide cada rama en
+  // paralelo por separado para encontrar cuál es la lenta. Quitar junto con
+  // el resto de los console.log de "[dashboard-timing]".
+  const t0 = Date.now();
+  function medir<T>(nombre: string, p: PromiseLike<T>): Promise<T> {
+    return Promise.resolve(p).then((r) => {
+      console.log(`[dashboard-timing] tareas.${nombre}: ${Date.now() - t0}ms`);
+      return r;
+    });
+  }
+
   const [
     liquidacionesPendientes,
     cobrosPendientes,
@@ -100,31 +111,43 @@ export async function getTareasPendientes(): Promise<TareaPendiente[]> {
     contratosConDesfazadoPendiente,
     solicitudesPagoPendientes,
   ] = await Promise.all([
-    listPendientesLiquidar(`${periodoActual}-01`),
-    debeAvisarGeneracionAsistida()
-      ? listContratosSinArriendo(`${periodoArriendo}-01`)
-      : Promise.resolve([]),
-    supabase
-      .from("gastos")
-      .select("*", { count: "exact", head: true })
-      .eq("estado", "pendiente")
-      .eq("descontar_de_liquidacion", true)
-      .is("liquidacion_id", null),
-    supabase
-      .from("gastos")
-      .select("*", { count: "exact", head: true })
-      .eq("estado", "pagado")
-      .is("documento_id", null),
-    supabase
-      .from("contratos")
-      .select("*", { count: "exact", head: true })
-      .in("estado", ["vigente", "renovado"])
-      .eq("activo", true)
-      .gte("fecha_termino", hoy)
-      .lte("fecha_termino", en30dias),
-    listContratosConReajustePendiente(),
-    listContratosConDesfazadoPendiente(),
-    solicitudesPendientes(),
+    medir("listPendientesLiquidar", listPendientesLiquidar(`${periodoActual}-01`)),
+    medir(
+      "listContratosSinArriendo",
+      debeAvisarGeneracionAsistida()
+        ? listContratosSinArriendo(`${periodoArriendo}-01`)
+        : Promise.resolve([])
+    ),
+    medir(
+      "gastosPorLiquidar",
+      supabase
+        .from("gastos")
+        .select("*", { count: "exact", head: true })
+        .eq("estado", "pendiente")
+        .eq("descontar_de_liquidacion", true)
+        .is("liquidacion_id", null)
+    ),
+    medir(
+      "comprobantesPendientes",
+      supabase
+        .from("gastos")
+        .select("*", { count: "exact", head: true })
+        .eq("estado", "pagado")
+        .is("documento_id", null)
+    ),
+    medir(
+      "contratosPorVencer",
+      supabase
+        .from("contratos")
+        .select("*", { count: "exact", head: true })
+        .in("estado", ["vigente", "renovado"])
+        .eq("activo", true)
+        .gte("fecha_termino", hoy)
+        .lte("fecha_termino", en30dias)
+    ),
+    medir("listContratosConReajustePendiente", listContratosConReajustePendiente()),
+    medir("listContratosConDesfazadoPendiente", listContratosConDesfazadoPendiente()),
+    medir("solicitudesPendientes", solicitudesPendientes()),
   ]);
 
   return [

@@ -79,11 +79,26 @@ function Kpi({
 }
 
 export default async function DashboardPage() {
+  // Instrumentación temporal: Eduardo reporta que /dashboard queda "pegado"
+  // (visible incluso en WiFi), pero los logs de Vercel solo muestran al
+  // middleware respondiendo rápido — nunca se ve cuánto demora esta función.
+  // Quitar una vez identificado el cuello de botella real.
+  const t0 = Date.now();
   const [profile, stats, tareas] = await Promise.all([
-    getCurrentProfile(),
-    getDashboardStats(),
-    getTareasPendientes(),
+    getCurrentProfile().then((r) => {
+      console.log(`[dashboard-timing] getCurrentProfile: ${Date.now() - t0}ms`);
+      return r;
+    }),
+    getDashboardStats().then((r) => {
+      console.log(`[dashboard-timing] getDashboardStats: ${Date.now() - t0}ms`);
+      return r;
+    }),
+    getTareasPendientes().then((r) => {
+      console.log(`[dashboard-timing] getTareasPendientes: ${Date.now() - t0}ms`);
+      return r;
+    }),
   ]);
+  console.log(`[dashboard-timing] total: ${Date.now() - t0}ms`);
   const tareasConPendiente = tareas.filter((t) => t.cantidad > 0);
 
   return (
