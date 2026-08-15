@@ -184,6 +184,72 @@ export async function crearCargo(
   redirect("/cobros");
 }
 
+/** Actualiza un cargo existente (no cambia contrato/propiedad, esos son fijos). */
+export async function actualizarCargo(
+  cargoId: string,
+  _prev: CobroFormState,
+  formData: FormData
+): Promise<CobroFormState> {
+  const profile = await getCurrentProfile();
+  if (!profile || profile.rol !== "admin") return { error: "No autorizado." };
+
+  const ym = String(formData.get("periodo") ?? "");
+  if (!/^\d{4}-\d{2}$/.test(ym)) return { error: "Selecciona un período válido." };
+
+  const monto = decimal(formData, "monto");
+  if (monto === null || monto <= 0) return { error: "El monto debe ser mayor a 0." };
+
+  const tipoRaw = String(formData.get("tipo_cargo") ?? "").trim();
+  if (!(TIPOS as string[]).includes(tipoRaw)) {
+    return { error: "Selecciona el tipo de cargo." };
+  }
+  const tipo_cargo = tipoRaw as TipoCargo;
+  const pago_directo_servicio = String(formData.get("destino_pago") ?? "") === "directo";
+
+  const supabase = await createClient();
+
+  const { data: cargo } = await supabase
+    .from("cargos")
+    .select("monto, saldo_pendiente")
+    .eq("id", cargoId)
+    .single();
+  if (!cargo) return { error: "Cargo no encontrado." };
+
+  const pagado = Number(cargo.monto) - Number(cargo.saldo_pendiente);
+  if (monto < pagado) {
+    return {
+      error: `El monto no puede ser menor a lo ya pagado ($${pagado.toLocaleString("es-CL")}).`,
+    };
+  }
+
+  const { error } = await supabase
+    .from("cargos")
+    .update({
+      tipo_cargo,
+      periodo: `${ym}-01`,
+      pago_directo_servicio,
+      fecha_vencimiento: texto(formData, "fecha_vencimiento"),
+      monto,
+      observaciones: texto(formData, "observaciones"),
+      fecha_consumo_desde: texto(formData, "fecha_consumo_desde"),
+      fecha_consumo_hasta: texto(formData, "fecha_consumo_hasta"),
+    })
+    .eq("id", cargoId);
+
+  if (error) {
+    if (error.message.includes("duplicate") || error.message.includes("unique")) {
+      return { error: "Ya existe otro cargo con ese contrato/período/tipo." };
+    }
+    return { error: "No se pudo actualizar el cargo." };
+  }
+
+  await recalcularCargo(supabase, cargoId);
+
+  revalidatePath(`/cobros/${cargoId}`);
+  revalidatePath("/cobros");
+  return { error: null };
+}
+
 export async function registrarPago(
   cargoId: string,
   _prev: CobroFormState,
@@ -234,6 +300,65 @@ export async function registrarPago(
   });
 
   if (error) return { error: "No se pudo registrar el pago." };
+
+  await recalcularCargo(supabase, cargoId);
+
+  revalidatePath(`/cobros/${cargoId}`);
+  revalidatePath("/cobros");
+  return { error: null };
+}
+
+/** Edita un pago ya registrado. */
+export async function editarPago(
+  pagoId: string,
+  cargoId: string,
+  _prev: CobroFormState,
+  formData: FormData
+): Promise<CobroFormState> {
+  const profile = await getCurrentProfile();
+  if (!profile || profile.rol !== "admin") return { error: "No autorizado." };
+
+  const monto_pagado = decimal(formData, "monto_pagado");
+  if (monto_pagado === null || monto_pagado <= 0) {
+    return { error: "El monto del pago debe ser mayor a 0." };
+  }
+
+  const fecha_pago = texto(formData, "fecha_pago") ?? hoy();
+
+  const medioRaw = texto(formData, "medio_pago");
+  const medio_pago =
+    medioRaw && (MEDIOS as string[]).includes(medioRaw)
+      ? (medioRaw as MedioPago)
+      : null;
+
+  const supabase = await createClient();
+
+  const [{ data: cargo }, { data: pagoActual }] = await Promise.all([
+    supabase.from("cargos").select("saldo_pendiente").eq("id", cargoId).single(),
+    supabase.from("pagos").select("monto_pagado").eq("id", pagoId).single(),
+  ]);
+  if (!cargo || !pagoActual) return { error: "Pago o cargo no encontrado." };
+
+  // Al editar, el saldo disponible incluye lo que este mismo pago ya cubría.
+  const disponible = Number(cargo.saldo_pendiente) + Number(pagoActual.monto_pagado);
+  if (monto_pagado > disponible + 0.01) {
+    return {
+      error: `El pago supera el saldo disponible ($${disponible.toLocaleString("es-CL")}).`,
+    };
+  }
+
+  const { error } = await supabase
+    .from("pagos")
+    .update({
+      fecha_pago,
+      monto_pagado,
+      medio_pago,
+      referencia: texto(formData, "referencia"),
+      observaciones: texto(formData, "observaciones"),
+    })
+    .eq("id", pagoId);
+
+  if (error) return { error: "No se pudo actualizar el pago." };
 
   await recalcularCargo(supabase, cargoId);
 

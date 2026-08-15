@@ -37,6 +37,18 @@ function fmt(digits: string): string {
   return digits === "" ? "" : Number(digits).toLocaleString("es-CL");
 }
 
+/** Borrador solo para solicitudes nuevas (no al editar una ya existente, que ya trae sus datos reales). */
+function draftKey(cargoId: string): string {
+  return `rzk:draft:solicitud-pago:${cargoId}`;
+}
+
+type Borrador = {
+  paso: number;
+  valores: Record<string, string>;
+  archivoNombre: string | null;
+  comprobante: { path: string; nombre: string; tamano: number; mime: string | null } | null;
+};
+
 export function SolicitudPagoWizard({
   cargoId,
   saldoPendiente,
@@ -97,10 +109,49 @@ export function SolicitudPagoWizard({
   const actual = PASOS[paso];
   const esUltimo = paso === PASOS.length - 1;
 
+  function limpiarBorrador() {
+    try {
+      localStorage.removeItem(draftKey(cargoId));
+    } catch {
+      /* ignorar */
+    }
+  }
+
+  // Restaurar borrador solo si se está creando una solicitud nueva: si ya se
+  // está editando una existente, sus datos reales tienen prioridad sobre
+  // cualquier borrador viejo que haya quedado guardado.
+  useEffect(() => {
+    if (editando) return;
+    try {
+      const raw = localStorage.getItem(draftKey(cargoId));
+      if (!raw) return;
+      const guardado: Borrador = JSON.parse(raw);
+      if (guardado.valores) setValores((v) => ({ ...v, ...guardado.valores }));
+      if (typeof guardado.paso === "number") setPaso(guardado.paso);
+      if (guardado.archivoNombre) setArchivoNombre(guardado.archivoNombre);
+      if (guardado.comprobante) setComprobante(guardado.comprobante);
+    } catch {
+      /* borrador corrupto o no disponible: ignorar */
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    if (editando) return;
+    try {
+      const borrador: Borrador = { paso, valores, archivoNombre, comprobante };
+      localStorage.setItem(draftKey(cargoId), JSON.stringify(borrador));
+    } catch {
+      /* almacenamiento lleno o no disponible: ignorar */
+    }
+  }, [editando, cargoId, paso, valores, archivoNombre, comprobante]);
+
   useEffect(() => {
     if (enviado.current && !pending && !state.error) {
+      limpiarBorrador();
       router.push("/portal/cargos");
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pending, state.error, router]);
 
   function set(key: string, value: string) {

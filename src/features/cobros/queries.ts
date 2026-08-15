@@ -304,3 +304,9 @@ export async function getPagosDeCargo(cargoId: string): Promise<Pago[]> {
   if (error) throw new Error(error.message);
   return data ?? [];
 }
+
+export async function getPago(pagoId: string): Promise<Pago | null> {
+  const supabase = await createClient();
+  const { data } = await supabase.from("pagos").select("*").eq("id", pagoId).single();
+  return data ?? null;
+}

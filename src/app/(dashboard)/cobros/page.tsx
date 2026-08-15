@@ -220,20 +220,30 @@ export default async function CobrosPage({
       ) : (
         <div className="flex flex-col gap-4">
           {agruparPorPeriodo(cargos).map(([periodo, items]) => {
-            const deudaPeriodo = items.reduce((acc, c) => acc + Number(c.saldo_pendiente), 0);
+            const deudaVencidaPeriodo = items.reduce(
+              (acc, c) =>
+                Number(c.saldo_pendiente) > 0 && c.fecha_vencimiento && c.fecha_vencimiento < hoy
+                  ? acc + Number(c.saldo_pendiente)
+                  : acc,
+              0
+            );
             return (
               <details key={periodo} className="rounded-xl bg-burgundy overflow-hidden">
                 <summary className="flex cursor-pointer list-none items-center justify-between p-5 [&::-webkit-details-marker]:hidden">
                   <span className="font-semibold text-white">{formatearPeriodo(periodo)}</span>
                   <span className="flex items-center gap-2 text-white/70">
-                    Deuda pendiente: {monto(deudaPeriodo)}
+                    Deuda vencida: {monto(deudaVencidaPeriodo)}
                   </span>
                 </summary>
-                <div className="flex flex-col divide-y divide-white/10 px-5 pb-5">
+                <div className="flex flex-col divide-y-2 divide-white/20 px-5 pb-5">
                   {items.map((c) => {
                     const est = estadoMostrar(c.estado, Number(c.saldo_pendiente), c.fecha_vencimiento, hoy);
+                    const sinDeuda = Number(c.saldo_pendiente) === 0;
                     return (
-                      <div key={c.id} className="flex flex-col gap-3 py-4 first:pt-0">
+                      <div
+                        key={c.id}
+                        className={`flex flex-col gap-3 py-4 first:pt-0 ${sinDeuda ? "opacity-50" : ""}`}
+                      >
                         <div className="flex items-start justify-between gap-2">
                           <div>
                             <p className="text-xs text-white/60">{c.propiedad_direccion}</p>
