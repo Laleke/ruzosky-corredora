@@ -19,6 +19,7 @@ import {
   LogOut,
   Menu,
   X,
+  Wrench,
 } from "lucide-react";
 
 const NAV = [
@@ -27,6 +28,7 @@ const NAV = [
   { href: "/propietarios", label: "Propietarios", icon: Users },
   { href: "/arrendatarios", label: "Arrendatarios", icon: UserSquare2 },
   { href: "/contratos", label: "Contratos", icon: FileText },
+  { href: "/incidencias", label: "Incidencias", icon: Wrench },
   { href: "/cobros", label: "Cobros", icon: Wallet },
   { href: "/liquidaciones", label: "Liquidaciones", icon: Receipt },
   { href: "/gastos", label: "Gastos", icon: Banknote },

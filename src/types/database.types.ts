@@ -156,8 +156,8 @@ export type Database = {
           monto: number
           nombre: string | null
           observaciones: string | null
-          periodo: string
           pago_directo_servicio: boolean
+          periodo: string
           saldo_pendiente: number
           tipo_cargo: Database["public"]["Enums"]["tipo_cargo"]
           updated_at: string
@@ -175,8 +175,8 @@ export type Database = {
           monto: number
           nombre?: string | null
           observaciones?: string | null
-          periodo: string
           pago_directo_servicio?: boolean
+          periodo: string
           saldo_pendiente: number
           tipo_cargo?: Database["public"]["Enums"]["tipo_cargo"]
           updated_at?: string
@@ -194,8 +194,8 @@ export type Database = {
           monto?: number
           nombre?: string | null
           observaciones?: string | null
-          periodo?: string
           pago_directo_servicio?: boolean
+          periodo?: string
           saldo_pendiente?: number
           tipo_cargo?: Database["public"]["Enums"]["tipo_cargo"]
           updated_at?: string
@@ -210,6 +210,63 @@ export type Database = {
           },
           {
             foreignKeyName: "cargos_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      contrato_garantias: {
+        Row: {
+          contrato_id: string
+          creado_por: string | null
+          creado_por_email: string | null
+          created_at: string
+          empresa_id: string
+          fecha: string
+          id: string
+          monto: number
+          motivo: string | null
+          tipo_movimiento: Database["public"]["Enums"]["tipo_movimiento_garantia"]
+          updated_at: string
+        }
+        Insert: {
+          contrato_id: string
+          creado_por?: string | null
+          creado_por_email?: string | null
+          created_at?: string
+          empresa_id: string
+          fecha: string
+          id?: string
+          monto: number
+          motivo?: string | null
+          tipo_movimiento: Database["public"]["Enums"]["tipo_movimiento_garantia"]
+          updated_at?: string
+        }
+        Update: {
+          contrato_id?: string
+          creado_por?: string | null
+          creado_por_email?: string | null
+          created_at?: string
+          empresa_id?: string
+          fecha?: string
+          id?: string
+          monto?: number
+          motivo?: string | null
+          tipo_movimiento?: Database["public"]["Enums"]["tipo_movimiento_garantia"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contrato_garantias_contrato_id_fkey"
+            columns: ["contrato_id"]
+            isOneToOne: false
+            referencedRelation: "contratos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contrato_garantias_empresa_id_fkey"
             columns: ["empresa_id"]
             isOneToOne: false
             referencedRelation: "empresas"
@@ -724,6 +781,101 @@ export type Database = {
             columns: ["propietario_id"]
             isOneToOne: false
             referencedRelation: "propietarios"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      incidencias: {
+        Row: {
+          contrato_id: string | null
+          costo: number | null
+          creado_por: string | null
+          creado_por_email: string | null
+          created_at: string
+          descripcion: string | null
+          empresa_id: string
+          estado: Database["public"]["Enums"]["estado_incidencia"]
+          fecha_agendada: string | null
+          fecha_reportada: string
+          fecha_resuelta: string | null
+          gasto_id: string | null
+          id: string
+          observaciones: string | null
+          propiedad_id: string
+          proveedor_contacto: string | null
+          proveedor_nombre: string | null
+          titulo: string
+          updated_at: string
+        }
+        Insert: {
+          contrato_id?: string | null
+          costo?: number | null
+          creado_por?: string | null
+          creado_por_email?: string | null
+          created_at?: string
+          descripcion?: string | null
+          empresa_id: string
+          estado?: Database["public"]["Enums"]["estado_incidencia"]
+          fecha_agendada?: string | null
+          fecha_reportada: string
+          fecha_resuelta?: string | null
+          gasto_id?: string | null
+          id?: string
+          observaciones?: string | null
+          propiedad_id: string
+          proveedor_contacto?: string | null
+          proveedor_nombre?: string | null
+          titulo: string
+          updated_at?: string
+        }
+        Update: {
+          contrato_id?: string | null
+          costo?: number | null
+          creado_por?: string | null
+          creado_por_email?: string | null
+          created_at?: string
+          descripcion?: string | null
+          empresa_id?: string
+          estado?: Database["public"]["Enums"]["estado_incidencia"]
+          fecha_agendada?: string | null
+          fecha_reportada?: string
+          fecha_resuelta?: string | null
+          gasto_id?: string | null
+          id?: string
+          observaciones?: string | null
+          propiedad_id?: string
+          proveedor_contacto?: string | null
+          proveedor_nombre?: string | null
+          titulo?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "incidencias_contrato_id_fkey"
+            columns: ["contrato_id"]
+            isOneToOne: false
+            referencedRelation: "contratos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "incidencias_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "incidencias_gasto_id_fkey"
+            columns: ["gasto_id"]
+            isOneToOne: false
+            referencedRelation: "gastos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "incidencias_propiedad_id_fkey"
+            columns: ["propiedad_id"]
+            isOneToOne: false
+            referencedRelation: "propiedades"
             referencedColumns: ["id"]
           },
         ]
@@ -1407,6 +1559,12 @@ export type Database = {
         | "terminado"
         | "renovado"
       estado_gasto: "pendiente" | "pagado" | "anulado"
+      estado_incidencia:
+        | "reportada"
+        | "agendada"
+        | "en_proceso"
+        | "resuelta"
+        | "cancelada"
       estado_invitacion: "sin_invitar" | "invitado" | "activo"
       estado_liquidacion: "pendiente" | "pagada" | "anulada"
       estado_propiedad:
@@ -1434,6 +1592,7 @@ export type Database = {
       tipo_comision: "porcentaje" | "monto_fijo"
       tipo_cuenta_bancaria: "corriente" | "vista" | "ahorro" | "rut"
       tipo_detalle_liquidacion: "ingreso" | "descuento"
+      tipo_movimiento_garantia: "recepcion" | "retencion" | "devolucion"
       tipo_persona: "persona_natural" | "persona_juridica"
       tipo_propiedad:
         | "departamento"
@@ -1606,6 +1765,13 @@ export const Constants = {
         "renovado",
       ],
       estado_gasto: ["pendiente", "pagado", "anulado"],
+      estado_incidencia: [
+        "reportada",
+        "agendada",
+        "en_proceso",
+        "resuelta",
+        "cancelada",
+      ],
       estado_invitacion: ["sin_invitar", "invitado", "activo"],
       estado_liquidacion: ["pendiente", "pagada", "anulada"],
       estado_propiedad: [
@@ -1635,6 +1801,7 @@ export const Constants = {
       tipo_comision: ["porcentaje", "monto_fijo"],
       tipo_cuenta_bancaria: ["corriente", "vista", "ahorro", "rut"],
       tipo_detalle_liquidacion: ["ingreso", "descuento"],
+      tipo_movimiento_garantia: ["recepcion", "retencion", "devolucion"],
       tipo_persona: ["persona_natural", "persona_juridica"],
       tipo_propiedad: [
         "departamento",
@@ -1649,6 +1816,7 @@ export const Constants = {
     },
   },
 } as const
+
 
 // -----------------------------------------------------------------
 // Alias de conveniencia para los enums (usados en todo el código en
@@ -1675,3 +1843,5 @@ export type EstadoGasto = Database["public"]["Enums"]["estado_gasto"];
 export type ResponsableGasto = Database["public"]["Enums"]["responsable_gasto"];
 export type EstadoInvitacion = Database["public"]["Enums"]["estado_invitacion"];
 export type EstadoSolicitudPago = Database["public"]["Enums"]["estado_solicitud_pago"];
+export type EstadoIncidencia = Database["public"]["Enums"]["estado_incidencia"];
+export type TipoMovimientoGarantia = Database["public"]["Enums"]["tipo_movimiento_garantia"];

@@ -107,9 +107,9 @@ export default async function DashboardPage() {
         />
         <Kpi
           icon={Wallet}
-          label="Deuda pendiente"
-          valor={clp(stats.deudaPendiente)}
-          alerta={stats.deudaPendiente > 0}
+          label="Deuda vencida"
+          valor={clp(stats.deudaVencida)}
+          alerta={stats.deudaVencida > 0}
           href="/cobros"
         />
         <Kpi

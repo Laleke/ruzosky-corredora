@@ -12,7 +12,7 @@ import { solicitudesPendientes } from "@/features/solicitudes-pago/queries";
 export type DashboardStats = {
   propiedadesTotal: number;
   propiedadesArrendadas: number;
-  deudaPendiente: number;
+  deudaVencida: number;
   cargosMorosos: number;
   pagosRecibidosMesMonto: number;
 };
@@ -39,15 +39,23 @@ export async function getDashboardStats(): Promise<DashboardStats> {
     // "Pagos recibidos" se mide por el período del cargo (no por la fecha en
     // que se registró el pago): el arriendo se paga por adelantado, así que
     // filtrar por fecha_pago dejaría afuera pagos hechos antes de que empiece
-    // el mes que en realidad cubren.
-    supabase.from("cargos").select("id").eq("periodo", inicioMes),
+    // el mes que en realidad cubren. Se excluyen los cargos de pago directo a
+    // servicio (luz/agua/etc.): ese dinero no lo recibe la corredora, se
+    // informa aparte (mismo criterio ya usado en Estado de Cuenta).
+    supabase
+      .from("cargos")
+      .select("id")
+      .eq("periodo", inicioMes)
+      .eq("pago_directo_servicio", false),
   ]);
 
   const filas = cargos.data ?? [];
-  const deudaPendiente = filas.reduce(
-    (acc, c) => acc + Number(c.saldo_pendiente),
-    0
-  );
+  // "Deuda vencida": solo cargos con saldo pendiente cuya fecha de
+  // vencimiento ya pasó (mismo criterio que Cobros/Estado de Cuenta), no toda
+  // la deuda pendiente (incluye deuda futura que aún no vence).
+  const deudaVencida = filas
+    .filter((c) => c.fecha_vencimiento && c.fecha_vencimiento < hoy)
+    .reduce((acc, c) => acc + Number(c.saldo_pendiente), 0);
   const cargosMorosos = filas.filter(
     (c) => c.fecha_vencimiento && c.fecha_vencimiento < hoy
   ).length;
@@ -65,7 +73,7 @@ export async function getDashboardStats(): Promise<DashboardStats> {
   return {
     propiedadesTotal: propiedadesTotal.count ?? 0,
     propiedadesArrendadas: propiedadesArrendadas.count ?? 0,
-    deudaPendiente,
+    deudaVencida,
     cargosMorosos,
     pagosRecibidosMesMonto,
   };
@@ -99,6 +107,7 @@ export async function getTareasPendientes(): Promise<TareaPendiente[]> {
     contratosConReajustePendiente,
     contratosConDesfazadoPendiente,
     solicitudesPagoPendientes,
+    incidenciasSinResolver,
   ] = await Promise.all([
     listPendientesLiquidar(`${periodoActual}-01`),
     debeAvisarGeneracionAsistida()
@@ -125,6 +134,10 @@ export async function getTareasPendientes(): Promise<TareaPendiente[]> {
     listContratosConReajustePendiente(),
     listContratosConDesfazadoPendiente(),
     solicitudesPendientes(),
+    supabase
+      .from("incidencias")
+      .select("*", { count: "exact", head: true })
+      .in("estado", ["reportada", "agendada", "en_proceso"]),
   ]);
 
   return [
@@ -183,6 +196,13 @@ export async function getTareasPendientes(): Promise<TareaPendiente[]> {
       cantidad: contratosConDesfazadoPendiente.length,
       href: "/cobros",
       alerta: contratosConDesfazadoPendiente.length > 0,
+    },
+    {
+      key: "incidencias",
+      label: "Incidencias sin resolver",
+      cantidad: incidenciasSinResolver.count ?? 0,
+      href: "/incidencias",
+      alerta: false,
     },
   ];
 }
