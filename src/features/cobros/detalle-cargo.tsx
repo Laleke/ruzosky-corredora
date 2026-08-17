@@ -31,6 +31,7 @@ export function DetalleCargo({ id, cargo }: { id: string; cargo: CargoConContext
     error: null,
   });
 
+  const [nombre, setNombre] = useState(cargo.nombre ?? "");
   const [tipoCargo, setTipoCargo] = useState(cargo.tipo_cargo);
   const [periodo, setPeriodo] = useState(cargo.periodo.slice(0, 7));
   const [destinoPago, setDestinoPago] = useState(
@@ -46,9 +47,14 @@ export function DetalleCargo({ id, cargo }: { id: string; cargo: CargoConContext
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           {!editando && (
-            <h1 className="truncate text-xl font-semibold tracking-tight text-white">
-              {TIPO_CARGO_LABEL[cargo.tipo_cargo] ?? cargo.tipo_cargo} · {formatearPeriodo(cargo.periodo)}
-            </h1>
+            <>
+              <h1 className="truncate text-xl font-semibold tracking-tight text-white">
+                {TIPO_CARGO_LABEL[cargo.tipo_cargo] ?? cargo.tipo_cargo} · {formatearPeriodo(cargo.periodo)}
+              </h1>
+              {cargo.nombre && (
+                <p className="mt-1 text-sm font-medium text-white/90">{cargo.nombre}</p>
+              )}
+            </>
           )}
           <p className="mt-1 text-sm text-white/70">
             {cargo.numero_contrato ? `Contrato ${cargo.numero_contrato} · ` : ""}
@@ -77,6 +83,20 @@ export function DetalleCargo({ id, cargo }: { id: string; cargo: CargoConContext
       </div>
 
       <form action={formAction}>
+        {editando && (
+          <div className="mt-4 flex flex-col gap-1.5">
+            <label className="text-xs uppercase tracking-wide text-white/50">
+              Nombre del cobro (opcional)
+            </label>
+            <input
+              name="nombre"
+              value={nombre}
+              onChange={(e) => setNombre(e.target.value)}
+              placeholder="Ej: Luz depto 907-A"
+              className={ui.input}
+            />
+          </div>
+        )}
         {editando && (
           <div className="mt-4 flex flex-col gap-3 sm:flex-row">
             <div className="flex flex-1 flex-col gap-1.5">

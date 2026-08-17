@@ -259,6 +259,7 @@ export default async function CobrosPage({
                             <p className="text-xs text-white/60">{c.propiedad_direccion}</p>
                             <p className="font-medium text-white">
                               {etiquetaTipoCargo(c.tipo_cargo)}
+                              {c.nombre ? ` · ${c.nombre}` : ""}
                             </p>
                           </div>
                           <span className={badge(est.tone)}>{est.label}</span>

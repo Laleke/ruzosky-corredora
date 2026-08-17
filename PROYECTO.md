@@ -17,7 +17,13 @@ Ciclo operable: propiedad → (propietario/contrato/arrendatario auto) → cargo
 
 ## Punto de Continuación (handoff — actualizar al cerrar cada sesión)
 
-**Última sesión: 2026-08-15 — ronda de mejoras puntuales en Cobros/Pagos + UI transversal (combos), y una investigación larga y sin resolver del "Dashboard se queda pegado" que terminó revertida. Todo commiteado y pusheado a `main`, en commits chicos por entregable (autorizados uno por uno por Eduardo). Sin migraciones nuevas esta sesión — no hay nada pendiente de ejecutar en Supabase.**
+**Última sesión: 2026-08-16 — campo "nombre" opcional en Cargos + migración nueva pendiente de ejecutar.**
+
+**Migración `0041_cargos_nombre.sql` (`alter table cargos add column nombre text`) ejecutada y confirmada por Eduardo.**
+
+1. **Cargos: campo `nombre` opcional** (ej. "Luz depto 907-A") para identificar un cobro más allá de "Tipo · Período". `actualizarCargo`/`crearCargo` (`features/cobros/actions.ts`) guardan `texto(formData, "nombre")`; edición en línea en `detalle-cargo.tsx` con el mismo patrón toggle "Editar" ya usado (input "Nombre del cobro (opcional)" al inicio del formulario, arriba de Tipo/Período). En modo lectura se muestra como línea propia bajo el título, junto con la dirección de la propiedad (que sigue siendo fija, no editable — se deriva del contrato). Tarjeta de listado (`/cobros`) también muestra el nombre si existe, como sufijo del tipo de cargo (`Tipo · nombre`). El wizard de creación (`cargo-wizard.tsx`) **no** se tocó — el nombre solo se puede cargar después, vía "Editar", no en la creación (no solicitado; si se necesita en el wizard, agregarlo como paso opcional al final).
+
+**Última sesión previa: 2026-08-15 — ronda de mejoras puntuales en Cobros/Pagos + UI transversal (combos), y una investigación larga y sin resolver del "Dashboard se queda pegado" que terminó revertida. Todo commiteado y pusheado a `main`, en commits chicos por entregable (autorizados uno por uno por Eduardo). Sin migraciones nuevas esa sesión — no había nada pendiente de ejecutar en Supabase.**
 
 **Resumen por tema (orden cronológico):**
 

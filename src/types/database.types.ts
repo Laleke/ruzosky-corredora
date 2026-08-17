@@ -154,6 +154,7 @@ export type Database = {
           fecha_vencimiento: string | null
           id: string
           monto: number
+          nombre: string | null
           observaciones: string | null
           periodo: string
           pago_directo_servicio: boolean
@@ -172,6 +173,7 @@ export type Database = {
           fecha_vencimiento?: string | null
           id?: string
           monto: number
+          nombre?: string | null
           observaciones?: string | null
           periodo: string
           pago_directo_servicio?: boolean
@@ -190,6 +192,7 @@ export type Database = {
           fecha_vencimiento?: string | null
           id?: string
           monto?: number
+          nombre?: string | null
           observaciones?: string | null
           periodo?: string
           pago_directo_servicio?: boolean
