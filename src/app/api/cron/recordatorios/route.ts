@@ -36,6 +36,8 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     .lte("dia_mes_aviso", diaHoy);
 
   let enviados = 0;
+  let entregadasTotal = 0;
+  const errores: { status?: number; mensaje?: string }[] = [];
 
   for (const r of recordatorios ?? []) {
     if (r.ultima_notificacion_en === hoyISO) continue;
@@ -64,12 +66,19 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     if (faltantes.length === 0) continue;
 
     const etiqueta = etiquetaTipoCargo(r.tipo_cargo);
-    await notificarAdmins(r.empresa_id, {
+    const resultado = await notificarAdmins(r.empresa_id, {
       titulo: r.nombre || `Falta cargar ${etiqueta}`,
       cuerpo: `${faltantes.length} propiedad${faltantes.length === 1 ? "" : "es"} sin cargo de ${etiqueta} este mes.`,
       url: "/recordatorios",
       tag: `recordatorio-${r.id}`,
     });
+    entregadasTotal += resultado.entregadas;
+    errores.push(...resultado.errores.map(({ status, mensaje }) => ({ status, mensaje })));
+
+    // Si no se entregó a nadie (sin suscripciones, o el envío falló), no se
+    // marca como avisado — el próximo cron lo vuelve a intentar en vez de
+    // darlo por hecho para el resto del día.
+    if (resultado.entregadas === 0) continue;
 
     await admin
       .from("recordatorios")
@@ -78,5 +87,10 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     enviados++;
   }
 
-  return NextResponse.json({ evaluados: recordatorios?.length ?? 0, enviados });
+  return NextResponse.json({
+    evaluados: recordatorios?.length ?? 0,
+    enviados,
+    entregadas: entregadasTotal,
+    errores,
+  });
 }
