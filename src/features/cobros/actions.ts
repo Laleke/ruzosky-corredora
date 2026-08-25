@@ -7,7 +7,13 @@ import { createClient } from "@/lib/supabase/server";
 import { getCurrentProfile } from "@/lib/auth";
 import type { Database, TipoCargo, MedioPago } from "@/types/database.types";
 
-export type CobroFormState = { error: string | null; mensaje?: string | null };
+export type ContratoPendienteReajuste = { id: string; propiedad_direccion: string };
+
+export type CobroFormState = {
+  error: string | null;
+  mensaje?: string | null;
+  contratosConReajustePendiente?: ContratoPendienteReajuste[];
+};
 
 type DB = SupabaseClient<Database>;
 
@@ -83,17 +89,50 @@ export async function generarArriendosDelMes(
 
   const supabase = await createClient();
 
-  const { data: contratos } = await supabase
+  const { data } = await supabase
     .from("contratos")
-    .select("id, canon_monto, canon_actual")
+    .select(
+      "id, canon_monto, canon_actual, fecha_proximo_reajuste, propiedades(direccion)"
+    )
     .in("estado", ["vigente", "renovado"])
     .eq("activo", true);
 
-  if (!contratos || contratos.length === 0) {
+  type ContratoRow = {
+    id: string;
+    canon_monto: number;
+    canon_actual: number | null;
+    fecha_proximo_reajuste: string | null;
+    propiedades: { direccion: string | null } | null;
+  };
+  const contratos = (data ?? []) as unknown as ContratoRow[];
+
+  if (contratos.length === 0) {
     return { error: null, mensaje: "No hay contratos activos para generar." };
   }
 
-  const filas = contratos.map((c) => {
+  const hoyISO = hoy();
+  // No se genera el arriendo de un contrato con reajuste pendiente sin que el
+  // admin lo revise primero — evita cobrar el monto anterior sin ajuste.
+  const pendientesReajuste = contratos.filter(
+    (c) => c.fecha_proximo_reajuste && c.fecha_proximo_reajuste <= hoyISO
+  );
+  const contratosConReajustePendiente = pendientesReajuste.map((c) => ({
+    id: c.id,
+    propiedad_direccion: c.propiedades?.direccion ?? "—",
+  }));
+  const contratosAGenerar = contratos.filter(
+    (c) => !pendientesReajuste.some((p) => p.id === c.id)
+  );
+
+  if (contratosAGenerar.length === 0) {
+    return {
+      error: null,
+      mensaje: "Todos los contratos activos tienen reajuste pendiente de revisar.",
+      contratosConReajustePendiente,
+    };
+  }
+
+  const filas = contratosAGenerar.map((c) => {
     const monto = Number(c.canon_actual ?? c.canon_monto);
     return {
       empresa_id: profile.empresa_id,
@@ -119,9 +158,15 @@ export async function generarArriendosDelMes(
   if (error) return { error: "No se pudieron generar los cargos." };
 
   revalidatePath("/cobros");
+  const avisoPendientes =
+    contratosConReajustePendiente.length > 0
+      ? ` ${contratosConReajustePendiente.length} propiedad(es) quedaron sin generar por tener reajuste pendiente de revisar.`
+      : "";
   return {
     error: null,
-    mensaje: `Cargos de arriendo generados para ${ym} (${contratos.length} contrato(s)).`,
+    mensaje: `Cargos de arriendo generados para ${ym} (${contratosAGenerar.length} contrato(s)).${avisoPendientes}`,
+    contratosConReajustePendiente:
+      contratosConReajustePendiente.length > 0 ? contratosConReajustePendiente : undefined,
   };
 }
 
@@ -249,7 +294,7 @@ export async function actualizarCargo(
 
   revalidatePath(`/cobros/${cargoId}`);
   revalidatePath("/cobros");
-  return { error: null };
+  return { error: null, mensaje: "Cargo actualizado." };
 }
 
 export async function registrarPago(

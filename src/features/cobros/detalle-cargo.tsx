@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useActionState } from "react";
+import { useRouter } from "next/navigation";
 import { Pencil } from "lucide-react";
 import { ui } from "@/components/ui";
 import { ComboboxOpcion } from "@/components/combobox-opcion";
@@ -26,10 +27,19 @@ function monto(n: number | null): string {
 }
 
 export function DetalleCargo({ id, cargo }: { id: string; cargo: CargoConContexto }) {
+  const router = useRouter();
   const [editando, setEditando] = useState(false);
   const [state, formAction, pending] = useActionState(actualizarCargo.bind(null, id), {
     error: null,
   });
+
+  // Tras guardar sin error, se muestra "Cargo actualizado" un momento y se
+  // vuelve al listado — el admin no necesita quedarse en el detalle editado.
+  useEffect(() => {
+    if (!state.mensaje) return;
+    const t = setTimeout(() => router.push("/cobros"), 900);
+    return () => clearTimeout(t);
+  }, [state.mensaje, router]);
 
   const [nombre, setNombre] = useState(cargo.nombre ?? "");
   const [tipoCargo, setTipoCargo] = useState(cargo.tipo_cargo);
@@ -238,12 +248,17 @@ export function DetalleCargo({ id, cargo }: { id: string; cargo: CargoConContext
             {state.error}
           </p>
         )}
+        {state.mensaje && (
+          <p className="mt-3 rounded-lg bg-emerald-600/20 px-3 py-2 text-sm text-emerald-300">
+            {state.mensaje}
+          </p>
+        )}
 
         {editando && (
           <div className="mt-4 flex justify-end gap-2">
             <button
               type="submit"
-              disabled={pending}
+              disabled={pending || Boolean(state.mensaje)}
               className="inline-flex items-center justify-center gap-2 rounded-lg bg-white px-4 py-2 text-sm font-medium text-burgundy shadow-sm transition-colors hover:bg-white/90 disabled:pointer-events-none disabled:opacity-50"
             >
               {pending ? "Guardando…" : "Guardar"}

@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState } from "react";
+import Link from "next/link";
 import { ui } from "@/components/ui";
 import { generarArriendosDelMes, type CobroFormState } from "./actions";
 
@@ -38,6 +39,18 @@ export function GenerarArriendos({ periodoDefault }: { periodoDefault?: string }
       )}
       {state.mensaje && (
         <p className="w-full text-sm text-emerald-300">{state.mensaje}</p>
+      )}
+      {state.contratosConReajustePendiente && state.contratosConReajustePendiente.length > 0 && (
+        <ul className="flex w-full flex-col gap-1 text-sm text-amber-200">
+          {state.contratosConReajustePendiente.map((c) => (
+            <li key={c.id} className="flex items-center justify-between gap-3">
+              <span>{c.propiedad_direccion} necesita revisar su reajuste antes de generar</span>
+              <Link href={`/contratos/${c.id}`} className="font-medium underline hover:text-white">
+                Revisar contrato
+              </Link>
+            </li>
+          ))}
+        </ul>
       )}
     </form>
   );

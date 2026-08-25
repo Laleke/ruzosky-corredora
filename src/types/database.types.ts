@@ -1402,6 +1402,50 @@ export type Database = {
           },
         ]
       }
+      recordatorios: {
+        Row: {
+          activo: boolean
+          created_at: string
+          dia_mes_aviso: number
+          empresa_id: string
+          id: string
+          nombre: string | null
+          tipo_cargo: Database["public"]["Enums"]["tipo_cargo"]
+          ultima_notificacion_en: string | null
+          updated_at: string
+        }
+        Insert: {
+          activo?: boolean
+          created_at?: string
+          dia_mes_aviso: number
+          empresa_id: string
+          id?: string
+          nombre?: string | null
+          tipo_cargo: Database["public"]["Enums"]["tipo_cargo"]
+          ultima_notificacion_en?: string | null
+          updated_at?: string
+        }
+        Update: {
+          activo?: boolean
+          created_at?: string
+          dia_mes_aviso?: number
+          empresa_id?: string
+          id?: string
+          nombre?: string | null
+          tipo_cargo?: Database["public"]["Enums"]["tipo_cargo"]
+          ultima_notificacion_en?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "recordatorios_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       solicitudes_pago: {
         Row: {
           arrendatario_id: string

@@ -20,6 +20,7 @@ import {
   Menu,
   X,
   Wrench,
+  Bell,
 } from "lucide-react";
 
 const NAV = [
@@ -30,6 +31,7 @@ const NAV = [
   { href: "/contratos", label: "Contratos", icon: FileText },
   { href: "/incidencias", label: "Incidencias", icon: Wrench },
   { href: "/cobros", label: "Cobros", icon: Wallet },
+  { href: "/recordatorios", label: "Recordatorios", icon: Bell },
   { href: "/liquidaciones", label: "Liquidaciones", icon: Receipt },
   { href: "/gastos", label: "Gastos", icon: Banknote },
   { href: "/documentos", label: "Documentos", icon: FolderOpen },
