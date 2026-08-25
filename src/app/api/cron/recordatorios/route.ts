@@ -38,6 +38,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
   let enviados = 0;
   let entregadasTotal = 0;
   const errores: { status?: number; mensaje?: string }[] = [];
+  const diagnostico: unknown[] = [];
 
   for (const r of recordatorios ?? []) {
     if (r.ultima_notificacion_en === hoyISO) continue;
@@ -74,6 +75,13 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     });
     entregadasTotal += resultado.entregadas;
     errores.push(...resultado.errores.map(({ status, mensaje }) => ({ status, mensaje })));
+    diagnostico.push({
+      recordatorioId: r.id,
+      admins: resultado.admins,
+      suscripciones: resultado.suscripciones,
+      muertas: resultado.muertas,
+      fatal: resultado.fatal,
+    });
 
     // Si no se entregó a nadie (sin suscripciones, o el envío falló), no se
     // marca como avisado — el próximo cron lo vuelve a intentar en vez de
@@ -93,5 +101,6 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     entregadas: entregadasTotal,
     errores,
     vapidConfigurado: vapidConfigurado(),
+    diagnostico,
   });
 }

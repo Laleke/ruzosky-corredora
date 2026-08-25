@@ -40,6 +40,12 @@ export type ResultadoNotificacion = {
   muertas: number;
   /** Otros fallos (ej. VAPID mal configurado del lado del servidor). */
   errores: { endpoint: string; status?: number; mensaje?: string }[];
+  /** Cuántos admins/suscripciones se encontraron antes de intentar enviar
+   *  (diagnóstico temporal — ver comentario de `notificarAdmins`). */
+  admins?: number;
+  suscripciones?: number;
+  /** Si el catch exterior se disparó (error inesperado antes de enviar). */
+  fatal?: string;
 };
 
 /**
@@ -77,14 +83,16 @@ export async function notificarAdmins(
       .eq("rol", "admin");
 
     const ids = (admins ?? []).map((p) => p.id);
-    if (ids.length === 0) return vacio;
+    if (ids.length === 0) return { ...vacio, admins: 0 };
 
     const { data: suscripciones } = await admin
       .from("push_suscripciones")
       .select("endpoint, p256dh, auth")
       .in("profile_id", ids);
 
-    if (!suscripciones || suscripciones.length === 0) return vacio;
+    if (!suscripciones || suscripciones.length === 0) {
+      return { ...vacio, admins: ids.length, suscripciones: 0 };
+    }
 
     const cuerpo = JSON.stringify(payload);
     const muertas: string[] = [];
@@ -117,9 +125,15 @@ export async function notificarAdmins(
       await admin.from("push_suscripciones").delete().in("endpoint", muertas);
     }
 
-    return { entregadas, muertas: muertas.length, errores };
+    return {
+      entregadas,
+      muertas: muertas.length,
+      errores,
+      admins: ids.length,
+      suscripciones: suscripciones.length,
+    };
   } catch (error) {
     console.error("[push] error inesperado al notificar", error);
-    return vacio;
+    return { ...vacio, fatal: error instanceof Error ? error.message : String(error) };
   }
 }
