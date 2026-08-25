@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { notificarAdmins } from "@/features/notificaciones/push";
+import { notificarAdmins, vapidConfigurado } from "@/features/notificaciones/push";
 import { etiquetaTipoCargo } from "@/features/cobros/constants";
 
 export const dynamic = "force-dynamic";
@@ -92,5 +92,6 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     enviados,
     entregadas: entregadasTotal,
     errores,
+    vapidConfigurado: vapidConfigurado(),
   });
 }

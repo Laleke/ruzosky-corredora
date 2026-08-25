@@ -15,7 +15,7 @@ export type PushPayload = {
  * configuradas, el push simplemente no se envía: es una función accesoria y no
  * puede impedir que se registre una solicitud de pago.
  */
-function vapidConfigurado(): boolean {
+export function vapidConfigurado(): boolean {
   return Boolean(
     process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY && process.env.VAPID_PRIVATE_KEY
   );
