@@ -47,7 +47,13 @@ self.addEventListener("push", (event) => {
     self.registration.showNotification(payload.titulo, {
       body: payload.cuerpo,
       icon: "/icons/icon-192.png",
-      badge: "/icons/icon-192.png",
+      // Android ignora el color del badge y usa solo el canal alfa como
+      // silueta para el ícono de la barra de estado — icon-192 es opaco de
+      // borde a borde (fondo burdeo sólido), así que esa silueta terminaba
+      // siendo un cuadrado blanco relleno (el ícono "en blanco" reportado).
+      // icon-badge-mono.png es transparente salvo la casita, generado con
+      // sharp a partir del logo real (ver notas en el script de esa sesión).
+      badge: "/icons/icon-badge-mono.png",
       data: { url: payload.url },
       // Mismo tag = la notificación nueva reemplaza a la anterior, para no
       // apilar un aviso por cada pago informado.
