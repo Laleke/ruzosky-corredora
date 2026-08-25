@@ -53,7 +53,11 @@ self.addEventListener("push", (event) => {
       // siendo un cuadrado blanco relleno (el ícono "en blanco" reportado).
       // icon-badge-mono.png es transparente salvo la casita, generado con
       // sharp a partir del logo real (ver notas en el script de esa sesión).
-      badge: "/icons/icon-badge-mono.png",
+      // El "?v=" es cache-busting: la caché de imágenes del SW (CacheFirst,
+      // ver defaultCache de @serwist/next) guarda por URL exacta — sin esto,
+      // un cambio al archivo no se refleja hasta que expire esa caché.
+      // Subir el número cada vez que se reemplace este archivo.
+      badge: "/icons/icon-badge-mono.png?v=2",
       data: { url: payload.url },
       // Mismo tag = la notificación nueva reemplaza a la anterior, para no
       // apilar un aviso por cada pago informado.
