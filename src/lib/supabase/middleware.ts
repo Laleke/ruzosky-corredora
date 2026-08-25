@@ -53,6 +53,11 @@ export async function updateSession(request: NextRequest) {
     // sin sesión. La autorización es el token de la URL, validado
     // server-side en `estadoCuentaPorToken` (revocable y con expiración).
     pathname.startsWith("/e/") ||
+    // Rutas API: no usan cookie de sesión — Vercel Cron y webhooks las llaman
+    // sin navegador. Cada una valida su propia autorización (ej. el header
+    // `Authorization: Bearer CRON_SECRET` en /api/cron/*), no la sesión de
+    // Supabase que este middleware gestiona para páginas.
+    pathname.startsWith("/api/") ||
     pathname === "/";
 
   // Sin sesión y ruta privada → redirige a login.
