@@ -9,16 +9,8 @@ import { SelectStyled } from "@/components/select-styled";
 import { MAX_TAMANO_BYTES } from "@/features/documentos/constants";
 import { subirArchivo, limpiarArchivo } from "@/features/documentos/storage-client";
 import { registrarDocumento } from "@/features/documentos/actions";
-import { registrarPago, editarPago, type CobroFormState } from "./actions";
-import type { Pago } from "./types";
-
-const MEDIO_OPCIONES = [
-  { value: "transferencia", label: "Transferencia" },
-  { value: "efectivo", label: "Efectivo" },
-  { value: "cheque", label: "Cheque" },
-  { value: "tarjeta", label: "Tarjeta" },
-  { value: "otro", label: "Otro" },
-];
+import { registrarPago, type CobroFormState } from "./actions";
+import { MEDIOS_PAGO } from "./constants";
 
 type TipoPaso = "monto" | "fecha" | "select" | "texto" | "archivo";
 type Paso = { key: string; pregunta: string; tipo: TipoPaso; requerido?: boolean };
@@ -44,32 +36,23 @@ export function PagoWizard({
   saldoPendiente,
   contratoId,
   empresaId,
-  pagoExistente,
 }: {
   cargoId: string;
   saldoPendiente: number;
   contratoId: string;
   empresaId: string;
-  /** Si viene, edita este pago en vez de crear uno nuevo. */
-  pagoExistente?: Pago;
 }) {
   const router = useRouter();
-  const editando = Boolean(pagoExistente);
-  // Editar el comprobante ya tiene su propio flujo (ComprobantePago) en el
-  // detalle del cargo — no repetirlo acá.
-  const pasos = editando ? PASOS.filter((p) => p.tipo !== "archivo") : PASOS;
-  const accion = pagoExistente
-    ? editarPago.bind(null, pagoExistente.id, cargoId)
-    : registrarPago.bind(null, cargoId);
-  const [state, formAction, pending] = useActionState(accion, {
+  const pasos = PASOS;
+  const [state, formAction, pending] = useActionState(registrarPago.bind(null, cargoId), {
     error: null,
   } as CobroFormState);
   const [paso, setPaso] = useState(0);
   const [valores, setValores] = useState<Record<string, string>>({
-    monto_pagado: pagoExistente ? String(pagoExistente.monto_pagado) : "",
-    fecha_pago: pagoExistente?.fecha_pago ?? hoyISO(),
-    medio_pago: pagoExistente?.medio_pago ?? "transferencia",
-    referencia: pagoExistente?.referencia ?? "",
+    monto_pagado: "",
+    fecha_pago: hoyISO(),
+    medio_pago: "transferencia",
+    referencia: "",
     documento_id: "",
   });
   const [errorPaso, setErrorPaso] = useState<string | null>(null);
@@ -193,7 +176,7 @@ export function PagoWizard({
           className="text-base"
           autoFocus
         >
-          {MEDIO_OPCIONES.map((o) => (
+          {MEDIOS_PAGO.map((o) => (
             <option key={o.value} value={o.value}>
               {o.label}
             </option>
@@ -247,9 +230,7 @@ export function PagoWizard({
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
           <div className="flex w-full max-w-sm flex-col items-center gap-3 rounded-xl bg-burgundy-strong p-5 shadow-lg">
             <p className="text-center text-sm text-white">
-              {editando
-                ? "Se perderán los cambios de este pago. ¿Cancelar de todas formas?"
-                : "Se perderá el avance de este pago. ¿Cancelar de todas formas?"}
+              Se perderá el avance de este pago. ¿Cancelar de todas formas?
             </p>
             <div className="flex gap-2">
               <button
@@ -296,10 +277,7 @@ export function PagoWizard({
         className="flex flex-col items-center gap-4 text-center"
       >
         <p className="text-xs text-white/60">
-          {editando ? "Saldo disponible: " : "Saldo pendiente: "}$
-          {(editando ? saldoPendiente + Number(pagoExistente!.monto_pagado) : saldoPendiente).toLocaleString(
-            "es-CL"
-          )}
+          Saldo pendiente: ${saldoPendiente.toLocaleString("es-CL")}
         </p>
 
         {pasos.map((p, i) => (
@@ -359,7 +337,7 @@ export function PagoWizard({
               disabled={pending || subiendoArchivo}
               className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-white px-3 py-2 text-sm font-medium text-burgundy shadow-sm transition-colors hover:bg-white/90 disabled:pointer-events-none disabled:opacity-50"
             >
-              <Check size={15} /> {pending ? "Guardando…" : editando ? "Guardar cambios" : "Registrar pago"}
+              <Check size={15} /> {pending ? "Guardando…" : "Registrar pago"}
             </button>
           )}
         </div>

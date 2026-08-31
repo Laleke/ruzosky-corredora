@@ -1,6 +1,8 @@
 "use client";
 
+import { useEffect, useRef, useState } from "react";
 import { useActionState } from "react";
+import { Pencil, Plus } from "lucide-react";
 import { ui } from "@/components/ui";
 import { SelectStyled } from "@/components/select-styled";
 import { actualizarDatosCobranza, type EmpresaFormState } from "./actions";
@@ -40,11 +42,73 @@ function Campo({
   );
 }
 
+function Dato({ label, valor }: { label: string; valor: string | null }) {
+  return (
+    <div>
+      <dt className="text-xs uppercase tracking-wide text-muted">{label}</dt>
+      <dd className="mt-0.5 text-sm text-ink">{valor ?? "—"}</dd>
+    </div>
+  );
+}
+
+/** Datos de cobranza con edición en línea (mismo patrón que Arrendatarios/Gasto/Cargo). */
 export function DatosCobranzaForm({ empresa }: { empresa: Empresa }) {
+  const hayDatos = Boolean(empresa.banco || empresa.numero_cuenta);
+  const [editando, setEditando] = useState(false);
   const [state, formAction, pending] = useActionState(actualizarDatosCobranza, {
     error: null,
     exito: false,
   } as EmpresaFormState);
+
+  // actualizarDatosCobranza no redirige: cerramos la edición manualmente al
+  // guardar sin error (mismo patrón que Pago/Cargo/Gasto).
+  const enviado = useRef(false);
+  useEffect(() => {
+    if (enviado.current && !pending && !state.error) {
+      enviado.current = false;
+      setEditando(false);
+    }
+  }, [pending, state.error]);
+
+  if (!editando) {
+    return (
+      <div className={`${ui.card} flex flex-col gap-4 p-5`}>
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <h2 className="text-sm font-semibold text-ink">Datos de transferencia</h2>
+            <p className="mt-1 text-sm text-muted">
+              Aparecen en la sección &quot;Cómo regularizar&quot; del estado de cuenta que se
+              le envía al arrendatario.
+            </p>
+          </div>
+          <button type="button" onClick={() => setEditando(true)} className={ui.btnSecondary}>
+            {hayDatos ? (
+              <>
+                <Pencil size={16} /> Editar
+              </>
+            ) : (
+              <>
+                <Plus size={16} /> Agregar datos de cobranza
+              </>
+            )}
+          </button>
+        </div>
+
+        {hayDatos ? (
+          <dl className="grid grid-cols-2 gap-x-6 gap-y-4 sm:grid-cols-3">
+            <Dato label="Banco" valor={empresa.banco} />
+            <Dato label="Tipo de cuenta" valor={empresa.tipo_cuenta} />
+            <Dato label="N° de cuenta" valor={empresa.numero_cuenta} />
+            <Dato label="Nombre del titular" valor={empresa.titular_nombre} />
+            <Dato label="RUT del titular" valor={empresa.rut_titular} />
+            <Dato label="Email para comprobantes" valor={empresa.email_pagos} />
+          </dl>
+        ) : (
+          <p className="text-sm text-muted">Sin datos de cobranza registrados.</p>
+        )}
+      </div>
+    );
+  }
 
   return (
     <form action={formAction} className={`${ui.card} flex flex-col gap-4 p-5`}>
@@ -100,15 +164,25 @@ export function DatosCobranzaForm({ empresa }: { empresa: Empresa }) {
           {state.error}
         </p>
       )}
-      {state.exito && (
-        <p className="rounded-lg bg-emerald-50 px-3 py-2 text-sm text-emerald-800" role="status">
-          Datos guardados.
-        </p>
-      )}
 
-      <div>
-        <button type="submit" disabled={pending} className={ui.btnPrimary}>
+      <div className="flex gap-2">
+        <button
+          type="submit"
+          disabled={pending}
+          onClick={() => {
+            enviado.current = true;
+          }}
+          className={ui.btnPrimary}
+        >
           {pending ? "Guardando…" : "Guardar"}
+        </button>
+        <button
+          type="button"
+          onClick={() => setEditando(false)}
+          disabled={pending}
+          className={ui.btnSecondary}
+        >
+          Cancelar
         </button>
       </div>
     </form>

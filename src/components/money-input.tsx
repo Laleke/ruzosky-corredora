@@ -14,12 +14,15 @@ export function MoneyInput({
   required,
   placeholder,
   className,
+  onValueChange,
 }: {
   name: string;
   defaultValue?: number | string | null;
   required?: boolean;
   placeholder?: string;
   className?: string;
+  /** Notifica el valor numérico crudo en cada cambio (ej. para validar en vivo un cálculo dependiente). */
+  onValueChange?: (valor: number) => void;
 }) {
   const inicial =
     defaultValue !== undefined && defaultValue !== null && defaultValue !== ""
@@ -35,6 +38,7 @@ export function MoneyInput({
     const digits = e.target.value.replace(/\D/g, "");
     setRaw(digits);
     setDisplay(fmt(digits));
+    onValueChange?.(digits === "" ? 0 : Number(digits));
   }
 
   return (

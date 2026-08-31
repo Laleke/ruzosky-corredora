@@ -25,7 +25,7 @@ const PASOS: Paso[] = [
   { key: "proveedor_nombre", pregunta: "¿Qué proveedor lo atiende?", tipo: "texto" },
   { key: "proveedor_contacto", pregunta: "¿Cuál es el contacto del proveedor?", tipo: "texto" },
   { key: "fecha_reportada", pregunta: "¿Cuándo se reportó?", tipo: "fecha", requerido: true },
-  { key: "costo", pregunta: "¿Tiene un costo estimado?", tipo: "monto" },
+  { key: "costo", pregunta: "¿Cuál es el costo estimado?", tipo: "monto", requerido: true },
   { key: "observaciones", pregunta: "¿Alguna observación adicional?", tipo: "textarea" },
 ];
 
@@ -140,15 +140,20 @@ export function IncidenciaWizard({
 
     if (p.tipo === "monto") {
       return (
-        <input
-          name={p.key}
-          inputMode="numeric"
-          value={fmt(val)}
-          onChange={(e) => set(p.key, e.target.value.replace(/\D/g, ""))}
-          placeholder="0"
-          className={`${ui.input} text-base`}
-          autoFocus
-        />
+        <div className="relative">
+          <span className="pointer-events-none absolute inset-y-0 left-3 flex items-center text-base text-ink/60">
+            $
+          </span>
+          <input
+            name={p.key}
+            inputMode="numeric"
+            value={fmt(val)}
+            onChange={(e) => set(p.key, e.target.value.replace(/\D/g, ""))}
+            placeholder="0"
+            className={`${ui.input} pl-7 text-base`}
+            autoFocus
+          />
+        </div>
       );
     }
 
@@ -234,7 +239,25 @@ export function IncidenciaWizard({
         </div>
       )}
 
-      <form action={formAction} onSubmit={limpiarBorrador} className="flex flex-col items-center gap-4 text-center">
+      <form
+        action={formAction}
+        onSubmit={limpiarBorrador}
+        onKeyDown={(e) => {
+          // Un <form> con un solo input de texto visible se envía solo al
+          // presionar Enter aunque no haya botón submit en el DOM (los pasos
+          // intermedios solo tienen "Siguiente", type="button"). Sin esto,
+          // Enter en cualquier paso opcional creaba la incidencia apenas los
+          // 3 campos obligatorios ya estaban llenos, sin pasar por "Registrar
+          // incidencia".
+          const target = e.target as HTMLElement;
+          if (e.key !== "Enter" || target.tagName === "TEXTAREA" || target.tagName === "BUTTON") {
+            return;
+          }
+          e.preventDefault();
+          if (!esUltimo) siguiente();
+        }}
+        className="flex flex-col items-center gap-4 text-center"
+      >
         {PASOS.map((p, i) => (
           <div key={p.key} className={i === paso ? "contents" : "hidden"}>
             {i !== paso && renderInput(p, false)}

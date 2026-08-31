@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, Pencil, Trash2, Wrench } from "lucide-react";
 import { badge, ui } from "@/components/ui";
+import { MoneyInput } from "@/components/money-input";
 import { formatearFecha } from "@/lib/fecha";
 import { ESTADO_INCIDENCIA, clp } from "./constants";
 import {
@@ -43,13 +44,21 @@ function Campo({
     <div>
       <dt className="text-xs uppercase tracking-wide text-white/50">{label}</dt>
       {editando ? (
-        <input
-          name={name}
-          type={type === "number" ? "text" : type}
-          inputMode={type === "number" ? "decimal" : undefined}
-          defaultValue={value ?? ""}
-          className={`${ui.input} mt-1`}
-        />
+        type === "number" ? (
+          <div className="relative mt-1">
+            <span className="pointer-events-none absolute inset-y-0 left-3 flex items-center text-sm text-ink/60">
+              $
+            </span>
+            <MoneyInput name={name} defaultValue={value ?? ""} className={`${ui.input} pl-7`} />
+          </div>
+        ) : (
+          <input
+            name={name}
+            type={type}
+            defaultValue={value ?? ""}
+            className={`${ui.input} mt-1`}
+          />
+        )
       ) : (
         <dd className="mt-0.5 text-sm text-white">
           {type === "date"

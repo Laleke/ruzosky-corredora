@@ -36,6 +36,18 @@ export function etiquetaTipoCargo(tipo: string): string {
  * todos los comprobantes quedan con el mismo nombre y no hay forma de saber a
  * qué pago corresponde cada uno.
  */
+export const MEDIOS_PAGO: { value: string; label: string }[] = [
+  { value: "transferencia", label: "Transferencia" },
+  { value: "efectivo", label: "Efectivo" },
+  { value: "cheque", label: "Cheque" },
+  { value: "tarjeta", label: "Tarjeta" },
+  { value: "otro", label: "Otro" },
+];
+
+export const MEDIO_PAGO_LABEL: Record<string, string> = Object.fromEntries(
+  MEDIOS_PAGO.map((m) => [m.value, m.label])
+);
+
 export function nombreComprobante(
   tipoCargo: string | null | undefined,
   periodo: string | null | undefined

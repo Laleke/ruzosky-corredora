@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import { useActionState } from "react";
-import { useRouter } from "next/navigation";
 import { Pencil } from "lucide-react";
 import { ui } from "@/components/ui";
 import { ComboboxOpcion } from "@/components/combobox-opcion";
@@ -27,19 +26,19 @@ function monto(n: number | null): string {
 }
 
 export function DetalleCargo({ id, cargo }: { id: string; cargo: CargoConContexto }) {
-  const router = useRouter();
   const [editando, setEditando] = useState(false);
   const [state, formAction, pending] = useActionState(actualizarCargo.bind(null, id), {
     error: null,
   });
 
-  // Tras guardar sin error, se muestra "Cargo actualizado" un momento y se
-  // vuelve al listado — el admin no necesita quedarse en el detalle editado.
+  // Tras guardar sin error, vuelve a la vista de lectura en la misma tarjeta
+  // (mismo patrón que el resto de los módulos: Arrendatarios, Propietarios,
+  // Propiedades, Contratos) — antes redirigía a /cobros, único módulo que
+  // expulsaba al admin de la tarjeta recién editada.
   useEffect(() => {
     if (!state.mensaje) return;
-    const t = setTimeout(() => router.push("/cobros"), 900);
-    return () => clearTimeout(t);
-  }, [state.mensaje, router]);
+    setEditando(false);
+  }, [state.mensaje]);
 
   const [nombre, setNombre] = useState(cargo.nombre ?? "");
   const [tipoCargo, setTipoCargo] = useState(cargo.tipo_cargo);
