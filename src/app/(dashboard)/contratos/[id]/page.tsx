@@ -16,6 +16,7 @@ import { DetalleContrato } from "@/features/contratos/detalle-contrato";
 import { AsignarArrendatario } from "@/features/contratos/asignar-arrendatario";
 import { listMovimientosGarantia, saldoGarantiaDisponible } from "@/features/garantia/queries";
 import { SeccionGarantia } from "@/features/garantia/seccion-garantia";
+import { getConfigNotificacionCobroContrato } from "@/features/notificaciones/config-notificaciones-cobro-queries";
 
 function nombreArrendatario(a: {
   tipo_persona: string;
@@ -33,15 +34,23 @@ export default async function DetalleContratoPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const [contrato, vinculados, propiedades, arrendatarios, relaciones, movimientosGarantia] =
-    await Promise.all([
-      getContrato(id),
-      getArrendatariosDeContrato(id),
-      listPropiedades(),
-      listArrendatarios(),
-      tieneRelacionesBloqueantes(id),
-      listMovimientosGarantia(id),
-    ]);
+  const [
+    contrato,
+    vinculados,
+    propiedades,
+    arrendatarios,
+    relaciones,
+    movimientosGarantia,
+    configNotifCobro,
+  ] = await Promise.all([
+    getContrato(id),
+    getArrendatariosDeContrato(id),
+    listPropiedades(),
+    listArrendatarios(),
+    tieneRelacionesBloqueantes(id),
+    listMovimientosGarantia(id),
+    getConfigNotificacionCobroContrato(id),
+  ]);
   if (!contrato) notFound();
 
   const propiedadActual = propiedades.find((p) => p.id === contrato.propiedad_id);
@@ -65,6 +74,7 @@ export default async function DetalleContratoPage({
         propiedades={opcionesPropiedades}
         actualizarAction={actualizarContrato}
         eliminacionBloqueada={relaciones}
+        configNotifCobro={configNotifCobro}
       />
 
       <div className="rounded-2xl bg-burgundy p-6">

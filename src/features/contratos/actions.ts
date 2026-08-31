@@ -7,6 +7,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getCurrentProfile } from "@/lib/auth";
 import { parseDecimal } from "@/lib/numero";
 import { calcularCanonActualUF } from "@/lib/uf";
+import { sumarMeses } from "@/lib/fecha";
 import type { ContratoInsert } from "./types";
 import type {
   Database,
@@ -296,16 +297,6 @@ export async function actualizarContrato(
   redirect("/contratos");
 }
 
-function sumarMeses(fecha: Date, meses: number): Date {
-  const d = new Date(fecha);
-  d.setMonth(d.getMonth() + meses);
-  return d;
-}
-
-function aFechaISO(d: Date): string {
-  return d.toISOString().slice(0, 10);
-}
-
 /**
  * Aplica el reajuste pendiente: calcula canon_actual = canon_uf_base × UF del
  * corte trimestral vigente (consultando mindicador.cl) y avanza
@@ -345,25 +336,28 @@ export async function aplicarReajusteUF(
   // llega la fecha de revisión), no corresponde adelantar fecha_proximo_reajuste
   // — si no, se saltaría la próxima revisión real. Solo avanza si hoy ya
   // alcanzó o pasó esa fecha.
-  const hoyISO = aFechaISO(new Date());
+  const hoyISO = new Date().toISOString().slice(0, 10);
   const yaCorrespondia =
     !contrato.fecha_proximo_reajuste || contrato.fecha_proximo_reajuste <= hoyISO;
   const fecha_proximo_reajuste =
     yaCorrespondia && contrato.periodicidad_reajuste_meses
-      ? aFechaISO(
-          sumarMeses(
-            contrato.fecha_proximo_reajuste ? new Date(contrato.fecha_proximo_reajuste) : new Date(),
-            contrato.periodicidad_reajuste_meses
-          )
-        )
+      ? sumarMeses(contrato.fecha_proximo_reajuste ?? hoyISO, contrato.periodicidad_reajuste_meses)
       : contrato.fecha_proximo_reajuste;
 
-  const { error } = await supabase
+  const { data: actualizado, error } = await supabase
     .from("contratos")
     .update({ canon_actual, fecha_proximo_reajuste })
-    .eq("id", id);
+    .eq("id", id)
+    .select("id")
+    .maybeSingle();
 
   if (error) return { error: "No se pudo guardar el canon recalculado." };
+  // Un UPDATE bloqueado por RLS (empresa_id/rol no calzan) no devuelve error:
+  // simplemente afecta 0 filas. Sin este chequeo, la acción "aplicaba" el
+  // reajuste sin avisar que en realidad no escribió nada.
+  if (!actualizado) {
+    return { error: "No se pudo guardar el canon recalculado (sin permisos sobre este contrato)." };
+  }
 
   revalidatePath("/contratos");
   revalidatePath(`/contratos/${id}`);
@@ -397,17 +391,20 @@ export async function postergarReajuste(
 
   if (!contrato) return { error: "Contrato no encontrado." };
 
-  const base = contrato.fecha_proximo_reajuste
-    ? new Date(contrato.fecha_proximo_reajuste)
-    : new Date();
-  const fecha_proximo_reajuste = aFechaISO(sumarMeses(base, meses));
+  const base = contrato.fecha_proximo_reajuste ?? new Date().toISOString().slice(0, 10);
+  const fecha_proximo_reajuste = sumarMeses(base, meses);
 
-  const { error } = await supabase
+  const { data: actualizado, error } = await supabase
     .from("contratos")
     .update({ fecha_proximo_reajuste })
-    .eq("id", id);
+    .eq("id", id)
+    .select("id")
+    .maybeSingle();
 
   if (error) return { error: "No se pudo postergar el reajuste." };
+  if (!actualizado) {
+    return { error: "No se pudo postergar el reajuste (sin permisos sobre este contrato)." };
+  }
 
   revalidatePath("/contratos");
   revalidatePath(`/contratos/${id}`);

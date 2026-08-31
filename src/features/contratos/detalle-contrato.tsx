@@ -14,6 +14,8 @@ import {
   type actualizarContrato,
 } from "./actions";
 import type { Contrato } from "./types";
+import { ConfigNotificacionCobroContrato } from "@/features/notificaciones/config-notificacion-cobro-contrato";
+import type { ConfigNotificacionCobro } from "@/features/notificaciones/config-notificaciones-cobro-queries";
 
 const ESTADO_OPCIONES: { value: string; label: string; tone: Parameters<typeof badge>[0] }[] = [
   { value: "borrador", label: "Borrador", tone: "neutral" },
@@ -106,6 +108,7 @@ export function DetalleContrato({
   propiedades,
   actualizarAction,
   eliminacionBloqueada,
+  configNotifCobro,
 }: {
   id: string;
   contrato: Contrato;
@@ -113,6 +116,7 @@ export function DetalleContrato({
   propiedades: { id: string; label: string }[];
   actualizarAction: typeof actualizarContrato;
   eliminacionBloqueada: { bloqueada: boolean; motivo: string | null };
+  configNotifCobro: ConfigNotificacionCobro | null;
 }) {
   const router = useRouter();
   const [editando, setEditando] = useState(false);
@@ -390,6 +394,8 @@ export function DetalleContrato({
             {errorRecalculo}
           </p>
         )}
+
+        {!editando && <ConfigNotificacionCobroContrato contratoId={id} override={configNotifCobro} />}
 
         <Bloque titulo="Comisión y administración">
           {editando ? (

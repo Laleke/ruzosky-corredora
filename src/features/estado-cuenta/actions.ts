@@ -3,17 +3,9 @@
 import { revalidatePath } from "next/cache";
 import { getCurrentProfile } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
+import { generarToken } from "./token-queries";
 
 export type LinkState = { token: string | null; error: string | null };
-
-/** Token URL-safe de 32 caracteres (~190 bits) — no adivinable por fuerza bruta. */
-function generarToken(): string {
-  const bytes = crypto.getRandomValues(new Uint8Array(24));
-  return btoa(String.fromCharCode(...bytes))
-    .replace(/\+/g, "-")
-    .replace(/\//g, "_")
-    .replace(/=+$/, "");
-}
 
 /**
  * Crea (o reemplaza) el link público de estado de cuenta de un arrendatario.

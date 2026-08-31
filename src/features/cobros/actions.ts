@@ -5,7 +5,9 @@ import { redirect } from "next/navigation";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentProfile } from "@/lib/auth";
-import type { Database, TipoCargo, MedioPago } from "@/types/database.types";
+import { calcularCanonActualUF } from "@/lib/uf";
+import { sumarMeses } from "@/lib/fecha";
+import type { Database, TipoCargo, MedioPago, ReajusteTipo } from "@/types/database.types";
 
 export type ContratoPendienteReajuste = { id: string; propiedad_direccion: string };
 
@@ -92,7 +94,7 @@ export async function generarArriendosDelMes(
   const { data } = await supabase
     .from("contratos")
     .select(
-      "id, canon_monto, canon_actual, fecha_proximo_reajuste, propiedades(direccion)"
+      "id, canon_monto, canon_actual, canon_uf_base, reajuste_tipo, periodicidad_reajuste_meses, fecha_proximo_reajuste, propiedades(direccion)"
     )
     .in("estado", ["vigente", "renovado"])
     .eq("activo", true);
@@ -101,6 +103,9 @@ export async function generarArriendosDelMes(
     id: string;
     canon_monto: number;
     canon_actual: number | null;
+    canon_uf_base: number | null;
+    reajuste_tipo: ReajusteTipo;
+    periodicidad_reajuste_meses: number | null;
     fecha_proximo_reajuste: string | null;
     propiedades: { direccion: string | null } | null;
   };
@@ -110,19 +115,67 @@ export async function generarArriendosDelMes(
     return { error: null, mensaje: "No hay contratos activos para generar." };
   }
 
-  const hoyISO = hoy();
-  // No se genera el arriendo de un contrato con reajuste pendiente sin que el
-  // admin lo revise primero — evita cobrar el monto anterior sin ajuste.
+  // Un contrato con reajuste pendiente no genera el cargo con el monto
+  // anterior sin revisión. Se compara contra el vencimiento del período que
+  // se está generando (no contra la fecha real de hoy): si se genera el
+  // arriendo de septiembre estando aún en agosto, un reajuste programado
+  // para septiembre igual debe considerarse, porque para cuando venza ese
+  // cargo el reajuste ya debería estar aplicado.
   const pendientesReajuste = contratos.filter(
-    (c) => c.fecha_proximo_reajuste && c.fecha_proximo_reajuste <= hoyISO
+    (c) => c.fecha_proximo_reajuste && c.fecha_proximo_reajuste <= vencimiento
   );
-  const contratosConReajustePendiente = pendientesReajuste.map((c) => ({
+
+  // UF tiene fórmula objetiva (valor de UF del corte trimestral vía
+  // mindicador.cl) y se autoaplica acá mismo. IPC no tiene cálculo automático
+  // en este sistema (depende de un índice que no se está integrando) — sigue
+  // bloqueando la generación hasta que el admin lo aplique a mano desde la
+  // ficha del contrato.
+  const autoAjustables = pendientesReajuste.filter(
+    (c) => c.reajuste_tipo === "UF" && c.canon_uf_base !== null
+  );
+  const noAutoAjustables = pendientesReajuste.filter(
+    (c) => !(c.reajuste_tipo === "UF" && c.canon_uf_base !== null)
+  );
+
+  const canonAutoajustado = new Map<string, number>();
+  const fallidosReajuste: ContratoRow[] = [];
+
+  for (const c of autoAjustables) {
+    try {
+      const canon_actual = await calcularCanonActualUF(
+        c.canon_uf_base as number,
+        new Date(vencimiento)
+      );
+      const fecha_proximo_reajuste = c.periodicidad_reajuste_meses
+        ? sumarMeses(c.fecha_proximo_reajuste ?? vencimiento, c.periodicidad_reajuste_meses)
+        : c.fecha_proximo_reajuste;
+
+      const { data: actualizado, error } = await supabase
+        .from("contratos")
+        .update({ canon_actual, fecha_proximo_reajuste })
+        .eq("id", c.id)
+        .select("id")
+        .maybeSingle();
+
+      if (error || !actualizado) {
+        fallidosReajuste.push(c);
+        continue;
+      }
+      canonAutoajustado.set(c.id, canon_actual);
+    } catch {
+      // mindicador.cl no disponible: no bloquea el resto del lote, este
+      // contrato queda pendiente de revisión manual como antes.
+      fallidosReajuste.push(c);
+    }
+  }
+
+  const bloqueados = [...noAutoAjustables, ...fallidosReajuste];
+  const contratosConReajustePendiente = bloqueados.map((c) => ({
     id: c.id,
     propiedad_direccion: c.propiedades?.direccion ?? "—",
   }));
-  const contratosAGenerar = contratos.filter(
-    (c) => !pendientesReajuste.some((p) => p.id === c.id)
-  );
+  const bloqueadosIds = new Set(bloqueados.map((c) => c.id));
+  const contratosAGenerar = contratos.filter((c) => !bloqueadosIds.has(c.id));
 
   if (contratosAGenerar.length === 0) {
     return {
@@ -133,7 +186,7 @@ export async function generarArriendosDelMes(
   }
 
   const filas = contratosAGenerar.map((c) => {
-    const monto = Number(c.canon_actual ?? c.canon_monto);
+    const monto = Number(canonAutoajustado.get(c.id) ?? c.canon_actual ?? c.canon_monto);
     return {
       empresa_id: profile.empresa_id,
       contrato_id: c.id,
@@ -158,13 +211,19 @@ export async function generarArriendosDelMes(
   if (error) return { error: "No se pudieron generar los cargos." };
 
   revalidatePath("/cobros");
+  revalidatePath("/contratos");
+  const autoajustados = canonAutoajustado.size;
+  const avisoAuto =
+    autoajustados > 0
+      ? ` Se autoajustó el canon UF de ${autoajustados} contrato(s) antes de generar.`
+      : "";
   const avisoPendientes =
     contratosConReajustePendiente.length > 0
       ? ` ${contratosConReajustePendiente.length} propiedad(es) quedaron sin generar por tener reajuste pendiente de revisar.`
       : "";
   return {
     error: null,
-    mensaje: `Cargos de arriendo generados para ${ym} (${contratosAGenerar.length} contrato(s)).${avisoPendientes}`,
+    mensaje: `Cargos de arriendo generados para ${ym} (${contratosAGenerar.length} contrato(s)).${avisoAuto}${avisoPendientes}`,
     contratosConReajustePendiente:
       contratosConReajustePendiente.length > 0 ? contratosConReajustePendiente : undefined,
   };

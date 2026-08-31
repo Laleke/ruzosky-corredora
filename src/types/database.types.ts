@@ -217,6 +217,57 @@ export type Database = {
           },
         ]
       }
+      config_notificaciones_cobro: {
+        Row: {
+          activo: boolean
+          contrato_id: string | null
+          created_at: string
+          dias_antes: number | null
+          dias_despues: number | null
+          empresa_id: string
+          hora_envio: string
+          id: string
+          updated_at: string
+        }
+        Insert: {
+          activo?: boolean
+          contrato_id?: string | null
+          created_at?: string
+          dias_antes?: number | null
+          dias_despues?: number | null
+          empresa_id: string
+          hora_envio?: string
+          id?: string
+          updated_at?: string
+        }
+        Update: {
+          activo?: boolean
+          contrato_id?: string | null
+          created_at?: string
+          dias_antes?: number | null
+          dias_despues?: number | null
+          empresa_id?: string
+          hora_envio?: string
+          id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "config_notificaciones_cobro_contrato_id_fkey"
+            columns: ["contrato_id"]
+            isOneToOne: false
+            referencedRelation: "contratos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "config_notificaciones_cobro_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       contrato_garantias: {
         Row: {
           contrato_id: string
@@ -666,6 +717,154 @@ export type Database = {
           },
         ]
       }
+      gasto_obligaciones: {
+        Row: {
+          created_at: string
+          empresa_id: string
+          fecha_gasto: string
+          gasto_id: string
+          id: string
+          monto_calculado: number
+          propiedad_id: string
+          propietario_id: string | null
+          responsable: Database["public"]["Enums"]["responsable_gasto"]
+          tipo_monto: Database["public"]["Enums"]["tipo_monto_obligacion"]
+          updated_at: string
+          valor: number
+        }
+        Insert: {
+          created_at?: string
+          empresa_id: string
+          fecha_gasto: string
+          gasto_id: string
+          id?: string
+          monto_calculado: number
+          propiedad_id: string
+          propietario_id?: string | null
+          responsable: Database["public"]["Enums"]["responsable_gasto"]
+          tipo_monto: Database["public"]["Enums"]["tipo_monto_obligacion"]
+          updated_at?: string
+          valor: number
+        }
+        Update: {
+          created_at?: string
+          empresa_id?: string
+          fecha_gasto?: string
+          gasto_id?: string
+          id?: string
+          monto_calculado?: number
+          propiedad_id?: string
+          propietario_id?: string | null
+          responsable?: Database["public"]["Enums"]["responsable_gasto"]
+          tipo_monto?: Database["public"]["Enums"]["tipo_monto_obligacion"]
+          updated_at?: string
+          valor?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "gasto_obligaciones_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "gasto_obligaciones_gasto_id_fkey"
+            columns: ["gasto_id"]
+            isOneToOne: false
+            referencedRelation: "gastos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "gasto_obligaciones_propiedad_id_fkey"
+            columns: ["propiedad_id"]
+            isOneToOne: false
+            referencedRelation: "propiedades"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "gasto_obligaciones_propietario_id_fkey"
+            columns: ["propietario_id"]
+            isOneToOne: false
+            referencedRelation: "propietarios"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      gasto_obligaciones_cuotas: {
+        Row: {
+          created_at: string
+          documento_id: string | null
+          empresa_id: string
+          estado: Database["public"]["Enums"]["estado_gasto"]
+          fecha_vencimiento: string | null
+          id: string
+          liquidacion_id: string | null
+          monto: number
+          numero_cuota: number
+          obligacion_id: string
+          observaciones: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          documento_id?: string | null
+          empresa_id: string
+          estado?: Database["public"]["Enums"]["estado_gasto"]
+          fecha_vencimiento?: string | null
+          id?: string
+          liquidacion_id?: string | null
+          monto: number
+          numero_cuota?: number
+          obligacion_id: string
+          observaciones?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          documento_id?: string | null
+          empresa_id?: string
+          estado?: Database["public"]["Enums"]["estado_gasto"]
+          fecha_vencimiento?: string | null
+          id?: string
+          liquidacion_id?: string | null
+          monto?: number
+          numero_cuota?: number
+          obligacion_id?: string
+          observaciones?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "gasto_obligaciones_cuotas_documento_id_fkey"
+            columns: ["documento_id"]
+            isOneToOne: false
+            referencedRelation: "documentos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "gasto_obligaciones_cuotas_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "gasto_obligaciones_cuotas_liquidacion_id_fkey"
+            columns: ["liquidacion_id"]
+            isOneToOne: false
+            referencedRelation: "liquidaciones"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "gasto_obligaciones_cuotas_obligacion_id_fkey"
+            columns: ["obligacion_id"]
+            isOneToOne: false
+            referencedRelation: "gasto_obligaciones"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       gastos: {
         Row: {
           arrendatario_id: string | null
@@ -1002,6 +1201,64 @@ export type Database = {
             columns: ["propietario_id"]
             isOneToOne: false
             referencedRelation: "propietarios"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      notificaciones_cobro_log: {
+        Row: {
+          arrendatario_id: string
+          cargo_id: string
+          email_destino: string
+          empresa_id: string
+          enviado_en: string
+          error_detalle: string | null
+          estado: string
+          id: string
+          tipo: string
+        }
+        Insert: {
+          arrendatario_id: string
+          cargo_id: string
+          email_destino: string
+          empresa_id: string
+          enviado_en?: string
+          error_detalle?: string | null
+          estado: string
+          id?: string
+          tipo: string
+        }
+        Update: {
+          arrendatario_id?: string
+          cargo_id?: string
+          email_destino?: string
+          empresa_id?: string
+          enviado_en?: string
+          error_detalle?: string | null
+          estado?: string
+          id?: string
+          tipo?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notificaciones_cobro_log_arrendatario_id_fkey"
+            columns: ["arrendatario_id"]
+            isOneToOne: false
+            referencedRelation: "arrendatarios"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notificaciones_cobro_log_cargo_id_fkey"
+            columns: ["cargo_id"]
+            isOneToOne: false
+            referencedRelation: "cargos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notificaciones_cobro_log_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
             referencedColumns: ["id"]
           },
         ]
@@ -1636,6 +1893,7 @@ export type Database = {
       tipo_comision: "porcentaje" | "monto_fijo"
       tipo_cuenta_bancaria: "corriente" | "vista" | "ahorro" | "rut"
       tipo_detalle_liquidacion: "ingreso" | "descuento"
+      tipo_monto_obligacion: "porcentaje" | "monto_fijo"
       tipo_movimiento_garantia: "recepcion" | "retencion" | "devolucion"
       tipo_persona: "persona_natural" | "persona_juridica"
       tipo_propiedad:
@@ -1845,6 +2103,7 @@ export const Constants = {
       tipo_comision: ["porcentaje", "monto_fijo"],
       tipo_cuenta_bancaria: ["corriente", "vista", "ahorro", "rut"],
       tipo_detalle_liquidacion: ["ingreso", "descuento"],
+      tipo_monto_obligacion: ["porcentaje", "monto_fijo"],
       tipo_movimiento_garantia: ["recepcion", "retencion", "devolucion"],
       tipo_persona: ["persona_natural", "persona_juridica"],
       tipo_propiedad: [
@@ -1889,3 +2148,4 @@ export type EstadoInvitacion = Database["public"]["Enums"]["estado_invitacion"];
 export type EstadoSolicitudPago = Database["public"]["Enums"]["estado_solicitud_pago"];
 export type EstadoIncidencia = Database["public"]["Enums"]["estado_incidencia"];
 export type TipoMovimientoGarantia = Database["public"]["Enums"]["tipo_movimiento_garantia"];
+export type TipoMontoObligacion = Database["public"]["Enums"]["tipo_monto_obligacion"];
