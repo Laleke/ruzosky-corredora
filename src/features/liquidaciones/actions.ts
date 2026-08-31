@@ -8,6 +8,7 @@ import { getCurrentProfile } from "@/lib/auth";
 import { registrarAuditoria } from "@/lib/auditoria";
 import { calcularLiquidacion } from "./queries";
 import { CATEGORIA_GASTO_LABEL } from "@/features/gastos/constants";
+import { sincronizarEstadoGasto } from "@/features/gastos/actions";
 import type { Database } from "@/types/database.types";
 
 export type LiquidacionFormState = { error: string | null };
@@ -156,11 +157,15 @@ export async function generarLiquidacion(
     return { error: "No se pudo asignar número de liquidación. Reintenta." };
   }
 
-  // ---- Reclamo atómico de los gastos descontables ----
-  // El UPDATE condicional (liquidacion_id IS NULL) garantiza que cada gasto se
+  // ---- Reclamo atómico de las cuotas descontables ----
+  // El UPDATE condicional (liquidacion_id IS NULL) garantiza que cada cuota se
   // asocie a una sola liquidación aunque dos usuarios liquiden en paralelo.
+  // El filtro responsable='propietario' ya está garantizado aguas arriba en
+  // calcularLiquidacion/gastosDescontables — los ids que llegan aquí ya son
+  // solo cuotas de obligaciones de propietario.
   type GastoClaim = {
-    id: string;
+    cuota_id: string;
+    gasto_id: string;
     categoria: string;
     descripcion: string;
     fecha: string;
@@ -168,23 +173,19 @@ export async function generarLiquidacion(
   };
   let gastosDescontados: GastoClaim[] = [];
   if (calc.gastos.length) {
-    const ids = calc.gastos.map((g) => g.gasto_id);
+    const ids = calc.gastos.map((g) => g.cuota_id);
     const { data: claimed } = await supabase
-      .from("gastos")
+      .from("gasto_obligaciones_cuotas")
       .update({ liquidacion_id: liqId, estado: "pagado" })
       .in("id", ids)
       .is("liquidacion_id", null)
       .eq("estado", "pendiente")
-      .eq("responsable_pago", "propietario")
-      .eq("descontar_de_liquidacion", true)
-      .select("id, categoria, descripcion, fecha, monto");
-    gastosDescontados = (claimed ?? []).map((g) => ({
-      id: g.id,
-      categoria: g.categoria,
-      descripcion: g.descripcion,
-      fecha: g.fecha,
-      monto: Number(g.monto),
-    }));
+      .select("id");
+    const claimedIds = new Set((claimed ?? []).map((c) => c.id));
+    gastosDescontados = calc.gastos.filter((g) => claimedIds.has(g.cuota_id));
+    for (const gastoId of new Set(gastosDescontados.map((g) => g.gasto_id))) {
+      await sincronizarEstadoGasto(supabase, gastoId);
+    }
   }
   const gastosSum = r2(gastosDescontados.reduce((a, g) => a + g.monto, 0));
 
@@ -213,8 +214,8 @@ export async function generarLiquidacion(
     ...gastosDescontados.map((g) => ({
       tipo: "descuento" as const,
       concepto: g.descripcion,
-      referencia_tipo: "gasto",
-      referencia_id: g.id,
+      referencia_tipo: "gasto_cuota",
+      referencia_id: g.cuota_id,
       observacion: `${CATEGORIA_GASTO_LABEL[g.categoria as keyof typeof CATEGORIA_GASTO_LABEL] ?? g.categoria} · ${g.fecha}`,
       monto: g.monto,
     })),
@@ -254,9 +255,9 @@ export async function generarLiquidacion(
       supabase,
       profile,
       "gasto_asociado_liquidacion",
-      "gasto",
-      g.id,
-      { liquidacion_id: liqId, monto: g.monto }
+      "gasto_cuota",
+      g.cuota_id,
+      { gasto_id: g.gasto_id, liquidacion_id: liqId, monto: g.monto }
     );
   }
 
@@ -335,22 +336,38 @@ export async function anularLiquidacion(id: string) {
       .in("id", contratosCorretaje);
   }
 
-  // Libera los gastos descontados: vuelven a 'pendiente' y sin liquidación,
+  // Libera las cuotas descontadas: vuelven a 'pendiente' y sin liquidación,
   // quedando disponibles para una futura liquidación.
   const { data: liberados } = await supabase
-    .from("gastos")
+    .from("gasto_obligaciones_cuotas")
     .update({ liquidacion_id: null, estado: "pendiente" })
     .eq("liquidacion_id", id)
-    .select("id, monto");
-  for (const g of liberados ?? []) {
-    await registrarAuditoria(
-      supabase,
-      profile,
-      "gasto_liberado_anulacion",
-      "gasto",
-      g.id,
-      { liquidacion_id: id, monto: Number(g.monto) }
-    );
+    .select("id, monto, obligacion_id");
+
+  if (liberados && liberados.length) {
+    const obligacionIds = [...new Set(liberados.map((c) => c.obligacion_id))];
+    const { data: obligaciones } = await supabase
+      .from("gasto_obligaciones")
+      .select("id, gasto_id")
+      .in("id", obligacionIds);
+    const gastoIdPorObligacion = new Map((obligaciones ?? []).map((o) => [o.id, o.gasto_id]));
+    for (const c of liberados) {
+      await registrarAuditoria(
+        supabase,
+        profile,
+        "gasto_liberado_anulacion",
+        "gasto_cuota",
+        c.id,
+        {
+          gasto_id: gastoIdPorObligacion.get(c.obligacion_id) ?? null,
+          liquidacion_id: id,
+          monto: Number(c.monto),
+        }
+      );
+    }
+    for (const gastoId of new Set(gastoIdPorObligacion.values())) {
+      if (gastoId) await sincronizarEstadoGasto(supabase, gastoId);
+    }
   }
 
   await registrarAuditoria(supabase, profile, "liquidacion_anulada", "liquidacion", id, {

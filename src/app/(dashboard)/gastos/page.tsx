@@ -78,6 +78,8 @@ export default async function GastosPage({
           <div className={ui.cardGrid}>
             {gastos.map((g) => {
               const est = ESTADO_GASTO[g.estado];
+              const cuotas = g.obligaciones.flatMap((o) => o.cuotas);
+              const cuotasPagadas = cuotas.filter((c) => c.estado === "pagado").length;
               return (
                 <div key={g.id} className={ui.listCard}>
                   <div className="flex items-start justify-between gap-2">
@@ -87,9 +89,12 @@ export default async function GastosPage({
                       </p>
                       <p className="flex items-center gap-2 font-medium text-white">
                         {g.descripcion}
-                        {g.descontar_de_liquidacion && (
-                          <span className={badge("info")} title="Se descuenta de la liquidación del propietario">
-                            Liq.
+                        {cuotas.length > 1 && (
+                          <span
+                            className={badge("info")}
+                            title="Cuotas pagadas / total"
+                          >
+                            {cuotasPagadas}/{cuotas.length} cuotas
                           </span>
                         )}
                       </p>

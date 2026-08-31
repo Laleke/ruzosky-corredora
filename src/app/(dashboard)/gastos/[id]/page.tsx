@@ -1,21 +1,14 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
-import { ArrowLeft, Pencil } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import { getGasto } from "@/features/gastos/queries";
-import { CATEGORIA_GASTO_LABEL, ESTADO_GASTO, clp } from "@/features/gastos/constants";
-import { GastoAcciones, VerComprobanteBtn } from "@/features/gastos/acciones";
+import {
+  getOpcionesRelacion,
+  getContextoVigentePorPropiedad,
+} from "@/features/documentos/queries";
+import { DetalleGasto } from "@/features/gastos/detalle-gasto";
 import { getCurrentProfile } from "@/lib/auth";
-import { ui, badge } from "@/components/ui";
-import { formatearFecha } from "@/lib/fecha";
-
-function Dato({ label, valor }: { label: string; valor: string | null }) {
-  return (
-    <div>
-      <dt className="text-xs uppercase tracking-wide text-muted">{label}</dt>
-      <dd className="mt-0.5 text-sm text-ink">{valor ?? "—"}</dd>
-    </div>
-  );
-}
+import { ui } from "@/components/ui";
 
 export default async function GastoDetallePage({
   params,
@@ -26,11 +19,12 @@ export default async function GastoDetallePage({
   const profile = await getCurrentProfile();
   if (!profile) redirect("/login");
 
-  const gasto = await getGasto(id);
+  const [gasto, opciones, contexto] = await Promise.all([
+    getGasto(id),
+    getOpcionesRelacion(),
+    getContextoVigentePorPropiedad(),
+  ]);
   if (!gasto) notFound();
-
-  const est = ESTADO_GASTO[gasto.estado];
-  const ligado = Boolean(gasto.liquidacion_id);
 
   return (
     <div>
@@ -38,69 +32,12 @@ export default async function GastoDetallePage({
         <ArrowLeft size={16} /> Volver
       </Link>
 
-      <div className="mb-6 flex flex-wrap items-start justify-between gap-4">
-        <div>
-          <div className="flex items-center gap-3">
-            <h1 className="text-2xl font-semibold tracking-tight text-ink">
-              {gasto.descripcion}
-            </h1>
-            <span className={badge(est.tone)}>{est.label}</span>
-          </div>
-          <p className="mt-1 text-2xl font-semibold text-burgundy">
-            {clp(gasto.monto)}
-          </p>
-        </div>
-        {!ligado && (
-          <Link href={`/gastos/${id}/editar`} className={ui.btnSecondary}>
-            <Pencil size={16} /> Editar
-          </Link>
-        )}
-      </div>
-
-      <div className={`${ui.card} mb-6 p-6`}>
-        <dl className="grid grid-cols-2 gap-x-6 gap-y-4 sm:grid-cols-3">
-          <Dato label="Fecha" valor={formatearFecha(gasto.fecha)} />
-          <Dato label="Categoría" valor={CATEGORIA_GASTO_LABEL[gasto.categoria]} />
-          <Dato label="Propiedad" valor={gasto.propiedad_label} />
-          <Dato
-            label="Descuenta de liquidación"
-            valor={gasto.descontar_de_liquidacion ? "Sí" : "No"}
-          />
-          <Dato label="Registrado por" valor={gasto.creado_por_email} />
-          <div>
-            <dt className="text-xs uppercase tracking-wide text-muted">
-              Comprobante
-            </dt>
-            <dd className="mt-0.5 text-sm text-ink">
-              {gasto.documento_id ? (
-                <span className="flex items-center gap-2">
-                  Adjuntado <VerComprobanteBtn id={id} />
-                </span>
-              ) : (
-                <span className="text-muted">Sin comprobante</span>
-              )}
-            </dd>
-          </div>
-        </dl>
-        {gasto.observaciones && (
-          <div className="mt-4 border-t border-line pt-4">
-            <dt className="text-xs uppercase tracking-wide text-muted">
-              Observaciones
-            </dt>
-            <dd className="mt-1 whitespace-pre-wrap text-sm text-ink">
-              {gasto.observaciones}
-            </dd>
-          </div>
-        )}
-      </div>
-
-      <GastoAcciones
+      <DetalleGasto
         id={id}
-        estado={gasto.estado}
-        ligadoALiquidacion={ligado}
+        gasto={gasto}
+        opciones={opciones}
+        contexto={contexto}
         empresaId={profile.empresa_id}
-        propiedadId={gasto.propiedad_id}
-        descripcion={gasto.descripcion}
       />
     </div>
   );

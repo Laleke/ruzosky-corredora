@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentProfile } from "@/lib/auth";
 import { registrarAuditoria } from "@/lib/auditoria";
+import { insertarObligaciones } from "@/features/gastos/actions";
 import type { EstadoIncidencia } from "@/types/database.types";
 
 export type IncidenciaFormState = { error: string | null };
@@ -31,7 +32,7 @@ type Parsed = {
   proveedor_nombre: string | null;
   proveedor_contacto: string | null;
   fecha_reportada: string;
-  costo: number | null;
+  costo: number;
   observaciones: string | null;
 };
 
@@ -46,13 +47,13 @@ function parseIncidencia(fd: FormData): { data?: Parsed; error?: string } {
   const fecha_reportada = limpiar(fd.get("fecha_reportada"));
   if (!fecha_reportada) return { error: "La fecha reportada es obligatoria." };
 
-  const costoRaw = fd.get("costo");
-  let costo: number | null = null;
-  if (limpiar(costoRaw)) {
-    const n = Number(costoRaw);
-    if (!Number.isFinite(n) || n <= 0) return { error: "El costo debe ser mayor a 0." };
-    costo = Math.round(n * 100) / 100;
+  const costoRaw = limpiar(fd.get("costo"));
+  if (!costoRaw) return { error: "El costo estimado es obligatorio." };
+  const costoNum = Number(costoRaw);
+  if (!Number.isFinite(costoNum) || costoNum <= 0) {
+    return { error: "El costo debe ser mayor a 0." };
   }
+  const costo = Math.round(costoNum * 100) / 100;
 
   return {
     data: {
@@ -176,6 +177,8 @@ export async function generarGastoDeIncidencia(id: string): Promise<AccionResult
   if (!incidencia.costo) return { error: "La incidencia no tiene costo registrado." };
   if (incidencia.gasto_id) return { error: "Ya se generó un gasto para esta incidencia." };
 
+  const fecha = new Date().toISOString().slice(0, 10);
+  const monto = Number(incidencia.costo);
   const { data: gasto, error: gastoError } = await supabase
     .from("gastos")
     .insert({
@@ -184,8 +187,8 @@ export async function generarGastoDeIncidencia(id: string): Promise<AccionResult
       contrato_id: incidencia.contrato_id,
       categoria: "reparacion",
       descripcion: incidencia.titulo,
-      monto: incidencia.costo,
-      fecha: new Date().toISOString().slice(0, 10),
+      monto,
+      fecha,
       responsable_pago: "propietario",
       creado_por: profile.id,
       creado_por_email: profile.email,
@@ -193,6 +196,31 @@ export async function generarGastoDeIncidencia(id: string): Promise<AccionResult
     .select("id")
     .single();
   if (gastoError || !gasto) return { error: "No se pudo generar el gasto." };
+
+  // 100% propietario, pago único: mismo caso simple que usa el wizard de
+  // Gastos. Sin esto el gasto quedaría sin obligación/cuota y nunca
+  // aparecería como descontable en una liquidación (ver Gastos Fase 2).
+  const errorObligaciones = await insertarObligaciones(
+    supabase,
+    profile.empresa_id,
+    gasto.id,
+    incidencia.propiedad_id,
+    null,
+    fecha,
+    monto,
+    [
+      {
+        responsable: "propietario",
+        tipo_monto: "porcentaje",
+        valor: 100,
+        cuotas: [{ numero_cuota: 1, monto, fecha_vencimiento: fecha }],
+      },
+    ]
+  );
+  if (errorObligaciones) {
+    await supabase.from("gastos").delete().eq("id", gasto.id);
+    return { error: errorObligaciones };
+  }
 
   const { error: updError } = await supabase
     .from("incidencias")

@@ -96,6 +96,7 @@ export async function getReporteFinanciero(
     cargosRes,
     liquidacionesRes,
     gastosRes,
+    obligacionesPropietarioRes,
   ] = await Promise.all([
     supabase
       .from("contratos")
@@ -129,12 +130,19 @@ export async function getReporteFinanciero(
       .neq("estado", "anulada"),
     supabase
       .from("gastos")
-      .select(
-        "monto, fecha, categoria, propiedad_id, responsable_pago, descontar_de_liquidacion"
-      )
+      .select("monto, fecha, categoria, propiedad_id")
       .neq("estado", "anulado")
       .gte("fecha", desde)
       .lte("fecha", hasta),
+    // Porción de gasto que asume el propietario (para rentabilidadPropietario),
+    // ya resuelta por gasto_obligaciones.monto_calculado — sin condicionales
+    // ambiguos sobre columnas deprecadas de `gastos`.
+    supabase
+      .from("gasto_obligaciones")
+      .select("monto_calculado, propiedad_id, fecha_gasto")
+      .eq("responsable", "propietario")
+      .gte("fecha_gasto", desde)
+      .lte("fecha_gasto", hasta),
   ]);
 
   const contratos = (contratosRes.data ?? []) as unknown as ContratoRow[];
@@ -234,12 +242,9 @@ export async function getReporteFinanciero(
     fecha: string;
     categoria: string;
     propiedad_id: string;
-    responsable_pago: string;
-    descontar_de_liquidacion: boolean;
   };
   const gastosPorCategoriaMap = new Map<string, number>();
   const gastosPorPropiedadMap = new Map<string, number>();
-  const gastosPropietarioPropiedadY = new Map<string, number>(); // solo gastos que asume el dueño
 
   for (const g of (gastosRes.data ?? []) as unknown as GastoRow[]) {
     if (!enPropiedad(g.propiedad_id)) continue;
@@ -256,14 +261,24 @@ export async function getReporteFinanciero(
         g.propiedad_id,
         (gastosPorPropiedadMap.get(g.propiedad_id) ?? 0) + monto
       );
-      // Solo el gasto que asume el propietario afecta su rentabilidad.
-      if (g.responsable_pago === "propietario" || g.descontar_de_liquidacion) {
-        gastosPropietarioPropiedadY.set(
-          g.propiedad_id,
-          (gastosPropietarioPropiedadY.get(g.propiedad_id) ?? 0) + monto
-        );
-      }
     }
+  }
+
+  // Solo la porción de obligaciones del propietario afecta su rentabilidad
+  // (ya no depende de columnas deprecadas de `gastos`).
+  type ObligacionRow = {
+    monto_calculado: number;
+    propiedad_id: string;
+    fecha_gasto: string;
+  };
+  const gastosPropietarioPropiedadY = new Map<string, number>();
+  for (const o of (obligacionesPropietarioRes.data ?? []) as unknown as ObligacionRow[]) {
+    if (!enPropiedad(o.propiedad_id)) continue;
+    if (anioDe(o.fecha_gasto) !== Y) continue;
+    gastosPropietarioPropiedadY.set(
+      o.propiedad_id,
+      (gastosPropietarioPropiedadY.get(o.propiedad_id) ?? 0) + Number(o.monto_calculado)
+    );
   }
 
   // ---- Liquidaciones (emitidas / pagadas / comparativo) ----

@@ -20,12 +20,16 @@ function inicioMesSiguiente(periodo: string): string {
 }
 
 /**
- * Gastos del propietario pendientes de descontar en una liquidación del período.
- * Condiciones (todas): propiedad del propietario, estado='pendiente',
- * descontar_de_liquidacion=true, responsable_pago='propietario',
- * liquidacion_id IS NULL, y el gasto pertenece a este propietario (o a la
- * propiedad sin dueño explícito). Se excluyen los gastos con fecha posterior al
- * mes del período.
+ * Cuotas descontables del propietario, pendientes de asociar a una
+ * liquidación del período. Se parte desde `gasto_obligaciones` (usa el
+ * índice `idx_gasto_obligaciones_por_descontar`: propiedad + responsable)
+ * en vez de `gasto_obligaciones_cuotas`, para filtrar por propiedad/fecha a
+ * nivel de BD; el filtro de estado/liquidación de cada cuota se hace en JS
+ * (arreglo chico por obligación, igual que el resto de reportes/queries.ts).
+ * Condiciones: obligación con responsable='propietario' de una propiedad del
+ * propietario, gasto anterior al mes del período, y cuota 'pendiente' sin
+ * liquidacion_id. El propietario_id de la obligación (foto al crearla) puede
+ * ser null (propiedad sin dueño explícito en ese momento) — se incluye igual.
  */
 async function gastosDescontables(
   supabase: DB,
@@ -35,25 +39,43 @@ async function gastosDescontables(
 ): Promise<LineaGasto[]> {
   if (propiedadIds.length === 0) return [];
   const { data } = await supabase
-    .from("gastos")
-    .select("id, categoria, descripcion, fecha, monto, propietario_id")
+    .from("gasto_obligaciones")
+    .select(
+      "gasto_id, propietario_id, fecha_gasto, gastos(categoria, descripcion), gasto_obligaciones_cuotas(id, monto, estado, liquidacion_id)"
+    )
+    .eq("responsable", "propietario")
     .in("propiedad_id", propiedadIds)
-    .eq("estado", "pendiente")
-    .eq("descontar_de_liquidacion", true)
-    .eq("responsable_pago", "propietario")
-    .is("liquidacion_id", null)
-    .lt("fecha", inicioMesSiguiente(periodo))
-    .order("fecha", { ascending: true });
+    .lt("fecha_gasto", inicioMesSiguiente(periodo));
 
-  return (data ?? [])
-    .filter((g) => g.propietario_id == null || g.propietario_id === propietarioId)
-    .map((g) => ({
-      gasto_id: g.id,
-      categoria: g.categoria,
-      descripcion: g.descripcion,
-      fecha: g.fecha,
-      monto: Number(g.monto),
-    }));
+  type ObligacionRow = {
+    gasto_id: string;
+    propietario_id: string | null;
+    fecha_gasto: string;
+    gastos: { categoria: string; descripcion: string } | null;
+    gasto_obligaciones_cuotas: {
+      id: string;
+      monto: number;
+      estado: string;
+      liquidacion_id: string | null;
+    }[];
+  };
+
+  const lineas: LineaGasto[] = [];
+  for (const o of (data ?? []) as unknown as ObligacionRow[]) {
+    if (o.propietario_id != null && o.propietario_id !== propietarioId) continue;
+    for (const c of o.gasto_obligaciones_cuotas ?? []) {
+      if (c.estado !== "pendiente" || c.liquidacion_id != null) continue;
+      lineas.push({
+        cuota_id: c.id,
+        gasto_id: o.gasto_id,
+        categoria: o.gastos?.categoria ?? "otro",
+        descripcion: o.gastos?.descripcion ?? "",
+        fecha: o.fecha_gasto,
+        monto: Number(c.monto),
+      });
+    }
+  }
+  return lineas.sort((a, b) => (a.fecha < b.fecha ? -1 : a.fecha > b.fecha ? 1 : 0));
 }
 
 type DB = SupabaseClient<Database>;
@@ -249,23 +271,39 @@ export async function calcularLiquidacion(
   };
 }
 
-/** Gastos efectivamente descontados en una liquidación (para el detalle). */
+/** Cuotas efectivamente descontadas en una liquidación (para el detalle). */
 export async function getGastosDeLiquidacion(
   liquidacionId: string
 ): Promise<LineaGasto[]> {
   const supabase = await createClient();
   const { data } = await supabase
-    .from("gastos")
-    .select("id, categoria, descripcion, fecha, monto")
-    .eq("liquidacion_id", liquidacionId)
-    .order("fecha", { ascending: true });
-  return (data ?? []).map((g) => ({
-    gasto_id: g.id,
-    categoria: g.categoria,
-    descripcion: g.descripcion,
-    fecha: g.fecha,
-    monto: Number(g.monto),
-  }));
+    .from("gasto_obligaciones_cuotas")
+    .select(
+      "id, monto, gasto_obligaciones(gasto_id, fecha_gasto, gastos(categoria, descripcion))"
+    )
+    .eq("liquidacion_id", liquidacionId);
+
+  type Row = {
+    id: string;
+    monto: number;
+    gasto_obligaciones: {
+      gasto_id: string;
+      fecha_gasto: string;
+      gastos: { categoria: string; descripcion: string } | null;
+    } | null;
+  };
+
+  return ((data ?? []) as unknown as Row[])
+    .filter((c) => c.gasto_obligaciones)
+    .map((c) => ({
+      cuota_id: c.id,
+      gasto_id: c.gasto_obligaciones!.gasto_id,
+      categoria: c.gasto_obligaciones!.gastos?.categoria ?? "otro",
+      descripcion: c.gasto_obligaciones!.gastos?.descripcion ?? "",
+      fecha: c.gasto_obligaciones!.fecha_gasto,
+      monto: Number(c.monto),
+    }))
+    .sort((a, b) => (a.fecha < b.fecha ? -1 : a.fecha > b.fecha ? 1 : 0));
 }
 
 export type PendienteLiquidar = {

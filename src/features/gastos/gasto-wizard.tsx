@@ -6,11 +6,11 @@ import { useRouter } from "next/navigation";
 import { ArrowLeft, ArrowRight, Check } from "lucide-react";
 import { ui } from "@/components/ui";
 import { ComboboxOpcion } from "@/components/combobox-opcion";
-import { CATEGORIAS_GASTO, ESTADOS_GASTO } from "./constants";
+import { CATEGORIAS_GASTO } from "./constants";
 import { crearGasto, type GastoFormState } from "./actions";
 import type { ContextoPropiedad } from "@/features/documentos/queries";
 
-type TipoPaso = "propiedad" | "select" | "texto" | "monto" | "fecha" | "checkbox" | "textarea";
+type TipoPaso = "propiedad" | "select" | "texto" | "monto" | "fecha" | "textarea";
 
 type Paso = {
   key: string;
@@ -25,8 +25,6 @@ const PASOS: Paso[] = [
   { key: "descripcion", pregunta: "¿Cuál es la descripción del gasto?", tipo: "texto", requerido: true },
   { key: "monto", pregunta: "¿Cuál es el monto?", tipo: "monto", requerido: true },
   { key: "fecha", pregunta: "¿Qué fecha tiene el gasto?", tipo: "fecha", requerido: true },
-  { key: "estado", pregunta: "¿Cuál es el estado del gasto?", tipo: "select" },
-  { key: "descontar_de_liquidacion", pregunta: "¿Se descuenta de la liquidación del propietario?", tipo: "checkbox" },
   { key: "observaciones", pregunta: "¿Alguna observación adicional?", tipo: "textarea" },
 ];
 
@@ -39,10 +37,24 @@ const VALORES_INICIALES: Valores = {
   descripcion: "",
   monto: "",
   fecha: "",
-  estado: "pendiente",
-  descontar_de_liquidacion: false,
   observaciones: "",
 };
+
+// El wizard siempre crea el caso simple (100% propietario, pago único); el
+// reparto avanzado (compartido/en cuotas) se configura después editando el
+// gasto, donde vive el editor completo (ver ObligacionesEditor).
+function obligacionSimple(valores: Valores): string {
+  const monto = Number(valores.monto) || 0;
+  const fecha = String(valores.fecha || "");
+  return JSON.stringify([
+    {
+      responsable: "propietario",
+      tipo_monto: "porcentaje",
+      valor: 100,
+      cuotas: [{ numero_cuota: 1, monto, fecha_vencimiento: fecha || null }],
+    },
+  ]);
+}
 
 const DRAFT_KEY = "rzk:draft:gasto-wizard";
 
@@ -124,23 +136,6 @@ export function GastoWizard({
   function renderInput(p: Paso, visible: boolean) {
     const val = valores[p.key];
 
-    if (p.tipo === "checkbox") {
-      if (!visible) return Boolean(val) && <input type="hidden" name={p.key} value="on" />;
-      return (
-        <label className="flex items-center justify-center gap-2 text-white">
-          <input
-            name={p.key}
-            type="checkbox"
-            value="on"
-            checked={Boolean(val)}
-            onChange={(e) => set(p.key, e.target.checked)}
-            className="h-5 w-5"
-          />
-          Sí, se descuenta de su liquidación
-        </label>
-      );
-    }
-
     if (p.key === "propiedad_id") {
       if (!visible) {
         return (
@@ -158,11 +153,10 @@ export function GastoWizard({
     if (!visible) return <input type="hidden" name={p.key} value={String(val)} />;
 
     if (p.tipo === "select") {
-      const opciones = p.key === "categoria" ? CATEGORIAS_GASTO : ESTADOS_GASTO.filter((e) => e.value !== "anulado");
       return (
         <ComboboxOpcion
           name={p.key}
-          options={opciones.map((o) => ({ id: o.value, label: o.label }))}
+          options={CATEGORIAS_GASTO.map((o) => ({ id: o.value, label: o.label }))}
           value={String(val)}
           onChange={(v) => set(p.key, v)}
           placeholder="Selecciona…"
@@ -272,6 +266,7 @@ export function GastoWizard({
             {i !== paso && renderInput(p, false)}
           </div>
         ))}
+        <input type="hidden" name="obligaciones" value={obligacionSimple(valores)} />
 
         <div className="flex flex-col items-center gap-1">
           <h1 className="text-xl font-semibold tracking-tight text-white sm:text-2xl">

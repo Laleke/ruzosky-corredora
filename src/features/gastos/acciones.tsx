@@ -11,11 +11,13 @@ import {
   cambiarEstadoGasto,
   eliminarGasto,
   marcarGastoPagado,
+  marcarCuotaPagada,
+  cambiarEstadoCuota,
   getComprobanteUrlGasto,
 } from "./actions";
 import type { EstadoGasto } from "@/types/database.types";
 
-/** Marcar pagado con comprobante opcional (R4). */
+/** Marcar pagado con comprobante opcional, para el caso trivial (1 responsable, 1 cuota). */
 export function MarcarPagadoBtn({
   id,
   empresaId,
@@ -133,14 +135,16 @@ export function VerComprobanteBtn({ id }: { id: string }) {
 export function GastoAcciones({
   id,
   estado,
-  ligadoALiquidacion,
+  compromiso,
+  totalCuotas,
   empresaId,
   propiedadId,
   descripcion,
 }: {
   id: string;
   estado: EstadoGasto;
-  ligadoALiquidacion: boolean;
+  compromiso: "libre" | "parcial" | "total";
+  totalCuotas: number;
   empresaId: string;
   propiedadId: string;
   descripcion: string;
@@ -169,32 +173,25 @@ export function GastoAcciones({
     router.refresh();
   }
 
-  if (ligadoALiquidacion) {
+  if (compromiso !== "libre") {
     return (
       <p className="text-xs text-muted">
-        Gasto descontado en una liquidación: solo lectura.
+        {compromiso === "total"
+          ? "Todas las cuotas de este gasto ya están comprometidas: solo lectura a nivel de gasto."
+          : "Este gasto tiene cuotas comprometidas: administra el resto desde el detalle."}
       </p>
     );
   }
 
   return (
     <div className="flex flex-wrap items-start gap-2">
-      {estado === "pendiente" && (
+      {totalCuotas === 1 && estado !== "anulado" && (
         <MarcarPagadoBtn
           id={id}
           empresaId={empresaId}
           propiedadId={propiedadId}
           descripcion={descripcion}
         />
-      )}
-      {estado === "pagado" && (
-        <button
-          onClick={() => cambiar("pendiente")}
-          disabled={pending}
-          className={ui.btnSecondary}
-        >
-          <RotateCcw size={16} /> Marcar pendiente
-        </button>
       )}
       {estado !== "anulado" ? (
         <button
@@ -222,6 +219,64 @@ export function GastoAcciones({
       >
         <Trash2 size={16} /> Eliminar
       </button>
+    </div>
+  );
+}
+
+/** Acciones sobre una cuota puntual de una obligación (dentro de "Reparto y cuotas"). */
+export function CuotaAcciones({
+  cuotaId,
+  estado,
+  liquidacionId,
+}: {
+  cuotaId: string;
+  estado: EstadoGasto;
+  liquidacionId: string | null;
+}) {
+  const router = useRouter();
+  const [pending, setPending] = useState(false);
+
+  if (liquidacionId) {
+    return <span className="text-xs text-muted">Descontada en una liquidación.</span>;
+  }
+
+  async function marcarPagada() {
+    setPending(true);
+    const res = await marcarCuotaPagada(cuotaId, null);
+    setPending(false);
+    if (res.error) alert(res.error);
+    else router.refresh();
+  }
+
+  async function cambiar(nuevo: EstadoGasto) {
+    setPending(true);
+    const res = await cambiarEstadoCuota(cuotaId, nuevo);
+    setPending(false);
+    if (res.error) alert(res.error);
+    else router.refresh();
+  }
+
+  return (
+    <div className="flex items-center gap-2">
+      {estado === "pendiente" && (
+        <button onClick={marcarPagada} disabled={pending} className={ui.linkAction}>
+          Marcar pagada
+        </button>
+      )}
+      {estado === "pagado" && (
+        <button onClick={() => cambiar("pendiente")} disabled={pending} className={ui.linkAction}>
+          Marcar pendiente
+        </button>
+      )}
+      {estado !== "anulado" ? (
+        <button onClick={() => cambiar("anulado")} disabled={pending} className={ui.linkAction}>
+          Anular
+        </button>
+      ) : (
+        <button onClick={() => cambiar("pendiente")} disabled={pending} className={ui.linkAction}>
+          Reactivar
+        </button>
+      )}
     </div>
   );
 }

@@ -1,13 +1,16 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 import { ui } from "@/components/ui";
 import { MoneyInput } from "@/components/money-input";
 import { SelectorPropiedadContrato } from "@/components/selector-propiedad-contrato";
 import { SelectStyled } from "@/components/select-styled";
-import { CATEGORIAS_GASTO, ESTADOS_GASTO } from "./constants";
+import { CATEGORIAS_GASTO, CATEGORIA_GASTO_LABEL, clp } from "./constants";
+import { ObligacionesEditor } from "./obligaciones-editor";
+import type { FilaObligacion } from "./reparto";
+import { formatearFecha } from "@/lib/fecha";
 import type { GastoFormState } from "./actions";
-import type { Gasto } from "./types";
+import type { GastoListado } from "./types";
 import type { OpcionesRelacion } from "@/features/documentos/types";
 import type { ContextoPropiedad } from "@/features/documentos/queries";
 
@@ -16,24 +19,61 @@ type Action = (
   fd: FormData
 ) => Promise<GastoFormState>;
 
-// Un gasto SIEMPRE corresponde al propietario: el usuario solo elige Propiedad
-// + datos del gasto. Propietario/contrato/arrendatario/responsable se derivan
-// o quedan implícitos (ver reglas de simplificación en PROYECTO.md).
+function Dato({ label, valor }: { label: string; valor: string | null }) {
+  return (
+    <div className="flex flex-col gap-1.5">
+      <span className={ui.label}>{label}</span>
+      <span className="rounded-lg border border-line bg-stone-50 px-3 py-2 text-sm text-ink">
+        {valor ?? "—"}
+      </span>
+    </div>
+  );
+}
+
+function obligacionesAFilas(gasto: GastoListado): FilaObligacion[] {
+  return gasto.obligaciones.map((o) => ({
+    responsable: o.responsable,
+    tipo_monto: o.tipo_monto,
+    valor: Number(o.valor),
+    cuotas: o.cuotas
+      .sort((a, b) => a.numero_cuota - b.numero_cuota)
+      .map((c) => ({
+        numero_cuota: c.numero_cuota,
+        monto: Number(c.monto),
+        fecha_vencimiento: c.fecha_vencimiento,
+      })),
+  }));
+}
+
 export function GastoForm({
   action,
   opciones,
   gasto,
   contexto,
+  compromiso = "libre",
+  onCancelar,
 }: {
   action: Action;
   opciones: OpcionesRelacion;
-  gasto?: Gasto;
+  gasto?: GastoListado;
   contexto: ContextoPropiedad;
+  compromiso?: "libre" | "parcial" | "total";
+  onCancelar?: () => void;
 }) {
   const [state, formAction, pending] = useActionState(action, { error: null });
+  const [monto, setMonto] = useState(Number(gasto?.monto ?? 0));
+  const libre = compromiso === "libre";
 
   return (
     <form action={formAction} className="flex max-w-2xl flex-col gap-5">
+      {!libre && (
+        <p className="rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-800">
+          Este gasto ya tiene cuotas pagadas o descontadas en una liquidación: solo
+          puedes editar la descripción, las observaciones y el comprobante. El
+          reparto y las cuotas se administran cuota por cuota desde el detalle.
+        </p>
+      )}
+
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div className="flex flex-col gap-1.5 sm:col-span-2">
           <label className={ui.label}>Descripción *</label>
@@ -45,55 +85,57 @@ export function GastoForm({
           />
         </div>
 
-        <div className="flex flex-col gap-1.5">
-          <label className={ui.label}>Categoría *</label>
-          <SelectStyled name="categoria" defaultValue={gasto?.categoria ?? "mantencion"}>
-            {CATEGORIAS_GASTO.map((c) => (
-              <option key={c.value} value={c.value}>
-                {c.label}
-              </option>
-            ))}
-          </SelectStyled>
-        </div>
+        {libre ? (
+          <>
+            <div className="flex flex-col gap-1.5">
+              <label className={ui.label}>Categoría *</label>
+              <SelectStyled name="categoria" defaultValue={gasto?.categoria ?? "mantencion"}>
+                {CATEGORIAS_GASTO.map((c) => (
+                  <option key={c.value} value={c.value}>
+                    {c.label}
+                  </option>
+                ))}
+              </SelectStyled>
+            </div>
 
-        <div className="flex flex-col gap-1.5">
-          <label className={ui.label}>Monto (CLP) *</label>
-          <MoneyInput
-            name="monto"
-            defaultValue={gasto?.monto ?? ""}
-            placeholder="0"
-            className={ui.input}
-          />
-        </div>
+            <div className="flex flex-col gap-1.5">
+              <label className={ui.label}>Monto (CLP) *</label>
+              <MoneyInput
+                name="monto"
+                defaultValue={gasto?.monto ?? ""}
+                placeholder="0"
+                className={ui.input}
+                onValueChange={setMonto}
+              />
+            </div>
 
-        <div className="flex flex-col gap-1.5">
-          <label className={ui.label}>Fecha *</label>
-          <input
-            type="date"
-            name="fecha"
-            defaultValue={gasto?.fecha ?? ""}
-            className={ui.input}
-          />
-        </div>
+            <div className="flex flex-col gap-1.5">
+              <label className={ui.label}>Fecha *</label>
+              <input
+                type="date"
+                name="fecha"
+                defaultValue={gasto?.fecha ?? ""}
+                className={ui.input}
+              />
+            </div>
 
-        <div className="flex flex-col gap-1.5">
-          <label className={ui.label}>Estado</label>
-          <SelectStyled name="estado" defaultValue={gasto?.estado ?? "pendiente"}>
-            {ESTADOS_GASTO.filter((e) => e.value !== "anulado").map((e) => (
-              <option key={e.value} value={e.value}>
-                {e.label}
-              </option>
-            ))}
-          </SelectStyled>
-        </div>
-
-        <SelectorPropiedadContrato
-          propiedades={opciones.propiedades}
-          contexto={contexto}
-          propiedadDefault={gasto?.propiedad_id ?? ""}
-          contratoDefault={gasto?.contrato_id ?? ""}
-          mostrarArrendatario={false}
-        />
+            <SelectorPropiedadContrato
+              propiedades={opciones.propiedades}
+              contexto={contexto}
+              propiedadDefault={gasto?.propiedad_id ?? ""}
+              contratoDefault={gasto?.contrato_id ?? ""}
+              mostrarArrendatario={false}
+            />
+          </>
+        ) : (
+          <>
+            <Dato label="Categoría" valor={CATEGORIA_GASTO_LABEL[gasto!.categoria]} />
+            <Dato label="Monto" valor={clp(gasto!.monto)} />
+            <Dato label="Fecha" valor={formatearFecha(gasto!.fecha)} />
+            <Dato label="Propiedad" valor={gasto!.propiedad_label} />
+            <input type="hidden" name="propiedad_id" value={gasto!.propiedad_id} />
+          </>
+        )}
 
         <div className="flex flex-col gap-1.5 sm:col-span-2">
           <label className={ui.label}>Observaciones</label>
@@ -107,24 +149,15 @@ export function GastoForm({
         </div>
       </div>
 
-      {/* El gasto es del propietario: puede descontarse de su liquidación. */}
-      <label className="flex items-start gap-3 rounded-lg border border-line p-4">
-        <input
-          type="checkbox"
-          name="descontar_de_liquidacion"
-          defaultChecked={gasto?.descontar_de_liquidacion ?? false}
-          className="mt-0.5 h-4 w-4 accent-burgundy"
+      <div className="flex flex-col gap-1.5">
+        <label className={ui.label}>Reparto y cuotas</label>
+        <ObligacionesEditor
+          montoTotalGasto={monto}
+          fechaGasto={gasto?.fecha ?? ""}
+          valorInicial={gasto ? obligacionesAFilas(gasto) : undefined}
+          soloLectura={!libre}
         />
-        <span className="text-sm">
-          <span className="font-medium text-ink">
-            Descontar de la liquidación del propietario
-          </span>
-          <span className="mt-0.5 block text-xs text-muted">
-            Se restará de una liquidación futura del propietario (afecta su
-            rentabilidad).
-          </span>
-        </span>
-      </label>
+      </div>
 
       {state.error && (
         <p
@@ -135,10 +168,20 @@ export function GastoForm({
         </p>
       )}
 
-      <div>
+      <div className="flex gap-2">
         <button type="submit" disabled={pending} className={ui.btnPrimary}>
           {pending ? "Guardando…" : gasto ? "Guardar cambios" : "Registrar gasto"}
         </button>
+        {onCancelar && (
+          <button
+            type="button"
+            onClick={onCancelar}
+            disabled={pending}
+            className={ui.btnSecondary}
+          >
+            Cancelar
+          </button>
+        )}
       </div>
     </form>
   );

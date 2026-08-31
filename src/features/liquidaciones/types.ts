@@ -13,8 +13,9 @@ export type LineaLiquidacion = {
   monto: number;
 };
 
-/** Gasto candidato/descontado en una liquidación. */
+/** Cuota (de una obligación de gasto) candidata/descontada en una liquidación. */
 export type LineaGasto = {
+  cuota_id: string;
   gasto_id: string;
   categoria: string;
   descripcion: string;

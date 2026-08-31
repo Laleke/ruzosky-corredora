@@ -1,6 +1,12 @@
 import { createClient } from "@/lib/supabase/server";
 import { etiquetaPropiedad } from "@/lib/propiedad";
-import type { Gasto, GastoListado, FiltrosGastos } from "./types";
+import type {
+  Gasto,
+  GastoListado,
+  GastoObligacion,
+  GastoObligacionCuota,
+  FiltrosGastos,
+} from "./types";
 
 type PersonaEmbed = {
   tipo_persona: string;
@@ -23,7 +29,12 @@ const SELECT_RELACIONES = `*,
   propiedades(codigo_interno, direccion, numero, departamento),
   propietarios(tipo_persona, nombre, apellido, razon_social),
   arrendatarios(tipo_persona, nombre, apellido, razon_social),
-  contratos(numero_contrato)`;
+  contratos(numero_contrato),
+  gasto_obligaciones(*, gasto_obligaciones_cuotas(*))`;
+
+type RawObligacion = GastoObligacion & {
+  gasto_obligaciones_cuotas: GastoObligacionCuota[];
+};
 
 type Row = Gasto & {
   propiedades: {
@@ -35,6 +46,7 @@ type Row = Gasto & {
   propietarios: PersonaEmbed;
   arrendatarios: PersonaEmbed;
   contratos: { numero_contrato: string | null } | null;
+  gasto_obligaciones: RawObligacion[];
 };
 
 function mapear(d: Row): GastoListado {
@@ -45,6 +57,10 @@ function mapear(d: Row): GastoListado {
     propietario_nombre: nombrePersona(d.propietarios),
     arrendatario_nombre: nombrePersona(d.arrendatarios),
     contrato_numero: d.contratos?.numero_contrato ?? null,
+    obligaciones: (d.gasto_obligaciones ?? []).map((o) => ({
+      ...o,
+      cuotas: o.gasto_obligaciones_cuotas ?? [],
+    })),
   };
 }
 
@@ -52,14 +68,27 @@ export async function listGastos(
   filtros: FiltrosGastos = {}
 ): Promise<GastoListado[]> {
   const supabase = await createClient();
+
+  // El responsable ya no vive en `gastos` (columna deprecada) — se resuelve
+  // primero qué gastos tienen una obligación de ese responsable.
+  let gastoIdsResponsable: string[] | null = null;
+  if (filtros.responsable) {
+    const { data } = await supabase
+      .from("gasto_obligaciones")
+      .select("gasto_id")
+      .eq("responsable", filtros.responsable);
+    gastoIdsResponsable = [...new Set((data ?? []).map((o) => o.gasto_id))];
+    if (gastoIdsResponsable.length === 0) return [];
+  }
+
   let q = supabase
     .from("gastos")
     .select(SELECT_RELACIONES)
     .order("fecha", { ascending: false });
 
+  if (gastoIdsResponsable) q = q.in("id", gastoIdsResponsable);
   if (filtros.categoria) q = q.eq("categoria", filtros.categoria);
   if (filtros.estado) q = q.eq("estado", filtros.estado);
-  if (filtros.responsable) q = q.eq("responsable_pago", filtros.responsable);
   if (filtros.propiedadId) q = q.eq("propiedad_id", filtros.propiedadId);
   if (filtros.contratoId) q = q.eq("contrato_id", filtros.contratoId);
   if (filtros.propietarioId) q = q.eq("propietario_id", filtros.propietarioId);

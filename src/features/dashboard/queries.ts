@@ -101,7 +101,7 @@ export async function getTareasPendientes(): Promise<TareaPendiente[]> {
   const [
     liquidacionesPendientes,
     cobrosPendientes,
-    gastosPorLiquidar,
+    obligacionesPropietarioPendientes,
     comprobantesPendientes,
     contratosPorVencer,
     contratosConReajustePendiente,
@@ -113,14 +113,18 @@ export async function getTareasPendientes(): Promise<TareaPendiente[]> {
     debeAvisarGeneracionAsistida()
       ? listContratosSinArriendo(`${periodoArriendo}-01`)
       : Promise.resolve([]),
+    // Cuotas de obligaciones del propietario aún sin descontar (reemplaza el
+    // conteo directo sobre `gastos`, que ya no lleva ese estado — ver Gastos
+    // Fase 2). Cantidad de gastos en este tenant es chica, así que traer y
+    // filtrar en JS es aceptable (mismo criterio que reportes/queries.ts).
     supabase
-      .from("gastos")
-      .select("*", { count: "exact", head: true })
-      .eq("estado", "pendiente")
-      .eq("descontar_de_liquidacion", true)
-      .is("liquidacion_id", null),
+      .from("gasto_obligaciones")
+      .select("gasto_obligaciones_cuotas(estado, liquidacion_id)")
+      .eq("responsable", "propietario"),
+    // "pagado" ya no se alcanza a nivel de `gastos` (ver Gastos Fase 2) — se
+    // cuentan las cuotas pagadas sin comprobante propio.
     supabase
-      .from("gastos")
+      .from("gasto_obligaciones_cuotas")
       .select("*", { count: "exact", head: true })
       .eq("estado", "pagado")
       .is("documento_id", null),
@@ -139,6 +143,20 @@ export async function getTareasPendientes(): Promise<TareaPendiente[]> {
       .select("*", { count: "exact", head: true })
       .in("estado", ["reportada", "agendada", "en_proceso"]),
   ]);
+
+  type ObligacionCuotasRow = {
+    gasto_obligaciones_cuotas: { estado: string; liquidacion_id: string | null }[] | null;
+  };
+  const gastosPorLiquidarCount = (
+    (obligacionesPropietarioPendientes.data ?? []) as unknown as ObligacionCuotasRow[]
+  ).reduce(
+    (acc, o) =>
+      acc +
+      (o.gasto_obligaciones_cuotas ?? []).filter(
+        (c) => c.estado === "pendiente" && c.liquidacion_id == null
+      ).length,
+    0
+  );
 
   return [
     {
@@ -165,7 +183,7 @@ export async function getTareasPendientes(): Promise<TareaPendiente[]> {
     {
       key: "gastos",
       label: "Gastos pendientes de liquidar",
-      cantidad: gastosPorLiquidar.count ?? 0,
+      cantidad: gastosPorLiquidarCount,
       href: "/gastos?estado=pendiente",
       alerta: false,
     },

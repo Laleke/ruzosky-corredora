@@ -40,7 +40,7 @@ export default async function DetalleLiquidacionPage({
   const ingresos = detalles.filter((d) => d.tipo === "ingreso");
   // Descuentos = comisiones/ajustes manuales + gastos del propietario, en un solo bloque.
   const comisionesYAjustes = detalles.filter(
-    (d) => d.tipo === "descuento" && d.referencia_tipo !== "gasto"
+    (d) => d.tipo === "descuento" && d.referencia_tipo !== "gasto_cuota"
   );
   type LineaDescuento = { key: string; label: string; sub: string | null; monto: number };
   const descuentos: LineaDescuento[] = [
@@ -54,7 +54,7 @@ export default async function DetalleLiquidacionPage({
       monto: d.monto,
     })),
     ...gastos.map((g) => ({
-      key: g.gasto_id,
+      key: g.cuota_id,
       label: g.descripcion,
       sub: `Gasto: ${
         CATEGORIA_GASTO_LABEL[g.categoria as keyof typeof CATEGORIA_GASTO_LABEL] ?? g.categoria
